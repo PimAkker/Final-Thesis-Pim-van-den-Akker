@@ -5,20 +5,22 @@ import random
 import numpy as np
 import os
 import sys
-
+import time
 # render image, instance annoatation and depth in one line code
 # result["ycb_meta"] is 6d pose GT
-def render_data(folder = r"data/", path_name="demo", path_affix="", save_rgb=True, save_inst=True, save_depth=True, save_combined=True):
+def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_depth=True, save_combined=True):
     
     # render image, instance annoatation and depth in one line code
+    start_time = time.time()    
     result = bpycv.render_data()
+    end_time = time.time()
     
-    rgb_pathname = f"{folder}/{path_name}-rgb-{path_affix}.png"
-    depth_pathname = f"{folder}/{path_name}-depth-{path_affix}_depth.png"
-    inst_pathname = f"{folder}/{path_name}-inst-{path_affix}_inst.png"
-    combined_pathname = f"{folder}/{path_name}-combined-{path_affix}.png"
-
-        
+    print("render_data time taken: ", end_time - start_time)
+    
+    rgb_pathname = f"{folder}\\-rgb-{path_affix}.png"
+    depth_pathname = f"{folder}-depth-{path_affix}_depth.png"
+    inst_pathname = f"{folder}\\-inst-{path_affix}_inst.png"
+    combined_pathname = f"{folder}\\-combined-{path_affix}.png" 
     
     if save_rgb:
         cv2.imwrite(rgb_pathname, result["image"][..., ::-1])

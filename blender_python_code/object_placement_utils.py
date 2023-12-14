@@ -8,7 +8,7 @@ class object_placement:
     """ This class is used to place objects in the scene. It is used to place the room and tables in the scene.
     
     """
-    def __init__(self, delete_duplicates=True):
+    def __init__(self, delete_duplicates=False):
         self.delete_duplicates = delete_duplicates
         if self.delete_duplicates:
             # delete all objects which are copied
