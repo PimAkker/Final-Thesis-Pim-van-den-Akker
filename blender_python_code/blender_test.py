@@ -16,7 +16,7 @@ from custom_render_utils import render_data
 
 begin_time = time.time()
 
-nr_of_renders = 1
+nr_of_renders = 0
 for i in range(nr_of_renders):
     
     place_class = object_placement(delete_duplicates=False)
