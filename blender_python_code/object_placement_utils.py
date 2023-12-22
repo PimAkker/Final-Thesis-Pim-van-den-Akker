@@ -41,7 +41,7 @@ class object_placement:
         obj.location = default_location
         obj["inst_id"] = 255
 
-    def place_tables(self,num_tables=5,inst_id=100,leg_nr_range=(4,4)):
+    def place_tables(self,inst_id=100,size_range=(0.1,0.7),  leg_nr_range=(3,5),location=(0,0,0)):
         """ 
         this function places the tables in the scene. 
         input: num_tables: number of tables to be placed
@@ -53,24 +53,37 @@ class object_placement:
         TODO: better randomization of table scale
         
         """
-        for i in range(num_tables):
-            # deselect all
-            bpy.ops.object.select_all(action='DESELECT')
-            bpy.data.objects['table square'].select_set(True)
-            # set object as active
-            bpy.context.view_layer.objects.active = bpy.data.objects['table square']
-            rand_pos = (np.random.uniform(17, 40), np.random.uniform(7, -30), 0)
-            bpy.ops.object.duplicate_move_linked(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
-            obj = bpy.context.active_object
-            obj.location = rand_pos
-            bpy.ops.object.convert(target='MESH')
-            obj = bpy.context.active_object
-            obj["inst_id"] = inst_id+i
+        self.blend_deselect_all()
+        
+
+        nr_of_legs = np.random.randint(leg_nr_range[0],leg_nr_range[1]+1)
+        size_x = np.random.uniform(size_range[0],size_range[1])
+        size_y = np.random.uniform(size_range[0],size_range[1])
+        print(f"nr_of_legs: {nr_of_legs}, size_x: {size_x}, size_y: {size_y}")
+        
+        object_name = "round table"
+        
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.data.objects[object_name].select_set(True)
+        bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
+        # set object to contex      
+        bpy.context.object.modifiers["GeometryNodes"]["Input_2"] = nr_of_legs
+        bpy.context.object.modifiers["GeometryNodes"]["Input_5"] = size_x
+        bpy.context.object.modifiers["GeometryNodes"]["Input_6"] = size_y
             
+        
+        
+        bpy.ops.object.duplicate_move_linked(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+        obj = bpy.context.active_object
+        obj.location = location
+        bpy.ops.object.convert(target='MESH')
+        obj = bpy.context.active_object
+        obj["inst_id"] = inst_id
+        
         # do bpy.data.objects["table square"].data.copy() to each instance of table square
         for obj in bpy.data.objects:
-            if obj.name.startswith("table square"):
-                obj.data = bpy.data.objects["table square"].data.copy()
+            if obj.name.startswith(object_name):
+                obj.data = bpy.data.objects[object_name].data.copy()
                 pass
     
     def place_raytrace(self, position=(2,1,0)):
@@ -96,7 +109,7 @@ class object_placement:
             bpy.ops.outliner.item_activate(deselect_all=True)
             bpy.ops.object.select_all(action='DESELECT')
         except:
-            pass
+            print("WARNING: blend_deselect_all failed")
         
     def finalize(self):
         """ 
