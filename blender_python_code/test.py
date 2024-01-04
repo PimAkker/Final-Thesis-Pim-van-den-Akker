@@ -17,20 +17,31 @@ import object_placement_utils
 # force a reload of object_placement_utils to help during development
 importlib.reload(object_placement_utils)
 
+place_class = object_placement_utils.object_placement(delete_duplicates=True)
 
+place_class.place_walls(inst_id=255)
+place_class.place_doors(inst_id=150)
+place_class.place_objects(object_name="Chairs display", inst_id=100)
+place_class.place_objects(object_name="Tables display", inst_id=50)
+place_class.place_objects(object_name="Pillars display", inst_id=10)
 
-place_class.blend_deselect_all()
-bpy.data.objects['Table Placement'].select_set(True)
+# bpy.data.objects['Table Placement'].select_set(True)
 # place tables at the location of the vertices of the table placement object
-
-try:
-    bpy.ops.object.convert(target='MESH')
-except:
-    pass
+render_data(folder ="blender_python_code\\data",  path_affix="1", save_rgb=True, save_inst=True, save_depth=True)   
+place_class.finalize()
 
 
-for vert in bpy.data.objects['Table Placement'].data.vertices:
-    vert_loc = tuple(vert.co)
-    place_class = object_placement_utils.object_placement(delete_duplicates=False)
-    place_class.place_tables(inst_id=100,leg_nr_range=(3,10),size_range=(0.3,0.7),location=vert_loc)
+
+
+
+# try:
+#     bpy.ops.object.convert(target='MESH')
+# except:
+#     pass
+
+
+# for vert in bpy.data.objects['Table Placement'].data.vertices:
+#     vert_loc = tuple(vert.co)
+#     place_class = object_placement_utils.object_placement(delete_duplicates=False)
+#     place_class.place_tables(inst_id=100,leg_nr_range=(3,10),size_range=(0.3,0.7),location=vert_loc)
     
