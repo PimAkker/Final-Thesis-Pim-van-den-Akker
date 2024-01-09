@@ -16,6 +16,8 @@ class object_placement:
             [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
         
         bpy.ops.object.select_all(action='DESELECT')
+        
+        self.room_center = bpy.data.objects["Walls"].location
     
     def place_walls(self,inst_id=255):
         """ 
@@ -118,7 +120,7 @@ class object_placement:
                 obj.data = bpy.data.objects[object_name].data.copy()
                 pass
     
-    def place_raytrace(self, position=(0,0,0),isolate=False):
+    def place_raytrace(self, position=(0,0,0)):
         """ 
         this function places a raytrace in the scene. 
         input: position: tuple x, y,z position of the raytrace
@@ -128,13 +130,40 @@ class object_placement:
         object_name = "raytrace"
         bpy.data.objects[object_name].select_set(True)
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
-        bpy.ops.object.duplicate_move_linked(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":position, "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+        cur_pos = bpy.data.objects[object_name].location
+        bpy.ops.object.duplicate_move_linked(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
-        obj.location = position
         bpy.ops.object.convert(target='MESH')
+        obj.location = cur_pos-self.room_center
+
+       
+    def isolate_object(self, object_name):
+        """ 
+        this function isolates an object in the scene by turning on hide render for all objects except object_name.
+        This will make sure that only object_name is visible in the render.
+        input: object_name: name of the object to be isolated
+        output: None
         
+        """
+        object_name = f"{object_name}.001"
+        for obj in bpy.data.objects:
+            if obj.name != object_name:
+                obj.hide_render = True
+                
+    def unisolate(self):
+        """ 
+        this function unisolates all objects in the scene. Showing everything in the render.
+        input: object_name: name of the object to be unisolated
+        output: None
         
+        """
+        
+        for obj in bpy.data.objects:
+            obj.hide_render = False
+    def delete_object(self, object_name):
+        """Deletes an object from the scene"""
+        bpy.data.objects.remove(bpy.data.objects[object_name])
         
     
     def blend_deselect_all(self):
@@ -144,7 +173,7 @@ class object_placement:
             bpy.ops.outliner.item_activate(deselect_all=True)
             bpy.ops.object.select_all(action='DESELECT')
         except:
-            print("WARNING: blend_deselect_all failed")
+            pass
         
     def finalize(self):
         """ 
@@ -157,3 +186,5 @@ class object_placement:
             # delete all objects which are copied
             [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
             
+        # turn on hide render for all objects except object_name
+        self.unisolate()
