@@ -11,9 +11,9 @@ class object_placement:
     def __init__(self, delete_duplicates=False):
         self.blend_deselect_all()
         self.delete_duplicates = delete_duplicates
-        if self.delete_duplicates:
-            # delete all objects which are copied
-            [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
+        
+        # delete all objects which are copied
+        [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
         
         bpy.ops.object.select_all(action='DESELECT')
         
@@ -146,7 +146,14 @@ class object_placement:
         output: None
         
         """
-        object_name = f"{object_name}.001"
+        
+        # only select the duplicate
+        if "." not in object_name:
+            object_name = f"{object_name}.001"
+        
+        # Ensure raytrace is not isolated
+        self.unisolate()	
+        
         for obj in bpy.data.objects:
             if obj.name != object_name:
                 obj.hide_render = True
@@ -164,6 +171,33 @@ class object_placement:
     def delete_object(self, object_name):
         """Deletes an object from the scene"""
         bpy.data.objects.remove(bpy.data.objects[object_name])
+        
+    def configure_camera(self, position=(0,0,0)):
+        """ Set the camera position to the given position"""
+        # Set the camera position to the given height
+        bpy.data.objects["Camera"].location = position
+
+        # Extract walls object and get the height width and depth
+        
+    def get_object_dims(self, object_name="Walls"):
+        """Get the dimensions of the object
+        input: object_name: name of the object to get the dimensions of
+        output: height, width, depth of the object
+        """
+        
+        walls = bpy.data.objects["Walls"]
+        bbox = walls.bound_box
+        height = np.abs(bbox[4][2]) + np.abs(bbox[0][2])
+        depth = np.abs(bbox[4][1]) + np.abs(bbox[0][1])
+        width = np.abs(bbox[4][0]) + np.abs(bbox[0][0])
+        return height, width, depth
+
+        
+        
+        
+        
+        
+        
         
     
     def blend_deselect_all(self):

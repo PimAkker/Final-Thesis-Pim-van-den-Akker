@@ -27,4 +27,10 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
         cv2.imwrite(inst_pathname, np.uint16(result["inst"]))
     if save_combined:
         cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
+        
+def simple_render(folder = r"data",file_prefix = "", path_affix=""):
+
+    bpy.context.scene.render.filepath= f"{folder}\\{file_prefix}{path_affix}.png"
+    bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer='', scene='')
+
 
