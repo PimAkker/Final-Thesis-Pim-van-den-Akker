@@ -10,13 +10,9 @@ import time
 # result["ycb_meta"] is 6d pose GT
 def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_depth=True, save_combined=True):
     
-    # render image, instance annoatation and depth in one line code
-    start_time = time.time()    
+    # render image, instance annoatation and depth in one line code   
     result = bpycv.render_data()
-    end_time = time.time()
-    
-    print("render_data time taken: ", end_time - start_time)
-    
+
     rgb_pathname = f"{folder}\\-rgb-{path_affix}.png"
     depth_pathname = f"{folder}-depth-{path_affix}_depth.png"
     inst_pathname = f"{folder}\\-inst-{path_affix}_inst.png"

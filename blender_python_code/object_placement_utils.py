@@ -118,7 +118,7 @@ class object_placement:
                 obj.data = bpy.data.objects[object_name].data.copy()
                 pass
     
-    def place_raytrace(self, position=(2,1,0)):
+    def place_raytrace(self, position=(0,0,0),isolate=False):
         """ 
         this function places a raytrace in the scene. 
         input: position: tuple x, y,z position of the raytrace
@@ -132,6 +132,9 @@ class object_placement:
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
         obj.location = position
+        bpy.ops.object.convert(target='MESH')
+        
+        
         
     
     def blend_deselect_all(self):

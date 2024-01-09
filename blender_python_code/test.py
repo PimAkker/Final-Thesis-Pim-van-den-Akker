@@ -17,6 +17,8 @@ import object_placement_utils
 # force a reload of object_placement_utils to help during development
 importlib.reload(object_placement_utils)
 
+start_time = time.time()
+
 place_class = object_placement_utils.object_placement(delete_duplicates=True)
 
 place_class.place_walls(inst_id=255)
@@ -24,15 +26,14 @@ place_class.place_doors(inst_id=150)
 place_class.place_objects(object_name="Chairs display", inst_id=100)
 place_class.place_objects(object_name="Tables display", inst_id=50)
 place_class.place_objects(object_name="Pillars display", inst_id=10)
+place_class.place_raytrace()
 
 # bpy.data.objects['Table Placement'].select_set(True)
 # place tables at the location of the vertices of the table placement object
 render_data(folder ="blender_python_code\\data",  path_affix="1", save_rgb=True, save_inst=True, save_depth=True)   
 place_class.finalize()
 
-
-
-
+print(f"Total time: {time.time() - start_time}")
 
 # try:
 #     bpy.ops.object.convert(target='MESH')
