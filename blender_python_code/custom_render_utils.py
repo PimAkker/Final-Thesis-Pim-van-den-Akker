@@ -28,9 +28,12 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
     if save_combined:
         cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
         
-def simple_render(folder = r"data",file_prefix = "", path_affix=""):
 
-    bpy.context.scene.render.filepath= f"{folder}\\{file_prefix}{path_affix}.png"
-    bpy.ops.render.render(animation=False, write_still=False, use_viewport=False, layer='', scene='')
+def simple_render(folder = r"data", file_prefix = "", file_affix=""):
+    sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-
+    path= os.path.join(os.getcwd(), folder)
+    path = os.path.join(path, file_prefix + file_affix+".png")
+    bpy.context.scene.render.filepath= path
+    print(f"generating simple render image with name {file_prefix + file_affix} at {path}")
+    output = bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
