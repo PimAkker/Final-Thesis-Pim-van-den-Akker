@@ -14,7 +14,7 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
     result = bpycv.render_data()
 
     rgb_pathname = f"{folder}\\-rgb-{path_affix}.png"
-    depth_pathname = f"{folder}-depth-{path_affix}_depth.png"
+    depth_pathname = f"{folder}\\-depth-{path_affix}_depth.png"
     inst_pathname = f"{folder}\\-inst-{path_affix}_inst.png"
     combined_pathname = f"{folder}\\-combined-{path_affix}.png" 
     
