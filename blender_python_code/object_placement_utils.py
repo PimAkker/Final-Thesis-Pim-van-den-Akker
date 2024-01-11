@@ -26,6 +26,10 @@ class object_placement:
         
         # get a list of the objects which are copies of the given object
         objects = [obj for obj in bpy.data.objects if object_name+"." in obj.name]
+        
+        # The id is the inst_id + the index of the object in the list 
+        # for example if chairs has inst_id 100 and there are 3 chairs in the scene
+        # the ids will be 100, 101, 102
         for i in range(len(objects)):
             objects[i]["inst_id"] = inst_id+i
         
@@ -72,6 +76,7 @@ class object_placement:
         obj = bpy.context.active_object
         obj.location = self.default_location
         self.set_object_id(object_name=object_name, inst_id=inst_id)
+        
     def place_objects(self,inst_id=255, object_name=""):
 
         
@@ -97,8 +102,8 @@ class object_placement:
     
     def place_raytrace(self, position=(0,0,0)):
         """ 
-        this function places a raytrace in the scene. 
-        input: position: tuple x, y,z position of the raytrace
+        This function places a raytrace in the scene. 
+        Input: position: tuple x, y,z position of the raytrace
         output: None
         
         """
@@ -110,7 +115,8 @@ class object_placement:
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
         bpy.ops.object.convert(target='MESH')
-        obj.location = cur_pos-self.room_center
+        self.raytrace_position = cur_pos-self.room_center
+        obj.location = self.raytrace_position
 
        
     def isolate_object(self, object_name):
