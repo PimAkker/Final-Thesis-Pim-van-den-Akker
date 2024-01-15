@@ -23,13 +23,13 @@ for _ in range(1):
 
     place_class = object_placement_utils.object_placement(delete_duplicates=False)
 
-    # Generate the room65
+    # Generate the room
     height, width, depth = place_class.get_object_dims(object_name="Walls")
-    place_class.place_walls(inst_id=255)
-    place_class.place_doors(inst_id=150)
-    place_class.place_objects(object_name="Chairs display", inst_id=0)
-    place_class.place_objects(object_name="Tables display", inst_id=20)
-    place_class.place_objects(object_name="Pillars display", inst_id=1000)
+    place_class.place_walls(inst_id=1)
+    place_class.place_doors(inst_id=2)
+    place_class.place_objects(object_name="Chairs display", inst_id=3)
+    place_class.place_objects(object_name="Tables display", inst_id=4)
+    place_class.place_objects(object_name="Pillars display", inst_id=5)
 
     custom_render_utils.render_data(folder ="blender_python_code\\data",  path_affix="True", save_rgb=True, save_inst=True)   
 

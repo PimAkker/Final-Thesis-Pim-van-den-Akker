@@ -6,7 +6,7 @@ import numpy as np
 
 class object_placement:
     """ This class is used to place objects in the scene. It is used to place the room and tables in the scene.
-    TODO: make this a more general class which can place any object in the scene
+
     """
     def __init__(self, delete_duplicates=False):
         self.blend_deselect_all()
@@ -19,7 +19,80 @@ class object_placement:
         
         self.room_center = bpy.data.objects["Walls"].location
         self.default_location = (0,0,0)   
+        
+    def set_modifier(self, object_name, modifier_name, value):
+        """ 
+        this function sets the value of a modifier in the geometry nodes modifier of an object.
+        input: 
+            object_name: name of the object to set the modifier of type string
+            modifier_name: name of the modifier to set of type string
+            value: value to set the modifier to of type int, float or tuple, 
+            if tuple then the value is set to a random value between the tuple values if the modifier is of type int or float
+            then the value is set to the that value.
+        output: None
+        """
+        self.blend_deselect_all()
+        bpy.data.objects[object_name].select_set(True)
+        # select active object
+        bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
     
+        modifier_name = modifier_name.lower()
+        geometry_nodes = bpy.data.objects[object_name].modifiers['GeometryNodes']
+        
+        modifier_identifier_list = [input.identifier for input in geometry_nodes.node_group.inputs][1:]
+        
+        modifier_name_list = [input.name for input in geometry_nodes.node_group.inputs][1:]
+        modifier_name_list = [name.lower() for name in modifier_name_list]
+        
+        assert modifier_name in modifier_name_list, f"modifier_name: {modifier_name} is not in the list of supported modifiers \
+        choose from {modifier_name_list}"
+        
+        modifier_data_type_list = [input.type for input in geometry_nodes.node_group.inputs][1:]
+
+
+        modifier_index = modifier_name_list.index(modifier_name)
+         
+        # get the identifier of the modifier
+        modifier_identifier = modifier_identifier_list[modifier_index]
+        modifier_number = int(modifier_identifier.split("_")[1])
+        
+        # retreive the maximum and minimum values of the modfiier as defined in the geometry nodes modifier.
+        # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
+        # "Walls" should have the "Walls" geometry node modifier
+        min_val = bpy.data.node_groups[object_name].inputs[modifier_number-3].min_value
+        
+        max_val = bpy.data.node_groups[object_name].inputs[modifier_number-3].max_value
+        
+        
+        # if the modifier is a tuple then set the value as a random value bouded by the tuple
+        if type(value) == tuple:
+            assert value[0] >= min_val, f"Value: {value[0]} is outside the range ensure that: {min_val} <= value <= {max_val}"
+            assert value[1] <= max_val, f"Value: {value[1]} is larger than the maximum ensure that: {min_val} <= value <= {max_val}"
+            
+            if modifier_data_type_list[modifier_index] == "VALUE":
+                
+                value = np.random.uniform(float(value[0]), float(value[1]))
+            elif modifier_data_type_list[modifier_index] == "INT":
+                value = np.random.randint(int(value[0]), int(value[1])) 
+        
+        elif type(value) == int or type(value) == float:
+            if modifier_data_type_list[modifier_index] == "VALUE":
+                value = float(value)
+            elif modifier_data_type_list[modifier_index] == "INT":
+                value = int(value)
+            assert value >= min_val, f"Value: {value} is outside the range ensure that: {min_val} <= value <= {max_val}"
+            assert value <= max_val, f"Value: {value} is outside the range ensure that: {min_val} <= value <= {max_val}"
+        
+        else:   
+            raise ValueError(f"Value: {value} is not of type int, float or tuple")
+        
+        bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
+
+
+        obj = bpy.context.active_object
+        obj.data.update()
+        
+
     def set_object_id(self, object_name, inst_id):
         """ 
         Gives unique object id to all the copies of a given object"""
@@ -27,11 +100,10 @@ class object_placement:
         # get a list of the objects which are copies of the given object
         objects = [obj for obj in bpy.data.objects if object_name+"." in obj.name]
         
-        # The id is the inst_id + the index of the object in the list 
-        # for example if chairs has inst_id 100 and there are 3 chairs in the scene
-        # the ids will be 100, 101, 102
+        # set the inst_id for all the objects inst id = inst_id*1000 + i making 
+        # sure that all the objects have a unique inst_id
         for i in range(len(objects)):
-            objects[i]["inst_id"] = inst_id+i
+            objects[i]["inst_id"] = inst_id*1000 + i
         
         
         
@@ -46,12 +118,11 @@ class object_placement:
         object_name = "Walls"
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
-        # set object as active
+        # select active object
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
-
-        bpy.context.object.modifiers["GeometryNodes"]["Socket_9"] = np.random.randint(0, 100000)
+        
+                
         obj = bpy.context.active_object
-
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         bpy.ops.object.convert(target='MESH')
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
@@ -59,7 +130,7 @@ class object_placement:
         obj.location = self.default_location
         
         self.set_object_id(object_name=object_name, inst_id=inst_id)
-        
+        obj.data.update()
     def place_doors(self,inst_id=255):
 
     

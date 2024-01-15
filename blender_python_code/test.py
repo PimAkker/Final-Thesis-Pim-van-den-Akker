@@ -21,10 +21,38 @@ importlib.reload(custom_render_utils)
 
 # start_time = time.time()
 
-# place_class = object_placement_utils.object_placement(delete_duplicates=False)
+try:
+    for ob in bpy.context.selected_objects:
+        ob.select = False
+except:
+    pass
+try:
+    bpy.ops.outliner.item_activate(deselect_all=True)
+except:
+    pass
+try:
+    bpy.ops.object.select_all(action='DESELECT')
+except:
+    pass   
 
-# load image
-cv2.imread("blender_python_code\\data\\-inst-Prior_inst.png")
+# modifier = bpy.data.objects['Walls'].modifiers['GeometryNodes']
+# for input in modifier.node_group.inputs:
+#     print(f"Input {input.identifier} is named {input.type}")
+place_class = object_placement_utils.object_placement(delete_duplicates=False)
 
-pass
+geometry_nodes = bpy.data.objects["Walls"].modifiers['GeometryNodes']
+
+modifier_identifier_list = [input.identifier for input in geometry_nodes.node_group.inputs]
+
+modifier_name_list = [input.name for input in geometry_nodes.node_group.inputs]
+modifier_name_list = [name.lower() for name in modifier_name_list][1:]
+
+# for modifier in modifier_name_list:
+
+place_class.set_modifier("Walls", "seed", 3.11)
+
+
+
+# place_class.place_walls(inst_id=1)
+# place_class.finalize()
 

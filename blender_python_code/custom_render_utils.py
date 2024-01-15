@@ -23,9 +23,11 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
     
     if save_inst:
         cv2.imwrite(inst_pathname, np.uint16(result["inst"]))
-        
-        if len(np.unique(result["inst"])) < 3:
-            print(f"instance image is empty with {len(np.unique(result['inst']))} unique values")
+        nr_of_inst= len(np.unique(result["inst"]))
+        if nr_of_inst > 3:
+            print(f"instance image has {nr_of_inst} unique values")
+        elif nr_of_inst < 3:
+            print(f"instance image is empty with {nr_of_inst} unique values")
     if save_combined:
         cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
         
