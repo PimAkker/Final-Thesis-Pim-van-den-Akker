@@ -14,15 +14,30 @@ import custom_render_utils
 import importlib
 import object_placement_utils
 
+walls_modifiers = {"Wall width":(0.05,0.2), 
+                    "Wall Amount X": (0,10),
+                    "Wall Amount Y": (0,10),
+                    "Wall Density": (0,1),
+                    "Seed": (0,10000000),
+                    "Min door width": 0.3,
+                    "Max door width": 1.5,
+                    "Max wall randomness": (0,0.1),
+                    "Max door rotation": (0,np.pi),
+                    "Door density": (0.1,1),                    
+                   }
+
 # force a reload of object_placement_utils to help during development
 importlib.reload(object_placement_utils)
 importlib.reload(custom_render_utils)
 importlib.reload(bpycv)
 for _ in range(1):
+     
     start_time = time.time()
 
     place_class = object_placement_utils.object_placement(delete_duplicates=False)
-
+    
+    for modifier in list(walls_modifiers.keys()):
+        place_class.set_modifier("Walls", modifier, walls_modifiers[modifier])
     # Generate the room
     height, width, depth = place_class.get_object_dims(object_name="Walls")
     place_class.place_walls(inst_id=1)

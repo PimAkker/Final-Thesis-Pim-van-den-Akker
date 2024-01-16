@@ -31,12 +31,15 @@ class object_placement:
             then the value is set to the that value.
         output: None
         """
+        
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # select active object
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
     
         modifier_name = modifier_name.lower()
+       
+        
         geometry_nodes = bpy.data.objects[object_name].modifiers['GeometryNodes']
         
         modifier_identifier_list = [input.identifier for input in geometry_nodes.node_group.inputs][1:]
@@ -59,15 +62,14 @@ class object_placement:
         # retreive the maximum and minimum values of the modfiier as defined in the geometry nodes modifier.
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "Walls" should have the "Walls" geometry node modifier
-        min_val = bpy.data.node_groups[object_name].inputs[modifier_number-3].min_value
-        
-        max_val = bpy.data.node_groups[object_name].inputs[modifier_number-3].max_value
-        
+        min_val = bpy.data.node_groups[object_name].inputs[modifier_index].min_value
+        max_val = bpy.data.node_groups[object_name].inputs[modifier_index].max_value
+
         
         # if the modifier is a tuple then set the value as a random value bouded by the tuple
         if type(value) == tuple:
-            assert value[0] >= min_val, f"Value: {value[0]} is outside the range ensure that: {min_val} <= value <= {max_val}"
-            assert value[1] <= max_val, f"Value: {value[1]} is larger than the maximum ensure that: {min_val} <= value <= {max_val}"
+            assert value[0] >= min_val, f"Value: {value[0]} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
+            assert value[1] <= max_val, f"Value: {value[1]} is too large for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             
             if modifier_data_type_list[modifier_index] == "VALUE":
                 
@@ -80,8 +82,8 @@ class object_placement:
                 value = float(value)
             elif modifier_data_type_list[modifier_index] == "INT":
                 value = int(value)
-            assert value >= min_val, f"Value: {value} is outside the range ensure that: {min_val} <= value <= {max_val}"
-            assert value <= max_val, f"Value: {value} is outside the range ensure that: {min_val} <= value <= {max_val}"
+            assert value >= min_val, f"Value: {value} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
+            assert value <= max_val, f"Value: {value} is too large for {modifier_name} modifier that: {min_val} <= value <= {max_val}"
         
         else:   
             raise ValueError(f"Value: {value} is not of type int, float or tuple")
