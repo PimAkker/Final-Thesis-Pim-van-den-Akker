@@ -62,8 +62,9 @@ class object_placement:
         # retreive the maximum and minimum values of the modfiier as defined in the geometry nodes modifier.
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "Walls" should have the "Walls" geometry node modifier
-        min_val = bpy.data.node_groups[object_name].inputs[modifier_index].min_value
-        max_val = bpy.data.node_groups[object_name].inputs[modifier_index].max_value
+
+        min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
+        max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
         
         # if the modifier is a tuple then set the value as a random value bouded by the tuple
@@ -132,7 +133,7 @@ class object_placement:
         obj.location = self.default_location
         
         self.set_object_id(object_name=object_name, inst_id=inst_id)
-        obj.data.update()
+        
     def place_doors(self,inst_id=255):
 
     
@@ -168,10 +169,6 @@ class object_placement:
         # Split mesh into individual objects
         bpy.ops.mesh.separate(type='LOOSE')
         self.set_object_id(object_name=object_name, inst_id=inst_id)
-        
-        
-
-
     
     def place_raytrace(self, position=(0,0,0)):
         """ 
@@ -190,17 +187,14 @@ class object_placement:
         bpy.ops.object.convert(target='MESH')
         self.raytrace_position = cur_pos-self.room_center
         obj.location = self.raytrace_position
-
-       
+ 
     def isolate_object(self, object_name):
         """ 
         this function isolates an object in the scene by turning on hide render for all objects except object_name.
         This will make sure that only object_name is visible in the render.
         input: object_name: name of the object to be isolated
         output: None
-        
         """
-        
         # only select the duplicate
         if "." not in object_name:
             object_name = f"{object_name}.001"
@@ -241,10 +235,7 @@ class object_placement:
             obj = random.choice(objects)
             bpy.data.objects.remove(obj)
             objects.remove(obj)
-
-        
-        
-        
+            
     def configure_camera(self, position=(0,0,0)):
         """ Set the camera position to the given position"""
         # Set the camera position to the given height
@@ -264,8 +255,6 @@ class object_placement:
         depth = np.abs(bbox[4][1]) + np.abs(bbox[0][1])
         width = np.abs(bbox[4][0]) + np.abs(bbox[0][0])
         return height, width, depth
-    
-        
     
     def blend_deselect_all(self):
         try:

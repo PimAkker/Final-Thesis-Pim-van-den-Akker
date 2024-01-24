@@ -22,7 +22,9 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
         cv2.imwrite(rgb_pathname, result["image"][..., ::-1])
     
     if save_inst:
-        cv2.imwrite(inst_pathname, np.uint16(result["inst"]))
+        # cv2.imwrite(inst_pathname, np.uint16(result["inst"]))
+        # save numpy 
+        np.save(f"{folder}\\-inst-{path_affix}_inst.npy", result["inst"])
         nr_of_inst= len(np.unique(result["inst"]))
         if nr_of_inst > 3:
             print(f"instance image has {nr_of_inst} unique values")
