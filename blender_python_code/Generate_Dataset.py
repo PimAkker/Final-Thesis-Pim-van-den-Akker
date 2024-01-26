@@ -14,10 +14,11 @@ import custom_render_utils
 import importlib
 import object_placement_utils
 
+nr_of_images = 2
 walls_modifiers = {"Wall width":(0.05,0.2), 
-                    "Wall Amount X": (0,10),
-                    "Wall Amount Y": (0,10),
-                    "Wall Density": (0,0.5),
+                    "Wall Amount X": (2,5),
+                    "Wall Amount Y": (2,5),
+                    "Wall Density": (0.3,0.9),
                     "Seed": (0,10000),
                     "Min door width": 0.3,
                     "Max door width": 1.5,
@@ -30,7 +31,7 @@ walls_modifiers = {"Wall width":(0.05,0.2),
 importlib.reload(object_placement_utils)
 importlib.reload(custom_render_utils)
 importlib.reload(bpycv)
-for i in np.arange(1,2):
+for i in np.arange(1,1+nr_of_images):
      
     start_time = time.time()
 

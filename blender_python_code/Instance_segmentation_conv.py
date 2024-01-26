@@ -9,8 +9,6 @@ import numpy as np                                 # (pip install numpy)
 from skimage import measure                        # (pip install scikit-image)
 from shapely.geometry import Polygon, MultiPolygon # (pip install Shapely)
 import json
-import cv2
-import os
 import numpy as np
 import PIL
 import time
@@ -18,6 +16,7 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
+import os
 
 def create_sub_masks(mask_image):
     width, height = mask_image.size
@@ -87,57 +86,22 @@ def create_sub_mask_annotation(sub_mask, image_id, category_id, annotation_id, i
     }
 
     return annotation
-def show_shapes(file_path="", image_path=""):
-
-
-    # Load the JSON file
-    with open('annotations.json') as f:
-        annotation = json.load(f)
-        
-
-    # Create a new matplotlib figure and axis
-    fig, ax = plt.subplots()
-
-    # Iterate over the annotations in the data
-    # for annotation in data['annotations']:
-        # Get the segmentation data
-    segmentation = annotation[0]['segmentation']
-
-    # Each segmentation is a list of polygons, and each polygon is a list of points
-    for polygon in segmentation[0]:
-        
-        # Reshape the points into a 2D array
-        polygon = np.array(polygon).reshape(-1, 2)
-
-        # Create a Polygon patch
-        poly_patch = patches.Polygon(polygon, fill=False)
-
-        # Add the patch to the Axes
-        ax.add_patch(poly_patch)
-        pass
-
-    # Display the shape and the figure over eachother
-    
-    # plt.imshow(np.load(image_path), alpha=0.5)
-    #  fit the axis to the image
-    # ax.set_xlim(0, 640)
-    # ax.set_ylim(0, 480)
-    plt.show()  
-    pass
-
-
 
 if __name__ == "__main__":
-    image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\blender_python_code\data\-inst-Prior1_inst.npy"
-    image = np.load(image_path)
-    image = PIL.Image.fromarray(image)
-    mask_images = [image]
-
     start_time = time.time()
+    
+    # the files that end in this string will be loaded
+    file_name_end = ".npy"
+    folder_path = r"C:\Users\pimde\OneDrive\thesis\Blender\blender_python_code\data"
+    type = "inst"
+    # find the files that end in .npy
+    inst_files = [f for f in os.listdir(folder_path) if f.endswith(file_name_end)]
+    # load all the images
+    mask_images = []
+    for i in range(1,len(inst_files)+1):
+        mask_images.append(Image.fromarray(np.load(os.path.join(folder_path, inst_files[i-1]))))
 
     is_crowd = 0
-
-
     annotation_id = 1
     image_id = 1
 
@@ -157,9 +121,9 @@ if __name__ == "__main__":
 
     print(json.dumps(annotations))
     # save the annotations to a json file
-    with open('annotations.json', 'w') as outfile:
+    with open(r"blender_python_code\data"+r'\annotations.json', 'w') as outfile:
         json.dump(annotations, outfile)
     print("--- %s seconds ---" % (time.time() - start_time))
-    show_shapes(r"C:\Users\pimde\OneDrive\thesis\Blender\annotations.json",image_path )
+    # show_shapes(r"C:\Users\pimde\OneDrive\thesis\Blender\annotations.json",image_path )
     
 

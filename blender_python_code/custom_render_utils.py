@@ -13,10 +13,10 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
     # render image, instance annoatation and depth in one line code   
     result = bpycv.render_data()
 
-    rgb_pathname = f"{folder}\\-rgb-{path_affix}.png"
-    depth_pathname = f"{folder}\\-depth-{path_affix}_depth.png"
-    inst_pathname = f"{folder}\\-inst-{path_affix}_inst.png"
-    combined_pathname = f"{folder}\\-combined-{path_affix}.png" 
+    rgb_pathname = f"{folder}\\rgb-{path_affix}.png"
+    depth_pathname = f"{folder}\\depth-{path_affix}_depth.png"
+    inst_pathname = f"{folder}\\inst-{path_affix}.png"
+    combined_pathname = f"{folder}\\combined-{path_affix}.png" 
     
     if save_rgb:
         cv2.imwrite(rgb_pathname, result["image"][..., ::-1])
@@ -24,7 +24,7 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
     if save_inst:
         # cv2.imwrite(inst_pathname, np.uint16(result["inst"]))
         # save numpy 
-        np.save(f"{folder}\\-inst-{path_affix}_inst.npy", result["inst"])
+        np.save(f"{folder}\\inst-{path_affix}.npy", result["inst"])
         nr_of_inst= len(np.unique(result["inst"]))
         if nr_of_inst > 3:
             print(f"instance image has {nr_of_inst} unique values")
