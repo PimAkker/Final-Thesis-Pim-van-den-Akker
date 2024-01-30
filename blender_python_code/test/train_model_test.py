@@ -25,8 +25,8 @@ class PennFudanDataset(torch.utils.data.Dataset):
         mask = read_image(mask_path)
         # instances are encoded as different colors
         obj_ids = torch.unique(mask)
-        # if 0 is an id remove it
-        obj_ids = obj_ids[obj_ids != 0]
+        # first id is the background, so remove it
+        obj_ids = obj_ids[1:]
         num_objs = len(obj_ids)
 
         # split the color-encoded mask into a set
@@ -170,34 +170,34 @@ if __name__ == '__main__':
         evaluate(model, data_loader_test, device=device)
 
     print("That's it!")
-#%%
-import matplotlib.pyplot as plt
+    #%%
+    import matplotlib.pyplot as plt
 
-from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
-
-
-image = read_image("data/PennFudanPed/PNGImages/FudanPed00046.png")
-eval_transform = get_transform(train=False)
-
-model.eval()
-with torch.no_grad():
-    x = eval_transform(image)
-    # convert RGBA -> RGB and move to device
-    x = x[:3, ...].to(device)
-    predictions = model([x, ])
-    pred = predictions[0]
+    from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 
 
-image = (255.0 * (image - image.min()) / (image.max() - image.min())).to(torch.uint8)
-image = image[:3, ...]
-pred_labels = [f"pedestrian: {score:.3f}" for label, score in zip(pred["labels"], pred["scores"])]
-pred_boxes = pred["boxes"].long()
-output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
+    image = read_image("data/PennFudanPed/PNGImages/FudanPed00046.png")
+    eval_transform = get_transform(train=False)
 
-masks = (pred["masks"] > 0.7).squeeze(1)
-output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="blue")
+    model.eval()
+    with torch.no_grad():
+        x = eval_transform(image)
+        # convert RGBA -> RGB and move to device
+        x = x[:3, ...].to(device)
+        predictions = model([x, ])
+        pred = predictions[0]
 
 
-plt.figure(figsize=(12, 12))
-plt.imshow(output_image.permute(1, 2, 0))
-# %%
+    image = (255.0 * (image - image.min()) / (image.max() - image.min())).to(torch.uint8)
+    image = image[:3, ...]
+    pred_labels = [f"pedestrian: {score:.3f}" for label, score in zip(pred["labels"], pred["scores"])]
+    pred_boxes = pred["boxes"].long()
+    output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
+
+    masks = (pred["masks"] > 0.7).squeeze(1)
+    output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="blue")
+
+
+    plt.figure(figsize=(12, 12))
+    plt.imshow(output_image.permute(1, 2, 0))
+    # %%
