@@ -14,7 +14,7 @@ import custom_render_utils
 import importlib
 import object_placement_utils
 
-nr_of_images = 2
+nr_of_images = 20
 walls_modifiers = {"Wall width":(0.05,0.2), 
                     "Wall Amount X": (2,5),
                     "Wall Amount Y": (2,5),
@@ -47,27 +47,27 @@ for i in np.arange(1,1+nr_of_images):
     place_class.place_objects(object_name="Tables display", inst_id=4)
     place_class.place_objects(object_name="Pillars display", inst_id=5)
     
-    custom_render_utils.render_data(folder ="blender_python_code\\data",  path_affix=f"True{i}", save_rgb=True, save_inst=True)   
+    custom_render_utils.render_data(folder ="blender_python_code\\data\\Masks",  path_affix=f"True{i}", save_rgb=False, save_combined=False, save_inst=True)   
 
 
     # Generate pointcloud image
     place_class.place_raytrace()
     place_class.isolate_object("raytrace")
     place_class.configure_camera(position=(0,0,height/2))
-    custom_render_utils.simple_render(folder ="blender_python_code\\data",file_prefix ="pointcloud", file_affix=str(i))
+    custom_render_utils.simple_render(folder ="blender_python_code\\data\\Images",file_prefix ="pointcloud", file_affix=str(i))
     place_class.unisolate()
 
 
     # get map image
-    place_class.delete_single_object("raytrace.001")
-    place_class.delete_random(object_type_name="Chairs display", delete_percentage=0.5)
-    custom_render_utils.simple_render(folder ="blender_python_code\\data",file_prefix ="Map", file_affix=str(i))
+    # place_class.delete_single_object("raytrace.001")
+    # place_class.delete_random(object_type_name="Chairs display", delete_percentage=0.5)
+    # custom_render_utils.simple_render(folder ="blender_python_code\\data",file_prefix ="Map", file_affix=str(i))
 
-    custom_render_utils.render_data(folder ="blender_python_code\\data",  path_affix=f"Prior{i}", save_rgb=True, save_inst=True)   
+    # custom_render_utils.render_data(folder ="blender_python_code\\data",  path_affix=f"Prior{i}", save_rgb=True, save_inst=True)   
 
     place_class.finalize()
 
     print(f"Total time: {time.time() - start_time}")
     
     
-    
+print("Done")

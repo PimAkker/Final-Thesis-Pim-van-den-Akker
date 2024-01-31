@@ -56,3 +56,14 @@ place_class.set_modifier("Walls", "seed", 3.11)
 # place_class.place_walls(inst_id=1)
 # place_class.finalize()
 
+
+#%%
+import PIL
+import numpy as np
+# open image
+img = PIL.Image.open(r"C:\Users\pimde\OneDrive\thesis\Blender\blender_python_code\data\Images\Map1.png")
+numpy_img = np.array(img)
+print(numpy_img[0])
+
+
+# %%

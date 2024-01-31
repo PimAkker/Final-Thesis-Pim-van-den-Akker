@@ -13,10 +13,10 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
     # render image, instance annoatation and depth in one line code   
     result = bpycv.render_data()
 
-    rgb_pathname = f"{folder}\\rgb-{path_affix}.png"
-    depth_pathname = f"{folder}\\depth-{path_affix}_depth.png"
-    inst_pathname = f"{folder}\\inst-{path_affix}.png"
-    combined_pathname = f"{folder}\\combined-{path_affix}.png" 
+    rgb_pathname = f"{folder}\\rgb-{path_affix}.jpg"
+    depth_pathname = f"{folder}\\depth-{path_affix}_depth.jpg"
+    inst_pathname = f"{folder}\\inst-{path_affix}.jpg"
+    combined_pathname = f"{folder}\\combined-{path_affix}.jpg" 
     
     if save_rgb:
         cv2.imwrite(rgb_pathname, result["image"][..., ::-1])
@@ -39,6 +39,6 @@ def simple_render(folder = r"data", file_prefix = "", file_affix=""):
     sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
     path= os.path.join(os.getcwd(), folder)
-    path = os.path.join(path, file_prefix + file_affix+".png")
+    path = os.path.join(path, file_prefix + file_affix+".jpg")
     bpy.context.scene.render.filepath= path
     output = bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')

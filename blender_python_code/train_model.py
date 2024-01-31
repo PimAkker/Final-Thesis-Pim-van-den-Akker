@@ -1,27 +1,33 @@
 #%%
 import os
 import torch
-
+from PIL import Image
 from torchvision.io import read_image
 from torchvision.ops.boxes import masks_to_boxes
 from torchvision import tv_tensors
 from torchvision.transforms.v2 import functional as F
 import numpy as np
 import torchvision
+import torchvision
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+
+
 class LoadDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms):
         self.root = root
         self.transforms = transforms
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # load all image files, sorting them to
         # ensure that they are aligned
         self.imgs = list(sorted(os.listdir(os.path.join(root, "Images"))))
         self.masks = list(sorted(os.listdir(os.path.join(root, "Masks"))))
-        self.num_classes = 2
+
     def __getitem__(self, idx):
         # load images and masks
+        
         img_path = os.path.join(self.root, "Images", self.imgs[idx])
         mask_path = os.path.join(self.root, "Masks", self.masks[idx])
-        img = read_image(img_path)
         mask = torch.from_numpy(np.load(mask_path))
         # instances are encoded as different colors
         obj_ids = torch.unique(mask)
@@ -29,9 +35,11 @@ class LoadDataset(torch.utils.data.Dataset):
         obj_ids = obj_ids[1:]
         num_objs = len(obj_ids)
 
+        img = read_image(img_path)
+        # set images to device
+        
         # split the color-encoded mask into a set
         # of binary masks
-
         masks = (mask == obj_ids[:, None, None]).to(dtype=torch.uint8)
 
         # get bounding box coordinates for each mask
@@ -39,7 +47,6 @@ class LoadDataset(torch.utils.data.Dataset):
 
         # Extract the first digit of the obj_ids tensor to get the class label
         labels = obj_ids // 10 ** torch.floor(torch.log10(obj_ids)).to(torch.int64)
-        self.num_classes = max(self.num_classes, torch.unique(labels).shape[0])
         image_id = idx
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # All instances are not crowd
@@ -64,10 +71,6 @@ class LoadDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
     
-    import torchvision
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-
 
 def get_model_instance_segmentation(num_classes):
     # load an instance segmentation model pre-trained on COCO
@@ -106,14 +109,16 @@ if __name__ == '__main__':
     import utils
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-    # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-
+    data_root = r'data'
+    num_classes = 6
     
-    dataset = LoadDataset(r'data', get_transform(train=True))
-    dataset_test = LoadDataset(r'data', get_transform(train=False))
+    # train on the GPU or on the CPU, if a GPU is not available
+    # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cpu')
 
+    dataset = LoadDataset(data_root, get_transform(train=True))
+    dataset_test = LoadDataset(data_root, get_transform(train=False))
+   
     
 
     # split the dataset in train and test set
@@ -124,7 +129,14 @@ if __name__ == '__main__':
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=2,
+        batch_size=4,
+        shuffle=True,
+        num_workers=4,
+        collate_fn=utils.collate_fn
+    )
+    data_loader_test = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=4,
         shuffle=True,
         num_workers=4,
         collate_fn=utils.collate_fn
@@ -132,10 +144,10 @@ if __name__ == '__main__':
 
 
     # get the model using our helper function
-    model = get_model_instance_segmentation(dataset.num_classes)
+    model = get_model_instance_segmentation(num_classes)
 
     # move model to the right device
-    model.to(device)
+    model.to('cpu')
 
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
@@ -171,7 +183,7 @@ if __name__ == '__main__':
     from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 
 
-    image = read_image("data/PennFudanPed/PNGImages/FudanPed00046.png")
+    image = read_image("data/Images/pointcloud1.png")
     eval_transform = get_transform(train=False)
 
     model.eval()
