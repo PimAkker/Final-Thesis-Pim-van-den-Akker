@@ -8,15 +8,15 @@ import sys
 import time
 # render image, instance annoatation and depth in one line code
 # result["ycb_meta"] is 6d pose GT
-def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
+def render_data(folder = r"data", path_affix="",number=0, save_rgb=True, save_inst=True, save_combined=True):
     
     # render image, instance annoatation and depth in one line code   
     result = bpycv.render_data()
 
-    rgb_pathname = f"{folder}\\rgb-{path_affix}.jpg"
-    depth_pathname = f"{folder}\\depth-{path_affix}_depth.jpg"
-    inst_pathname = f"{folder}\\inst-{path_affix}.jpg"
-    combined_pathname = f"{folder}\\combined-{path_affix}.jpg" 
+    rgb_pathname = f"{folder}\\rgb-{path_affix}-{number}-.jpg"
+    depth_pathname = f"{folder}\\depth-{path_affix}_depth-{number}-.jpg"
+    inst_pathname = f"{folder}\\inst-{path_affix}-{number}-.jpg"
+    combined_pathname = f"{folder}\\combined-{path_affix}-{number}-.jpg" 
     
     if save_rgb:
         cv2.imwrite(rgb_pathname, result["image"][..., ::-1])
@@ -34,11 +34,13 @@ def render_data(folder = r"data", path_affix="", save_rgb=True, save_inst=True, 
         cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
         
 
-def simple_render(folder = r"data", file_prefix = "", file_affix=""):
+def simple_render(folder = r"data", overwrite_data=False, file_prefix = "", file_affix="",file_number="0"):
 
+    file_type = ".jpg"
+    
     sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-
+    
     path= os.path.join(os.getcwd(), folder)
-    path = os.path.join(path, file_prefix + file_affix+".jpg")
+    path = os.path.join(path, file_prefix + file_affix+ "-" + file_number + "-" + file_type)
     bpy.context.scene.render.filepath= path
     output = bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')

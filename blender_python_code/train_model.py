@@ -44,6 +44,12 @@ class LoadDataset(torch.utils.data.Dataset):
 
         # get bounding box coordinates for each mask
         boxes = masks_to_boxes(masks)
+        # if the boundings boxes are one pixel wide or tall, add a pixel to their width or height respectively
+        # this avoids having boxes with size 0
+
+        boxes[:, 2] += boxes[:, 0] == boxes[:, 2]
+        boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
+    
 
         # Extract the first digit of the obj_ids tensor to get the class label
         labels = obj_ids // 10 ** torch.floor(torch.log10(obj_ids)).to(torch.int64)
@@ -111,20 +117,24 @@ if __name__ == '__main__':
 
     data_root = r'data'
     num_classes = 6
+    num_epochs = 3
+    train_percentage = 0.8
     
     # train on the GPU or on the CPU, if a GPU is not available
-    # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    device = torch.device('cpu')
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    
+    # device = torch.device('cpu')
 
     dataset = LoadDataset(data_root, get_transform(train=True))
-    dataset_test = LoadDataset(data_root, get_transform(train=False))
+    dataset_test = LoadDataset(data_root, get_transform(train=True))
    
-    
+    total_samples = len(dataset)
+    train_samples = int(train_percentage * total_samples)
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:])
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[:])
+    dataset = torch.utils.data.Subset(dataset, indices[:train_samples])
+    dataset_test = torch.utils.data.Subset(dataset_test, indices[train_samples:])
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -135,7 +145,7 @@ if __name__ == '__main__':
         collate_fn=utils.collate_fn
     )
     data_loader_test = torch.utils.data.DataLoader(
-        dataset,
+        dataset_test,
         batch_size=4,
         shuffle=True,
         num_workers=4,
@@ -147,7 +157,7 @@ if __name__ == '__main__':
     model = get_model_instance_segmentation(num_classes)
 
     # move model to the right device
-    model.to('cpu')
+    model.to(device)
 
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
@@ -165,8 +175,7 @@ if __name__ == '__main__':
         gamma=0.1
     )
 
-    # let's train it just for 2 epochs
-    num_epochs = 2
+    
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -181,9 +190,12 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
+    # add current directory to path
+    import sys
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-
-    image = read_image("data/Images/pointcloud1.png")
+    image = read_image(r"data\Images\pointcloud-0-.jpg")
+    mask_true = np.load(r"data\Masks\inst-True0.npy")
     eval_transform = get_transform(train=False)
 
     model.eval()
@@ -199,12 +211,32 @@ if __name__ == '__main__':
     image = image[:3, ...]
     pred_labels = [f"pedestrian: {score:.3f}" for label, score in zip(pred["labels"], pred["scores"])]
     pred_boxes = pred["boxes"].long()
-    output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
+    # output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
+    output_image = image
+    
+    mask_true = torch.from_numpy(mask_true)
+    # instances are encoded as different colors
+    obj_ids = torch.unique(mask_true)
+    # first id is the background, so remove it
+    obj_ids = obj_ids[1:]
+    num_objs = len(obj_ids)
+    # set images to device
+    
+    # split the color-encoded mask into a set
+    # of binary masks
+    masks_true = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8)
+    # convert masks too booleon
+    masks_true = masks_true.bool()
 
     masks = (pred["masks"] > 0.7).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="blue")
+    output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
+
+
+    masks = (pred["masks"] > 0.99).squeeze(1)
+    output_image = draw_segmentation_masks(output_image, masks, alpha=0.1, colors="blue")
 
 
     plt.figure(figsize=(12, 12))
     plt.imshow(output_image.permute(1, 2, 0))
+    plt.show()
     # %%

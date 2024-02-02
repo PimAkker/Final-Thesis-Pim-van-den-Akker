@@ -15,7 +15,7 @@ class object_placement:
         # delete all objects which are copied
         [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
         
-        bpy.ops.object.select_all(action='DESELECT')
+        
         
         self.room_center = bpy.data.objects["Walls"].location
         self.default_location = (0,0,0)   
@@ -257,15 +257,6 @@ class object_placement:
         return height, width, depth
     
     def blend_deselect_all(self):
-        try:
-            for ob in bpy.context.selected_objects:
-                ob.select = False
-        except:
-            pass
-        try:
-            bpy.ops.outliner.item_activate(deselect_all=True)
-        except:
-            pass
         try:
             bpy.ops.object.select_all(action='DESELECT')
         except:
