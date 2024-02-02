@@ -15,8 +15,8 @@ import importlib
 import object_placement_utils
 
 
-masks_folder = r"blender_python_code\\data\\Masks"
-images_folder = r"blender_python_code\\data\\Images"
+masks_folder = r"blender_python_code\data\Masks"
+images_folder = r"blender_python_code\data\Images"
 nr_of_images = 1
 overwrite_data = True
 walls_modifiers = {"Wall width":(0.05,0.2), 
@@ -82,12 +82,14 @@ for i in np.arange(file_number,nr_of_images+file_number):
 
     place_class.delete_single_object("raytrace.001")
     place_class.delete_random(object_type_name="Chairs display", delete_percentage=0.5)
-    cru_class.simple_render(folder ="blender_python_code\\data",file_prefix ="Map", file_affix="")
+    cru_class.simple_render(folder =r"blender_python_code\data",file_prefix ="Map", file_affix="")
 
-    cru_class.render_data(folder ="blender_python_code\\data",  path_affix=f"Prior{i}", save_rgb=True, save_inst=True)   
+    cru_class.render_data(folder =r"blender_python_code\data",  path_affix=f"Prior{i}", save_rgb=True, save_inst=True)   
 
     place_class.finalize()
+    
     cru_class.combine_simple_renders()
+    cru_class.combine_masks()
     print(f"Total time: {time.time() - start_time}")
     
     
