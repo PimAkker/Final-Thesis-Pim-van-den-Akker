@@ -44,15 +44,19 @@ class LoadDataset(torch.utils.data.Dataset):
 
         # get bounding box coordinates for each mask
         boxes = masks_to_boxes(masks)
+        
         # if the boundings boxes are one pixel wide or tall, add a pixel to their width or height respectively
         # this avoids having boxes with size 0
-
         boxes[:, 2] += boxes[:, 0] == boxes[:, 2]
         boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
     
+        # if the objs_id have 6 digits the first digit is the label
+        labels = obj_ids // 1000
+        #  if the objs_id have 7 digits the first two digits are the label
+        labels = obj_ids // 10000
 
-        # Extract the first digit of the obj_ids tensor to get the class label
-        labels = obj_ids // 10 ** torch.floor(torch.log10(obj_ids)).to(torch.int64)
+
+       
         image_id = idx
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # All instances are not crowd

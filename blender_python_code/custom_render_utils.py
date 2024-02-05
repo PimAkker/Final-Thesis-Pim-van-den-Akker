@@ -51,26 +51,43 @@ class custom_render_utils:
         self.simple_render_image_path_list.append(path)
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
-    def combine_simple_renders(self, path= "data", remove_originals = True):
+    def combine_simple_renders(self, path= "data", remove_originals = True, file_nr=""):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image.
         NOTE, we need to filter out the red tinted pixels from the pointcloud image and then combine the images, to overlay the images properly."""
 
         pointcloud_image = cv2.imread(self.simple_render_image_path_list[0])
         map_image = cv2.imread(self.simple_render_image_path_list[1])
+        
+        red_channel_map = map_image[:, :, 0]
+        blue_channel_map = map_image[:, :, 2]
+        # if either the red or blue channel is above  then it is not background
+        mask_map = (red_channel_map > 10) & (blue_channel_map > 10)
+        map_image[mask_map] = [0, 0, 0]
+        map_image[~mask_map] = [255, 255, 255]
+        
+              
+        
+        
+        
         # Extract the red channel
         red_channel = pointcloud_image[:, :, 0]
-        threshold = 40 
+        threshold = 20 
         red_tinted_mask = red_channel > threshold
         # Use the mask to filter out non-red tinted pixels
         combined_image = map_image.copy()
         combined_image[red_tinted_mask] = pointcloud_image[red_tinted_mask]
          
-        cv2.imwrite(f"combined{self.file_type}", combined_image)
+        cv2.imwrite(os.path.join(path, f"input-{file_nr}-{self.file_type}"), combined_image)
         if remove_originals:
             # delete the pointcloud and map images
             os.remove(self.simple_render_image_path_list[0])
             os.remove(self.simple_render_image_path_list[1])
     def combine_masks(self, path="data",remove_originals=True):
+        """
+        NOTE: will be removed, not used in the final version
+        """
+        
+        
         mask_prior = np.load(self.render_data_mask_path_list[0])
         mask_true = np.load(self.render_data_mask_path_list[1])
         
@@ -89,5 +106,8 @@ class custom_render_utils:
             # delete the prior and true masks
             os.remove(self.render_data_mask_path_list[0])
             os.remove(self.render_data_mask_path_list[1])
+
+        
+        
         
         

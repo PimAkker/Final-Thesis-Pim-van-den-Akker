@@ -96,19 +96,26 @@ class object_placement:
         obj.data.update()
         
 
-    def set_object_id(self, object_name, inst_id):
+    def set_object_id(self,class_label, object_name = "Walls", selection = None):
         """ 
-        Gives unique object id to all the copies of a given object"""
+        Gives an unique instance id to all objects of the same type in the scene.
+        input class_label: label of the object type
+        input object_name: (optional) name of the object to set the id of
+        input selection: (optional) list of objects to set the id of
+        output: None"""
         
-        # get a list of the objects which are copies of the given object
-        objects = [obj for obj in bpy.data.objects if object_name+"." in obj.name]
-        
-        # set the inst_id for all the objects inst id = inst_id*1000 + i making 
-        # sure that all the objects have a unique inst_id
+        if selection is None:
+            # get a list of the objects which are copies of the given object
+            objects = [obj for obj in bpy.data.objects if object_name+"." in obj.name]
+        else:
+            objects = selection
+        # Here there first two digits are the inst_id and 
+        # are the type of object, the 3rd and 4rth digits are the type of mismatch
+        # and the last 3 digits are the instance number of the object.
         for i in range(len(objects)):
-            objects[i]["inst_id"] = inst_id*1000 + i
-        
-        
+            assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
+            objects[i]["inst_id"] = class_label*1000+i
+
         
     def place_walls(self,inst_id=255):
         """ 
@@ -132,7 +139,7 @@ class object_placement:
         obj = bpy.context.active_object
         obj.location = self.default_location
         
-        self.set_object_id(object_name=object_name, inst_id=inst_id)
+        self.set_object_id(object_name=object_name, class_label=inst_id)
         
     def place_doors(self,inst_id=255):
 
@@ -149,7 +156,7 @@ class object_placement:
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
         obj.location = self.default_location
-        self.set_object_id(object_name=object_name, inst_id=inst_id)
+        self.set_object_id(object_name=object_name, class_label=inst_id)
         
     def place_objects(self,inst_id=255, object_name=""):
 
@@ -168,7 +175,7 @@ class object_placement:
         
         # Split mesh into individual objects
         bpy.ops.mesh.separate(type='LOOSE')
-        self.set_object_id(object_name=object_name, inst_id=inst_id)
+        self.set_object_id(object_name=object_name, class_label=inst_id)
     
     def place_raytrace(self, position=(0,0,0)):
         """ 
@@ -187,6 +194,8 @@ class object_placement:
         bpy.ops.object.convert(target='MESH')
         self.raytrace_position = cur_pos-self.room_center
         obj.location = self.raytrace_position
+        
+        
  
     def isolate_object(self, object_name):
         """ 
@@ -219,22 +228,32 @@ class object_placement:
     def delete_single_object(self, object_name):
         """Deletes an object from the scene"""
         bpy.data.objects.remove(bpy.data.objects[object_name])
-        
-    def delete_random(self, object_type_name="Chairs display", delete_percentage=1):
-        """Deletes a number of random objects from the scene"""
-        
-        # get all objects of object_type_name
-        objects = [obj for obj in bpy.data.objects if object_type_name+"." in obj.name]
-        
-        # calculate the number of objects to delete
-        delete_amount = int(len(objects)*delete_percentage)
-        
     
-        # delete delete_amount random objects
-        for _ in range(delete_amount):
-            obj = random.choice(objects)
+    def select_subset_of_objects(self,object_type_name="Chairs display", delete_percentage=1):
+        """
+        mark a percentage of the objects of a given type for deletion
+        input: object_type_name: name of the object type to delete
+        delete_percentage: percentage of objects to delete
+        output: tuple of all objects of the given type and the objects to delete
+        """
+        objects = [obj for obj in bpy.data.objects if object_type_name+"." in obj.name]
+        delete_amount = int(len(objects)*delete_percentage)
+        delete_indexes = random.sample(range(len(objects)), delete_amount)
+        # make list of objects to delete
+        objects_to_delete = [objects[i] for i in delete_indexes]
+        return objects_to_delete
+    
+    
+    
+    def delete_objects(self, object_list):
+        """
+        Deletes a number of random objects from the scene
+        input: object_list: list of objects to delete
+        output: None
+        """
+        for obj in object_list:
             bpy.data.objects.remove(obj)
-            objects.remove(obj)
+            
             
     def configure_camera(self, position=(0,0,0)):
         """ Set the camera position to the given position"""

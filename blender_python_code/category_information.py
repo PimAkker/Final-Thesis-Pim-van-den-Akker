@@ -2,12 +2,25 @@
 # files to the in the dataset 
 
 
-# The name needs to be the name of the object in the blender file. The id of a 
-# object would be id+instance_nr (e.g. for the first wall 1001)
-catogory_information = {"Walls": 1,
-                        "Column":2,
-                        "Chair": 3,
-                        "Table": 4
+
+catogory_information = {
+                        "Background": 0,
+                        "Walls": 1,
+                        "Wall removed": 2,
+                        "Wall new": 3,
+                        "Doors": 4,
+                        "Door open": 5,
+                        "Door closed": 6,
+                        "Chairs": 7,
+                        "Chairs removed": 8,
+                        "Chairs new": 9,
+                        "Tables": 10,
+                        "Tables removed": 11,
+                        "Tables new": 12,     
+                        "Pillars": 13,
+                        "Pillars removed": 14,
+                        "Pillars new": 15
+                                          
                         }
 
                         
