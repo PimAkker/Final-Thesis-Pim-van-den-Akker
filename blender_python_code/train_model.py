@@ -52,11 +52,8 @@ class LoadDataset(torch.utils.data.Dataset):
     
         # if the objs_id have 6 digits the first digit is the label
         labels = obj_ids // 1000
-        #  if the objs_id have 7 digits the first two digits are the label
-        labels = obj_ids // 10000
-
-
-       
+        labels = labels.long()
+        
         image_id = idx
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # All instances are not crowd
@@ -117,11 +114,13 @@ if __name__ == '__main__':
     import os
     from engine import train_one_epoch, evaluate
     import utils
+    from category_information import catogory_information
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
     data_root = r'data'
-    num_classes = 6
-    num_epochs = 3
+    num_classes = len(catogory_information)
+    
+    num_epochs = 5
     train_percentage = 0.8
     
     # train on the GPU or on the CPU, if a GPU is not available
@@ -198,8 +197,8 @@ if __name__ == '__main__':
     import sys
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-    image = read_image(r"data\Images\pointcloud-0-.jpg")
-    mask_true = np.load(r"data\Masks\inst-True0.npy")
+    image = read_image(r"data\Images\input-0-.jpg")
+    mask_true = np.load(r"data\Masks\inst-Mask0-0-.npy")
     eval_transform = get_transform(train=False)
 
     model.eval()
@@ -210,13 +209,23 @@ if __name__ == '__main__':
         predictions = model([x, ])
         pred = predictions[0]
 
+    confidence_threshold = 0.9
+    
 
     image = (255.0 * (image - image.min()) / (image.max() - image.min())).to(torch.uint8)
     image = image[:3, ...]
-    pred_labels = [f"pedestrian: {score:.3f}" for label, score in zip(pred["labels"], pred["scores"])]
+    # get the labels from category_information and link them to the pred_labels
+    pred_labels = pred["labels"]
+    pred_labels = pred_labels[pred["scores"] > confidence_threshold]
+    pred_labels = [list(catogory_information.keys())[list(catogory_information.values()).index(x)] for x in pred_labels]
+    # change chairs removed to REMCHAIR
+    pred_labels = [x.replace("Chairs removed", " REMCHAIR") for x in pred_labels]
+   
     pred_boxes = pred["boxes"].long()
-    # output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
-    output_image = image
+    pred_boxes = pred_boxes[pred["scores"] > confidence_threshold]
+    output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
+    # output_image = image
+    # output_image = torch.zeros_like(image)
     
     mask_true = torch.from_numpy(mask_true)
     # instances are encoded as different colors
@@ -232,15 +241,14 @@ if __name__ == '__main__':
     # convert masks too booleon
     masks_true = masks_true.bool()
 
-    masks = (pred["masks"] > 0.7).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
+    # masks = (pred["masks"] > 0.7).squeeze(1)
+    # output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
 
 
-    masks = (pred["masks"] > 0.99).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks, alpha=0.1, colors="blue")
+    masks = (pred["masks"] > confidence_threshold).squeeze(1)
+    output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
 
 
     plt.figure(figsize=(12, 12))
     plt.imshow(output_image.permute(1, 2, 0))
     plt.show()
-    # %%

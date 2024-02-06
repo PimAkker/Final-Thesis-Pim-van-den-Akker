@@ -51,6 +51,7 @@ class custom_render_utils:
         self.simple_render_image_path_list.append(path)
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
+        
     def combine_simple_renders(self, path= "data", remove_originals = True, file_nr=""):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image.
         NOTE, we need to filter out the red tinted pixels from the pointcloud image and then combine the images, to overlay the images properly."""
@@ -64,10 +65,6 @@ class custom_render_utils:
         mask_map = (red_channel_map > 10) & (blue_channel_map > 10)
         map_image[mask_map] = [0, 0, 0]
         map_image[~mask_map] = [255, 255, 255]
-        
-              
-        
-        
         
         # Extract the red channel
         red_channel = pointcloud_image[:, :, 0]

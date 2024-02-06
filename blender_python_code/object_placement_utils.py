@@ -134,7 +134,10 @@ class object_placement:
                 
         obj = bpy.context.active_object
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+        
+        
         bpy.ops.object.convert(target='MESH')
+        assert f'{object_name}.001' in bpy.data.objects, f"Object {object_name}.001 does not exist"
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
         obj.location = self.default_location
@@ -184,6 +187,7 @@ class object_placement:
         output: None
         
         """
+        self.blend_deselect_all()
         object_name = "raytrace"
         bpy.data.objects[object_name].select_set(True)
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
@@ -229,21 +233,51 @@ class object_placement:
         """Deletes an object from the scene"""
         bpy.data.objects.remove(bpy.data.objects[object_name])
     
-    def select_subset_of_objects(self,object_type_name="Chairs display", delete_percentage=1):
+    def select_subset_of_objects(self,object_type_name="Chairs display", delete_percentage=1, bbox=None):
         """
-        mark a percentage of the objects of a given type for deletion
+        select a subset of objects of a given type or within a given bounding box
         input: object_type_name: name of the object type to delete
         delete_percentage: percentage of objects to delete
+        within_bouding_box: (optional) tuple of the bounding box to delete objects from
         output: tuple of all objects of the given type and the objects to delete
         """
+        
+        
         objects = [obj for obj in bpy.data.objects if object_type_name+"." in obj.name]
+        if bbox is not None:
+            # get min max of x and y of the bounding box
+            x_min =0
+            x_max = 0
+            y_min = 0
+            y_max = 0
+            for i in range(8):
+                x_min = min(x_min, bbox[i][0])
+                x_max = max(x_max, bbox[i][0])
+                y_min = min(y_min, bbox[i][1])
+                y_max = max(y_max, bbox[i][1])
+            bbox = (x_min, x_max, y_min, y_max)
+            
+            object_bbox_corners = np.empty((0,3))
+            for object in objects:
+                object_bbox_corners = np.vstack((object_bbox_corners, np.array([np.array(corner) for corner in object.bound_box])))
+            # Calculate the center of the bounding box
+            
+            object_bbox_corners = object_bbox_corners.reshape(-1, 8, 3)
+            
+            object_centers = np.sum(object_bbox_corners,axis=1) / 8
+            objects_in_bbox =[]
+            for i in range(len(objects)):
+                if object_centers[i][0] > bbox[0] and object_centers[i][0] < bbox[1] and object_centers[i][1] > bbox[2] and object_centers[i][1] < bbox[3]:
+                    objects_in_bbox.append(objects[i])
+            
+            objects = objects_in_bbox
+            
         delete_amount = int(len(objects)*delete_percentage)
+        
         delete_indexes = random.sample(range(len(objects)), delete_amount)
         # make list of objects to delete
         objects_to_delete = [objects[i] for i in delete_indexes]
         return objects_to_delete
-    
-    
     
     def delete_objects(self, object_list):
         """
@@ -267,20 +301,23 @@ class object_placement:
         input: object_name: name of the object to get the dimensions of
         output: height, width, depth of the object
         """
-        
-        walls = bpy.data.objects["Walls"]
+        object_name = f"{object_name}"
+        walls = bpy.data.objects[object_name]
         bbox = walls.bound_box
         height = np.abs(bbox[4][2]) + np.abs(bbox[0][2])
         depth = np.abs(bbox[4][1]) + np.abs(bbox[0][1])
         width = np.abs(bbox[4][0]) + np.abs(bbox[0][0])
-        return height, width, depth
+        return bbox, height, width, depth
     
     def blend_deselect_all(self):
-        try:
+        """
+        This function deselects all objects in the scene.
+        input: None
+        output: None
+        """
+        if bpy.context.selected_objects != []:
             bpy.ops.object.select_all(action='DESELECT')
-        except:
-            pass    
-     
+
         
     def finalize(self):
         """ 
@@ -295,3 +332,4 @@ class object_placement:
             
         # turn on hide render for all objects except object_name
         self.unisolate()
+        self.blend_deselect_all()
