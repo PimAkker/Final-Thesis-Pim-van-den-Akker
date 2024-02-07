@@ -3,6 +3,7 @@ import torch
 import os
 import sys
 sys.path.append(os.path.join(os.curdir, "utilities"))
+sys.path.append(os.path.join(os.curdir, r"model_training/utilities"))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import torch
 from PIL import Image
@@ -35,9 +36,10 @@ if __name__ == '__main__':
     data_root = r'../data'
     num_classes = len(catogory_information)
     
+    save_model = True
     num_epochs = 5
     train_percentage = 0.8
-    batch_size = 16
+    batch_size = 4
     learning_rate = 0.005
     momentum=0.9
     weight_decay=0.0005
@@ -98,78 +100,65 @@ if __name__ == '__main__':
     )
 
     
-
+    metrics =[]
+    evaluator = []
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        metrics.append(train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10))
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 
     print("That's it!")
+#%% printing the metrics
+if __name__ == '__main__':
+
+    import matplotlib.pyplot as plt
+    lr= []
+    loss = []
+    loss_box_reg = []
+    loss_mask = []
+    loss_objectness = []
+    loss_rpn_box_reg = []
+    loss_classifier = []
+
+    for i, metric in enumerate(metrics):
+        lr.append(metric.meters['lr'].median)
+        loss.append(metric.meters['loss'].median)
+        loss_box_reg.append(metric.meters['loss_box_reg'].median)
+        loss_mask.append(metric.meters['loss_mask'].median)
+        loss_objectness.append(metric.meters['loss_objectness'].median)
+        loss_rpn_box_reg.append(metric.meters['loss_rpn_box_reg'].median)
+        loss_classifier.append(metric.meters['loss_classifier'].median)
+    for i, evaluator in enumerate(evaluator):
+        print(f'Epoch {i} - {evaluator}')
+        
+        
+    plt.plot(lr, label='learning rate')
+    plt.plot(loss, label='loss')
+    plt.plot(loss_box_reg, label='loss_box_reg')
+    plt.plot(loss_mask, label='loss_mask')
+    plt.plot(loss_objectness, label='loss_objectness')
+    plt.plot(loss_rpn_box_reg, label='loss_rpn_box_reg')
+    plt.plot(loss_classifier, label='loss_classifier')
+    plt.xlabel('Epoch')
+    plt.ylabel('Value')
+    plt.legend()
+    plt.show()
+    
+
+
+
 #%%
-    datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # save the model
-    torch.save(model.state_dict(), os.path.join(r"..\data\Models\\", f"model_{datetime}.pth"))
+if __name__ == '__main__':
+    import datetime
+    if save_model:
+        datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        # save the model
+        torch.save(model.state_dict(), os.path.join(r"..\data\Models\\", f"model_{datetime}.pth"))
 
     
     #%%
 
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-    image = read_image(r"..\data\Images\input-0-.jpg")
-    mask_true = np.load(r"..\data\Masks\inst-Mask0-0-.npy")
-    eval_transform = get_transform(train=False)
-
-    model.eval()
-    with torch.no_grad():
-        x = eval_transform(image)
-        # convert RGBA -> RGB and move to device
-        x = x[:3, ...].to(device)
-        predictions = model([x, ])
-        pred = predictions[0]
-
-    confidence_threshold = 0.9
-    
-
-    image = (255.0 * (image - image.min()) / (image.max() - image.min())).to(torch.uint8)
-    image = image[:3, ...]
-    # get the labels from category_information and link them to the pred_labels
-    pred_labels = pred["labels"]
-    pred_labels = pred_labels[pred["scores"] > confidence_threshold]
-    pred_labels = [list(catogory_information.keys())[list(catogory_information.values()).index(x)] for x in pred_labels]
-    # change chairs removed to REMCHAIR
-    pred_labels = [x.replace("Chairs removed", " REMCHAIR") for x in pred_labels]
-   
-    pred_boxes = pred["boxes"].long()
-    pred_boxes = pred_boxes[pred["scores"] > confidence_threshold]
-    output_image = draw_bounding_boxes(image, pred_boxes, pred_labels, colors="red")
-    # output_image = image
-    # output_image = torch.zeros_like(image)
-    
-    mask_true = torch.from_numpy(mask_true)
-    # instances are encoded as different colors
-    obj_ids = torch.unique(mask_true)
-    # first id is the background, so remove it
-    obj_ids = obj_ids[1:]
-    num_objs = len(obj_ids)
-    # set images to device
-    
-    # split the color-encoded mask into a set
-    # of binary masks
-    masks_true = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8)
-    # convert masks too booleon
-    masks_true = masks_true.bool()
-
-    # masks = (pred["masks"] > 0.7).squeeze(1)
-    # output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
-
-
-    masks = (pred["masks"] > confidence_threshold).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
-
-
-    plt.figure(figsize=(12, 12))
-    plt.imshow(output_image.permute(1, 2, 0))
-    plt.show()
+# %%
