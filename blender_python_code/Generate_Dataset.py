@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-# sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-os.chdir(r"C:\Users\pimde\OneDrive\thesis\Blender")
+sys.path.append(r'C:\Users\pimde\OneDrive\thesis\Blender\blender_python_code')
+os.chdir(r'C:\Users\pimde\OneDrive\thesis\Blender')
 import bpy
 import bpycv
 import random
@@ -27,8 +27,8 @@ total_start_time = time.time()
 
 
 
-masks_folder = r"blender_python_code\data\Masks"
-images_folder = r"blender_python_code\data\Images"
+masks_folder = r"data\Masks"
+images_folder = r"data\Images"
 nr_of_images = 1000
 overwrite_data = False
 empty_folders = False
@@ -104,7 +104,7 @@ for i in np.arange(file_number,nr_of_images+file_number):
 
     cru_class.render_data(folder =masks_folder,  path_affix=f"Mask{i}", save_combined=False,save_rgb=False, save_inst=True)   
     place_class.delete_objects(objects_to_delete)
-    cru_class.simple_render(folder =r"blender_python_code\data",file_prefix ="Map", file_affix="")
+    cru_class.simple_render(folder =r"data",file_prefix ="Map", file_affix="")
 
     place_class.finalize()
     
