@@ -17,9 +17,9 @@ class object_placement:
         
         
         
-        self.room_center = bpy.data.objects["Walls"].location
+        self.room_center = bpy.data.objects["walls"].location
         self.default_location = (0,0,0)   
-        
+        self.subset_selection = []
     def set_modifier(self, object_name, modifier_name, value):
         """ 
         this function sets the value of a modifier in the geometry nodes modifier of an object.
@@ -36,29 +36,26 @@ class object_placement:
         bpy.data.objects[object_name].select_set(True)
         # select active object
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
-    
+
         modifier_name = modifier_name.lower()
-       
-        
+
         geometry_nodes = bpy.data.objects[object_name].modifiers['GeometryNodes']
-        
+
         modifier_identifier_list = [input.identifier for input in geometry_nodes.node_group.inputs][1:]
-        
         modifier_name_list = [input.name for input in geometry_nodes.node_group.inputs][1:]
         modifier_name_list = [name.lower() for name in modifier_name_list]
-        
+
         assert modifier_name in modifier_name_list, f"modifier_name: {modifier_name} is not in the list of supported modifiers \
         choose from {modifier_name_list}"
-        
+
         modifier_data_type_list = [input.type for input in geometry_nodes.node_group.inputs][1:]
 
-
         modifier_index = modifier_name_list.index(modifier_name)
-         
+
         # get the identifier of the modifier
         modifier_identifier = modifier_identifier_list[modifier_index]
         modifier_number = int(modifier_identifier.split("_")[1])
-        
+
         # retreive the maximum and minimum values of the modfiier as defined in the geometry nodes modifier.
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "Walls" should have the "Walls" geometry node modifier
@@ -66,18 +63,16 @@ class object_placement:
         min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
         max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
-        
         # if the modifier is a tuple then set the value as a random value bouded by the tuple
         if type(value) == tuple:
             assert value[0] >= min_val, f"Value: {value[0]} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value[1] <= max_val, f"Value: {value[1]} is too large for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             
             if modifier_data_type_list[modifier_index] == "VALUE":
-                
                 value = np.random.uniform(float(value[0]), float(value[1]))
             elif modifier_data_type_list[modifier_index] == "INT":
                 value = np.random.randint(int(value[0]), int(value[1])) 
-        
+
         elif type(value) == int or type(value) == float:
             if modifier_data_type_list[modifier_index] == "VALUE":
                 value = float(value)
@@ -85,18 +80,16 @@ class object_placement:
                 value = int(value)
             assert value >= min_val, f"Value: {value} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value <= max_val, f"Value: {value} is too large for {modifier_name} modifier that: {min_val} <= value <= {max_val}"
-        
+
         else:   
             raise ValueError(f"Value: {value} is not of type int, float or tuple")
-        
-        bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
 
+        bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
 
         obj = bpy.context.active_object
         obj.data.update()
-        
 
-    def set_object_id(self,class_label, object_name = "Walls", selection = None):
+    def set_object_id(self,class_label, object_name = "walls", selection = None):
         """ 
         Gives an unique instance id to all objects of the same type in the scene.
         input class_label: label of the object type
@@ -125,7 +118,7 @@ class object_placement:
         
         """
         
-        object_name = "Walls"
+        object_name = "walls"
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # select active object
@@ -147,7 +140,7 @@ class object_placement:
     def place_doors(self,inst_id=255):
 
     
-        object_name = "Doors"
+        object_name = "doors"
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # set object as active
@@ -195,12 +188,20 @@ class object_placement:
         bpy.ops.object.duplicate_move_linked(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
-        bpy.ops.object.convert(target='MESH')
+        # bpy.ops.object.convert(target='MESH')
         self.raytrace_position = cur_pos-self.room_center
         obj.location = self.raytrace_position
         
         
- 
+    def hide_objects(self, object_list):
+        """ 
+        this function hides a list of objects in the scene.
+        input: object_list: list of objects to hide
+        output: None
+        """
+        for obj in object_list:
+            obj.hide_render = True
+    
     def isolate_object(self, object_name):
         """ 
         this function isolates an object in the scene by turning on hide render for all objects except object_name.
@@ -218,6 +219,7 @@ class object_placement:
         for obj in bpy.data.objects:
             if obj.name != object_name:
                 obj.hide_render = True
+    
                 
     def unisolate(self):
         """ 
@@ -233,15 +235,15 @@ class object_placement:
         """Deletes an object from the scene"""
         bpy.data.objects.remove(bpy.data.objects[object_name])
     
-    def select_subset_of_objects(self,object_type_name="Chairs display", delete_percentage=1, bbox=None):
+    def select_subset_of_objects(self,object_type_name="Chairs display", selection_percentage=1, bbox=None):
         """
         select a subset of objects of a given type or within a given bounding box
-        input: object_type_name: name of the object type to delete
-        delete_percentage: percentage of objects to delete
-        within_bouding_box: (optional) tuple of the bounding box to delete objects from
-        output: tuple of all objects of the given type and the objects to delete
+        input: object_type_name: name of the object type to select taken from the category_information.py file
+        selection: percentage of objects to select
+        within_bouding_box: (optional) tuple of the bounding box to select objects from
+        output: tuple of all objects of the given type and the objects to select
         """
-        
+        object_type_name = object_type_name.lower()
         
         objects = [obj for obj in bpy.data.objects if object_type_name+"." in obj.name]
         if bbox is not None:
@@ -271,13 +273,19 @@ class object_placement:
                     objects_in_bbox.append(objects[i])
             
             objects = objects_in_bbox
-            
-        delete_amount = int(len(objects)*delete_percentage)
         
-        delete_indexes = random.sample(range(len(objects)), delete_amount)
-        # make list of objects to delete
-        objects_to_delete = [objects[i] for i in delete_indexes]
-        return objects_to_delete
+        # exclude already selected objects
+        objects = [obj for obj in objects if obj not in self.subset_selection]
+        
+        
+        select_amount = int(len(objects)*selection_percentage)
+        
+        select_indexes = random.sample(range(len(objects)), select_amount)
+        # make list of objects to select
+        selected_objects = [objects[i] for i in select_indexes]
+        self.subset_selection.append(selected_objects)
+        
+        return selected_objects
     
     def delete_objects(self, object_list):
         """
@@ -296,7 +304,7 @@ class object_placement:
 
         # Extract walls object and get the height width and depth
         
-    def get_object_dims(self, object_name="Walls"):
+    def get_object_dims(self, object_name="walls"):
         """Get the dimensions of the object
         input: object_name: name of the object to get the dimensions of
         output: height, width, depth of the object
@@ -330,6 +338,6 @@ class object_placement:
             # delete all objects which are copied
             [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
             
-        # turn on hide render for all objects except object_name
+        
         self.unisolate()
         self.blend_deselect_all()

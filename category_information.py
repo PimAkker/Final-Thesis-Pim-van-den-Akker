@@ -3,23 +3,23 @@
 
 
 
-catogory_information = {
-                        "Background": 0,
-                        "Walls": 1,
-                        "Wall removed": 2,
-                        "Wall new": 3,
-                        "Doors": 4,
-                        "Door open": 5,
-                        "Door closed": 6,
-                        "Chairs": 7,
-                        "Chairs removed": 8,
-                        "Chairs new": 9,
-                        "Tables": 10,
-                        "Tables removed": 11,
-                        "Tables new": 12,     
-                        "Pillars": 13,
-                        "Pillars removed": 14,
-                        "Pillars new": 15
+category_information = {
+                        "background": 0,
+                        "walls": 1,
+                        "wall removed": 2,
+                        "wall new": 3,
+                        "doors": 4,
+                        "door open": 5,
+                        "door closed": 6,
+                        "chairs": 7,
+                        "chairs removed": 8,
+                        "chairs new": 9,
+                        "tables": 10,
+                        "tables removed": 11,
+                        "tables new": 12,     
+                        "pillars": 13,
+                        "pillars removed": 14,
+                        "pillars new": 15
                                           
                         }
 

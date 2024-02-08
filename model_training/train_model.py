@@ -37,7 +37,7 @@ if __name__ == '__main__':
     num_classes = len(catogory_information)
     
     save_model = True
-    num_epochs = 5
+    num_epochs = 1
     train_percentage = 0.8
     batch_size = 4
     learning_rate = 0.005
@@ -101,14 +101,14 @@ if __name__ == '__main__':
 
     
     metrics =[]
-    evaluator = []
+    IoU_info = []
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         metrics.append(train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10))
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
-        evaluate(model, data_loader_test, device=device)
+        IoU_info.append(evaluate(model, data_loader_test, device=device))
 
     print("That's it!")
 #%% printing the metrics
@@ -131,9 +131,7 @@ if __name__ == '__main__':
         loss_objectness.append(metric.meters['loss_objectness'].median)
         loss_rpn_box_reg.append(metric.meters['loss_rpn_box_reg'].median)
         loss_classifier.append(metric.meters['loss_classifier'].median)
-    for i, evaluator in enumerate(evaluator):
-        print(f'Epoch {i} - {evaluator}')
-        
+
         
     plt.plot(lr, label='learning rate')
     plt.plot(loss, label='loss')
@@ -147,6 +145,8 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
     
+    
+    
 
 
 
@@ -155,9 +155,20 @@ if __name__ == '__main__':
     import datetime
     if save_model:
         datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        # save the model
-        torch.save(model.state_dict(), os.path.join(r"..\data\Models\\", f"model_{datetime}.pth"))
+        # # save the model
+        # torch.save(model.state_dict(), os.path.join(r"..\data\Models\\", f"model_{datetime}.pth"))
+        
+        # # save metrics the metrics list 
+        # with open(os.path.join(r"..\data\Models\\", f"metrics_{datetime}.txt"), 'w') as f:
+        #     for metric in metrics:
+        #         f.write(f"{metric}\n")
+        # save the evaluator list
+        with open(os.path.join(r"..\data\Models\\", f"IoU_info_{datetime}.txt"), 'w') as f:
+            for i, info in enumerate(IoU_info):
+                f.write(f"IoU for epoch {i+1}: {info.coco_eval['bbox'].stats}\n")
+        
 
+        
     
     #%%
 

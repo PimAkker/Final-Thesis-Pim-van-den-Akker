@@ -2,37 +2,41 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-sys.path.append(r'C:\Users\pimde\OneDrive\thesis\Blender\blender_python_code')
-os.chdir(r'C:\Users\pimde\OneDrive\thesis\Blender')
+
+
+# ensure we are in the correct directory
+root_dir_name = 'Blender'
+current_directory = os.getcwd().split("\\")
+assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
+if current_directory[-1] != root_dir_name:
+    # go down in the directory tree until the root directory is found
+    while current_directory[-1] != root_dir_name:
+        os.chdir("..")
+        current_directory = os.getcwd().split("\\")
+
+
+# add all the subdirectories to the path
+for root, dirs, files in os.walk(os.getcwd()):
+    for dir in dirs:
+        sys.path.append(os.path.join(root, dir))
+sys.path.append(os.getcwd())
 import bpy
 import bpycv
 import random
 import numpy as np
 import time
-
-# print current directory
-print(os.getcwd())
-
-
 import custom_render_utils
 import importlib
 import object_placement_utils
-
-import category_information
-
-# open the blender file
-
+from category_information import category_information
 total_start_time = time.time()
-# change path to C:\Users\pimde\OneDrive\thesis\Blender
-
-
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 1000
+nr_of_images = 1
 overwrite_data = False
-empty_folders = False
-obj_ids = category_information.catogory_information
+empty_folders = True
+obj_ids = category_information
 walls_modifiers = {"Wall width":(0.05,0.2), 
                     "Wall Amount X": (2,5),
                     "Wall Amount Y": (2,5),
@@ -77,17 +81,19 @@ for i in np.arange(file_number,nr_of_images+file_number):
 
 
     for modifier in list(walls_modifiers.keys()):
-        place_class.set_modifier("Walls", modifier, walls_modifiers[modifier])
+        place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
     # Generate the room
   
-    _, height, width, depth = place_class.get_object_dims(object_name="Walls")
-    place_class.place_walls(inst_id=obj_ids["Walls"])
-    place_class.place_doors(inst_id=obj_ids["Doors"])
-    place_class.place_objects(object_name="Chairs display", inst_id=obj_ids["Chairs"])
-    place_class.place_objects(object_name="Tables display", inst_id=obj_ids["Tables"])
-    place_class.place_objects(object_name="Pillars display", inst_id=obj_ids["Pillars"])
+    _, height, width, depth = place_class.get_object_dims(object_name="walls")
+    place_class.place_walls(inst_id=obj_ids["walls"])
+    place_class.place_doors(inst_id=obj_ids["doors"])
+    place_class.place_objects(object_name="chairs display", inst_id=obj_ids["chairs"])
+    place_class.place_objects(object_name="tables display", inst_id=obj_ids["tables"])
+    place_class.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
     
     # cru_class.render_data(folder =masks_folder,  path_affix=f"True{i}", save_rgb=False, save_combined=False, save_inst=True)   
+
+    # we hide a s
 
     # Generate pointcloud image
     place_class.place_raytrace()
@@ -99,16 +105,17 @@ for i in np.arange(file_number,nr_of_images+file_number):
 
     place_class.delete_single_object("raytrace.001")
     
-    objects_to_delete = place_class.select_subset_of_objects(object_type_name="Chairs display", delete_percentage=1,bbox=bbox_raytrace)
-    place_class.set_object_id(obj_ids["Chairs removed"],selection=objects_to_delete)
+    objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1,bbox=bbox_raytrace)
+    place_class.set_object_id(obj_ids["chairs new"],selection=objects_to_delete)
 
     cru_class.render_data(folder =masks_folder,  path_affix=f"Mask{i}", save_combined=False,save_rgb=False, save_inst=True)   
     place_class.delete_objects(objects_to_delete)
+    
     cru_class.simple_render(folder =r"data",file_prefix ="Map", file_affix="")
 
     place_class.finalize()
     
-    cru_class.combine_simple_renders(path= images_folder, remove_originals = True, file_nr=f"{i}")
+    cru_class.combine_simple_renders(path= images_folder, remove_originals = False, file_nr=f"{i}")
     print(f"Total time: {time.time() - start_time}")
 
     

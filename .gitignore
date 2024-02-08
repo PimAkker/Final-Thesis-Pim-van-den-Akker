@@ -1,2 +1,2 @@
-# Ignore everything from the blender_python_code/data folder
-blender_python_code/data/*
+# Ignore everything from the data folder
+data/*
