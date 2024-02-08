@@ -15,11 +15,13 @@ class object_placement:
         # delete all objects which are copied
         [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
         
-        
-        
         self.room_center = bpy.data.objects["walls"].location
         self.default_location = (0,0,0)   
         self.subset_selection = []
+        
+        # make sure we are in object mode 
+        assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
+        
     def set_modifier(self, object_name, modifier_name, value):
         """ 
         this function sets the value of a modifier in the geometry nodes modifier of an object.
@@ -108,7 +110,6 @@ class object_placement:
         for i in range(len(objects)):
             assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
             objects[i]["inst_id"] = class_label*1000+i
-
         
     def place_walls(self,inst_id=255):
         """ 
@@ -190,8 +191,7 @@ class object_placement:
         obj = bpy.context.active_object
         # bpy.ops.object.convert(target='MESH')
         self.raytrace_position = cur_pos-self.room_center
-        obj.location = self.raytrace_position
-        
+        obj.location = self.raytrace_position 
         
     def hide_objects(self, object_list):
         """ 
@@ -219,8 +219,7 @@ class object_placement:
         for obj in bpy.data.objects:
             if obj.name != object_name:
                 obj.hide_render = True
-    
-                
+                  
     def unisolate(self):
         """ 
         this function unisolates all objects in the scene. Showing everything in the render.
@@ -231,6 +230,7 @@ class object_placement:
         
         for obj in bpy.data.objects:
             obj.hide_render = False
+            
     def delete_single_object(self, object_name):
         """Deletes an object from the scene"""
         bpy.data.objects.remove(bpy.data.objects[object_name])
@@ -245,7 +245,10 @@ class object_placement:
         """
         object_type_name = object_type_name.lower()
         
+        
         objects = [obj for obj in bpy.data.objects if object_type_name+"." in obj.name]
+        # exclude objects that are in self.subset_selection
+        objects = [obj for obj in objects if obj not in self.subset_selection]
         if bbox is not None:
             # get min max of x and y of the bounding box
             x_min =0
@@ -274,8 +277,6 @@ class object_placement:
             
             objects = objects_in_bbox
         
-        # exclude already selected objects
-        objects = [obj for obj in objects if obj not in self.subset_selection]
         
         
         select_amount = int(len(objects)*selection_percentage)
@@ -294,9 +295,21 @@ class object_placement:
         output: None
         """
         for obj in object_list:
-            bpy.data.objects.remove(obj)
-            
-            
+            bpy.data.objects.remove(obj)       
+    
+    def move_objects_relative(self, object_list, relative_position):  
+        """
+        move a list of objects in the scene relative to their current position
+        input: object_list: list of objects to move
+        input: relative_position: list of the relative position [x,y,z] to move the objects
+        output: None
+        """
+        relative_position = np.array(relative_position)
+        object_positions = [np.array(obj.location) for obj in object_list]
+        for i in range(len(object_list)):
+            object_list[i].location = object_positions[i] + relative_position
+        print(f"moved objects{object_list} to {relative_position}")
+    
     def configure_camera(self, position=(0,0,0)):
         """ Set the camera position to the given position"""
         # Set the camera position to the given height
@@ -325,7 +338,6 @@ class object_placement:
         """
         if bpy.context.selected_objects != []:
             bpy.ops.object.select_all(action='DESELECT')
-
         
     def finalize(self):
         """ 

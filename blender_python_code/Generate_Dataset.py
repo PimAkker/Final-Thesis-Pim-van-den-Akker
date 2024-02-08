@@ -16,9 +16,10 @@ if current_directory[-1] != root_dir_name:
 
 
 # add all the subdirectories to the path
-for root, dirs, files in os.walk(os.getcwd()):
-    for dir in dirs:
-        sys.path.append(os.path.join(root, dir))
+dirs  = os.listdir()
+root = os.getcwd()
+for dir in dirs:
+    sys.path.append(os.path.join(root, dir))
 sys.path.append(os.getcwd())
 import bpy
 import bpycv
@@ -93,19 +94,27 @@ for i in np.arange(file_number,nr_of_images+file_number):
     
     # cru_class.render_data(folder =masks_folder,  path_affix=f"True{i}", save_rgb=False, save_combined=False, save_inst=True)   
 
-    # we hide a s
+
 
     # Generate pointcloud image
     place_class.place_raytrace()
     bbox_raytrace, _, _, _ = place_class.get_object_dims("raytrace.001")
+   
+    # move a percentage of objects down, this will move them out of the raytrace image
+    # and will therefore not be seen in the pointcloud but will be seen in the mask and map
+    # simulating that they are removed in real life but present on the map
+    objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1, bbox=bbox_raytrace)
+    place_class.move_objects_relative(objects_to_move, [0,0,-10])
+    place_class.set_object_id(obj_ids["chairs removed"],selection=objects_to_move)
+    
     place_class.isolate_object("raytrace")
     place_class.configure_camera(position=(0,0,height/2))
     cru_class.simple_render(folder= images_folder,file_prefix ="pointcloud", file_affix="")
     place_class.unisolate()
 
-    place_class.delete_single_object("raytrace.001")
+    # place_class.delete_single_object("raytrace.001")
     
-    objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1,bbox=bbox_raytrace)
+    objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3,bbox=bbox_raytrace)
     place_class.set_object_id(obj_ids["chairs new"],selection=objects_to_delete)
 
     cru_class.render_data(folder =masks_folder,  path_affix=f"Mask{i}", save_combined=False,save_rgb=False, save_inst=True)   
