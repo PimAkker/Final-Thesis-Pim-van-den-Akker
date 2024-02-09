@@ -2,10 +2,9 @@
 import torch
 import os
 import sys
-sys.path.append(os.path.join(os.curdir, "utilities"))
-sys.path.append(os.path.join(os.curdir, r"model_training/utilities"))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
+utils_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "utilities"))
+sys.path.append(utils_path)
 root_dir_name = 'Blender'
 current_directory = os.getcwd().split("\\")
 assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
@@ -40,7 +39,8 @@ import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import sys
 from torchvision.ops.boxes import masks_to_boxes
-
+image_path = r"data\Images\input-0-.jpg"
+mask_path = r"data\Masks\inst-Mask0-0-.npy"
 #%%
 
 if __name__ == '__main__':
@@ -52,8 +52,7 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-07_11-09-03.pth"))
     model.to(device)
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    image_path = r"..\data\Images\input-0-.jpg"
-    mask_path = r"..\data\Masks\inst-Mask0-0-.npy"
+
     image_orig = read_image(image_path)
     mask_true = np.load(mask_path)
     eval_transform = get_transform(train=False)
@@ -102,8 +101,8 @@ if __name__ == '__main__':
     output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
 
 
-    # masks = (pred["masks"] > confidence_threshold).squeeze(1)
-    # output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
+    masks = (pred["masks"] > confidence_threshold).squeeze(1)
+    output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
 
 
     plt.figure(figsize=(12, 12))
@@ -113,62 +112,42 @@ if __name__ == '__main__':
 #%% 
 # render just the input image 
 if __name__ == '__main__':
-
-    image_path = r"..\data\Images\input-0-.jpg"
-    mask_path = r"..\data\Masks\inst-Mask0-0-.npy"
+    
+    show_image = True
+    show_mask = True
+    draw_bounding = True
+    
     image_orig = read_image(image_path)
     mask = torch.from_numpy(np.load(mask_path))
-    
 
-    # instances are encoded as different colors
-    obj_ids = torch.unique(mask)
-    # first id is the background, so remove it
-    obj_ids = obj_ids[1:]
+    obj_ids = torch.unique(mask)[1:]
     num_objs = len(obj_ids)
     labels = obj_ids // 1000
     labels = labels.long()
-        
-    # split the color-encoded mask into a set
-    # of binary masks
-    masks = (mask == obj_ids[:, None, None]).to(dtype=torch.uint8)
-
-    # get bounding box coordinates for each mask
+    labels = labels[1:]
+    masks = (mask == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
+    masks = masks[1:]
     boxes = masks_to_boxes(masks)
-    
-    # if the boundings boxes are one pixel wide or tall, add a pixel to their width or height respectively
-    # this avoids having boxes with size 0
     boxes[:, 2] += boxes[:, 0] == boxes[:, 2]
     boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
-    
-    
-    image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
-    image_orig = image_orig[:3, ...]
-    # get the labels from category_information and link them to the pred_labels
-    pred_labels = labels
-    pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in pred_labels]
-    
-    # change chairs removed to REMCHAIR
+    if show_image:
+        image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
+        image_orig = image_orig[:3, ...]
+    else :
+        image_orig = torch.zeros_like(image_orig)
+    pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in labels]
     pred_labels = [x.replace("chairs removed", " REMCHAIR") for x in pred_labels]
     pred_labels = [x.replace("chairs new", " NEWCHAIR") for x in pred_labels]
-    output_image = draw_bounding_boxes(image_orig, boxes, pred_labels, colors="red")
-    # output_image = image
-    # output_image = torch.zeros_like(image)
+
+    if draw_bounding:
+        output_image = draw_bounding_boxes(image_orig, boxes, pred_labels, colors="red")
     
-    # split the color-encoded mask into a set
-    # of binary masks
-    masks_true = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8)
-    # convert masks too booleon
-    masks_true = masks_true.bool()
-
-    masks = (pred["masks"] > 0.7).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
-
-
-    # masks = (pred["masks"] > confidence_threshold).squeeze(1)
-    # output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
-
+    if show_mask:
+        output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
 
     plt.figure(figsize=(12, 12))
     plt.imshow(output_image.permute(1, 2, 0))
     plt.show()
+
+
 # %%

@@ -153,6 +153,8 @@ class blender_object_placement:
         bpy.ops.object.convert(target='MESH')
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
+        bpy.ops.mesh.separate(type='LOOSE')
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
         obj.location = self.default_location
         self.set_object_id(object_name=object_name, class_label=inst_id)
         
