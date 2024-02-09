@@ -7,10 +7,10 @@ import bpycv
 import random
 import numpy as np
 import time
-from object_placement_utils import object_placement
+from blender_python_code.data_gen_utils import blender_object_placement
 from custom_render_utils import render_data
 
-place_class = object_placement(delete_duplicates=False)
+place_class = blender_object_placement(delete_duplicates=False)
 place_class.place_room()
 # place_class.place_tables(num_tables=5,inst_id=100)
 

@@ -2,68 +2,46 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
+
+# ensure we are in the correct directory
+root_dir_name = 'Blender'
+current_directory = os.getcwd().split("\\")
+assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
+if current_directory[-1] != root_dir_name:
+    # go down in the directory tree until the root directory is found
+    while current_directory[-1] != root_dir_name:
+        os.chdir("..")
+        current_directory = os.getcwd().split("\\")
+
+
+# add all the subdirectories to the path
+dirs  = os.listdir()
+root = os.getcwd()
+for dir in dirs:
+    sys.path.append(os.path.join(root, dir))
+sys.path.append(os.getcwd())
 import bpy
 import bpycv
 import random
 import numpy as np
 import time
-import cv2
 import custom_render_utils
 import importlib
-import object_placement_utils
+import blender_python_code.data_gen_utils as data_gen_utils
+from category_information import category_information
+total_start_time = time.time()
 
+masks_folder = r"data\Masks"
+images_folder = r"data\Images"
+nr_of_images = 1
+overwrite_data = False
+empty_folders = True
+obj_ids = category_information
 
-# force a reload of object_placement_utils to help during development
-importlib.reload(object_placement_utils)
-importlib.reload(custom_render_utils)
+place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
+   
+bbox_raytrace, _, _, _ = place_class.get_object_dims("raytrace.001")
 
-# start_time = time.time()
-
-try:
-    for ob in bpy.context.selected_objects:
-        ob.select = False
-except:
-    pass
-try:
-    bpy.ops.outliner.item_activate(deselect_all=True)
-except:
-    pass
-try:
-    bpy.ops.object.select_all(action='DESELECT')
-except:
-    pass   
-
-# modifier = bpy.data.objects['Walls'].modifiers['GeometryNodes']
-# for input in modifier.node_group.inputs:
-#     print(f"Input {input.identifier} is named {input.type}")
-place_class = object_placement_utils.object_placement(delete_duplicates=False)
-
-geometry_nodes = bpy.data.objects["Walls"].modifiers['GeometryNodes']
-
-modifier_identifier_list = [input.identifier for input in geometry_nodes.node_group.inputs]
-
-modifier_name_list = [input.name for input in geometry_nodes.node_group.inputs]
-modifier_name_list = [name.lower() for name in modifier_name_list][1:]
-
-# for modifier in modifier_name_list:
-
-place_class.set_modifier("Walls", "seed", 3.11)
-
-
-
-# place_class.place_walls(inst_id=1)
-# place_class.finalize()
-
-
-#%%
-import PIL
-import numpy as np
-# open image
-img = PIL.Image.open(r"C:\Users\pimde\OneDrive\thesis\Blender\blender_python_code\data\Images\Map1.png")
-numpy_img = np.array(img)
-print(numpy_img[0])
-
-
-# %%
+objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1, bbox=bbox_raytrace)
+place_class.move_objects_relative(objects_to_move, [0,0,-10])
