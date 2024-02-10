@@ -29,7 +29,7 @@ class blender_object_placement:
         input: 
             object_name: name of the object to set the modifier of type string
             modifier_name: name of the modifier to set of type string
-            value: value to set the modifier to of type int, float or tuple, 
+            value: value to set the modifier to of type int, float, boolean or tuple, 
             if tuple then the value is set to a random value between the tuple values if the modifier is of type int or float
             then the value is set to the that value.
         output: None
@@ -63,8 +63,9 @@ class blender_object_placement:
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "Walls" should have the "Walls" geometry node modifier
 
-        min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
-        max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
+        if type(value) == int or type(value) == float or type(value) == tuple:
+            min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
+            max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
         # if the modifier is a tuple then set the value as a random value bouded by the tuple
         if type(value) == tuple:
@@ -84,8 +85,8 @@ class blender_object_placement:
             assert value >= min_val, f"Value: {value} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value <= max_val, f"Value: {value} is too large for {modifier_name} modifier that: {min_val} <= value <= {max_val}"
 
-        else:   
-            raise ValueError(f"Value: {value} is not of type int, float or tuple")
+        elif type(value) != bool:   
+            raise ValueError(f"Value: {value} is not of type int, bool,  float or tuple")
 
         bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
 
@@ -297,7 +298,7 @@ class blender_object_placement:
         object_positions = [np.array(obj.location) for obj in object_list]
         for i in range(len(object_list)):
             object_list[i].location = object_positions[i] + relative_position
-        pass
+
     
     def configure_camera(self, position=(0,0,0)):
         """ Set the camera position to the given position"""

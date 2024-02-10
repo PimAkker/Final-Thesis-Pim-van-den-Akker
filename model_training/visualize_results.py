@@ -6,6 +6,7 @@ import sys
 utils_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "utilities"))
 sys.path.append(utils_path)
 root_dir_name = 'Blender'
+
 current_directory = os.getcwd().split("\\")
 assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
 if current_directory[-1] != root_dir_name:
@@ -46,7 +47,6 @@ mask_path = r"data\Masks\inst-Mask0-0-.npy"
 if __name__ == '__main__':
     num_classes = len(category_information)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    os.chdir(os.path.abspath(os.path.dirname(__file__)))
     model = get_model_instance_segmentation(num_classes)
     # load the weights
     model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-07_11-09-03.pth"))
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     masks = (pred["masks"] > confidence_threshold).squeeze(1)
     output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
 
-
+    plt.title("Prediction")
     plt.figure(figsize=(12, 12))
     plt.imshow(output_image.permute(1, 2, 0))
     plt.show()
@@ -145,6 +145,7 @@ if __name__ == '__main__':
     if show_mask:
         output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
 
+    plt.title("ground truth")
     plt.figure(figsize=(12, 12))
     plt.imshow(output_image.permute(1, 2, 0))
     plt.show()
