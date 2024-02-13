@@ -40,74 +40,85 @@ import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import sys
 from torchvision.ops.boxes import masks_to_boxes
-image_path = r"data\Images\input-0-.jpg"
-mask_path = r"data\Masks\inst-Mask0-0-.npy"
+import numpy as np
+
 #%%
-
+image_path = r"data\Images"
+mask_path = r"data\Masks"
 if __name__ == '__main__':
-    num_classes = len(category_information)
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model = get_model_instance_segmentation(num_classes)
-    # load the weights
-    model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-07_11-09-03.pth"))
-    model.to(device)
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-    image_orig = read_image(image_path)
-    mask_true = np.load(mask_path)
-    eval_transform = get_transform(train=False)
-
-    model.eval()
-    with torch.no_grad():
-        x = eval_transform(image_orig)
-        # convert RGBA -> RGB and move to device
-        x = x[:3, ...].to(device)
-        predictions = model([x, ])
-        pred = predictions[0]
-
-    confidence_threshold = 0.9
     
+    for file_nr in range(0,1):
+        num_classes = len(category_information)
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        model = get_model_instance_segmentation(num_classes)
+        # load the weights
+        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-12_13-56-25.pth"))
+        model.to(device)
+        sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-    image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
-    image_orig = image_orig[:3, ...]
-    # get the labels from category_information and link them to the pred_labels
-    pred_labels = pred["labels"]
-    pred_labels = pred_labels[pred["scores"] > confidence_threshold]
-    pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in pred_labels]
-    # change chairs removed to REMCHAIR
-    pred_labels = [x.replace("Chairs removed", " REMCHAIR") for x in pred_labels]
-   
-    pred_boxes = pred["boxes"].long()
-    pred_boxes = pred_boxes[pred["scores"] > confidence_threshold]
-    
-    output_image = draw_bounding_boxes(image_orig, pred_boxes, pred_labels, colors="red")
-    # output_image = image
-    # output_image = torch.zeros_like(image)
-    
-    mask_true = torch.from_numpy(mask_true)
-    # instances are encoded as different colors
-    obj_ids = torch.unique(mask_true)
-    # first id is the background, so remove it
-    obj_ids = obj_ids[1:]
-    num_objs = len(obj_ids)
-    
-    # split the color-encoded mask into a set
-    # of binary masks
-    masks_true = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8)
-    # convert masks too booleon
-    masks_true = masks_true.bool()
+        # pick a random files pair from the specified folder
+            
+        nr_of_files_in_path = len(os.listdir(image_path))
+        # file_nr  = np.random.randint(0,nr_of_files_in_path)
+        image_path_temp = os.path.join(image_path , f"input-{file_nr}-.jpg")
+        mask_path_temp = os.path.join(mask_path, f"inst-mask-{file_nr}-.npy")
 
-    masks = (pred["masks"] > 0.7).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
+        image_orig = read_image(image_path_temp)
+        mask_true = np.load(mask_path_temp)
+        eval_transform = get_transform(train=False)
+
+        model.eval()
+        with torch.no_grad():
+            x = eval_transform(image_orig)
+            # convert RGBA -> RGB and move to device
+            x = x[:3, ...].to(device)
+            predictions = model([x, ])
+            pred = predictions[0]
+
+        confidence_threshold = 0.2
+        
+
+        image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
+        image_orig = image_orig[:3, ...]
+        # get the labels from category_information and link them to the pred_labels
+        pred_labels = pred["labels"]
+        pred_labels = pred_labels[pred["scores"] > confidence_threshold]
+        pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in pred_labels]
+        # change chairs removed to REMCHAIR
+
+        red_labels = [x.replace("chairs removed", " REMCHAIR") for x in pred_labels]
+        pred_labels = [x.replace("chairs new", " NEWCHAIR") for x in pred_labels]
+        pred_boxes = pred["boxes"].long()
+        pred_boxes = pred_boxes[pred["scores"] > confidence_threshold]
+        
+        output_image = draw_bounding_boxes(image_orig, pred_boxes, pred_labels, colors="red")
+        # output_image = image
+        # output_image = torch.zeros_like(image)
+        
+        mask_true = torch.from_numpy(mask_true)
+        # instances are encoded as different colors
+        obj_ids = torch.unique(mask_true)
+        # first id is the background, so remove it
+        obj_ids = obj_ids[1:]
+        num_objs = len(obj_ids)
+        
+        # split the color-encoded mask into a set
+        # of binary masks
+        masks_true = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8)
+        # convert masks too booleon
+        masks_true = masks_true.bool()
+
+        masks = (pred["masks"] > 0.7).squeeze(1)
+        output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
 
 
-    masks = (pred["masks"] > confidence_threshold).squeeze(1)
-    output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
+        masks = (pred["masks"] > confidence_threshold).squeeze(1)
+        output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
 
-    plt.title("Prediction")
-    plt.figure(figsize=(12, 12))
-    plt.imshow(output_image.permute(1, 2, 0))
-    plt.show()
+        plt.title("Prediction")
+        plt.figure(figsize=(12, 12))
+        plt.imshow(output_image.permute(1, 2, 0))
+        plt.show()
     
 #%% 
 # render just the input image 
@@ -117,8 +128,8 @@ if __name__ == '__main__':
     show_mask = True
     draw_bounding = True
     
-    image_orig = read_image(image_path)
-    mask = torch.from_numpy(np.load(mask_path))
+    image_orig = read_image(image_path_temp)
+    mask = torch.from_numpy(np.load(mask_path_temp))
 
     obj_ids = torch.unique(mask)[1:]
     num_objs = len(obj_ids)

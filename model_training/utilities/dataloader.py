@@ -33,7 +33,7 @@ class LoadDataset(torch.utils.data.Dataset):
         # first id is the background, so remove it
         obj_ids = obj_ids[1:]
         num_objs = len(obj_ids)
-
+    
         img = read_image(img_path)
         # set images to device
         

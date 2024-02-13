@@ -2,9 +2,30 @@
 import torch
 import os
 import sys
-sys.path.append(os.path.join(os.curdir, "utilities"))
-sys.path.append(os.path.join(os.curdir, r"model_training/utilities"))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+
+
+# sys.path.append(os.path.join(os.curdir, r"model_training/utilities"))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+path = os.path.dirname(os.path.abspath(__file__))
+path = "\\".join(path.split("\\")[:-1])
+
+os.chdir(path)
+
+
+# ensure we are in the correct directory
+root_dir_name = 'Blender'
+current_directory = os.getcwd().split("\\")
+assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
+if current_directory[-1] != root_dir_name:
+    # go down in the directory tree until the root directory is found
+    while current_directory[-1] != root_dir_name:
+        os.chdir("..")
+        current_directory = os.getcwd().split("\\")
+        
+sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
+sys.path.append(os.getcwd())
 import torch
 from PIL import Image
 from torchvision.io import read_image
@@ -30,16 +51,15 @@ if __name__ == '__main__':
     import os
     from utilities.engine import train_one_epoch, evaluate
     import utilities.utils
-    from category_information import catogory_information
-    os.chdir(os.path.abspath(os.path.dirname(__file__)))
+    from category_information import category_information
 
-    data_root = r'../data'
-    num_classes = len(catogory_information)
+    data_root = r'data'
+    num_classes = len(category_information)
     
     save_model = True
     num_epochs = 1
     train_percentage = 0.8
-    batch_size = 4
+    batch_size = 8
     learning_rate = 0.005
     momentum=0.9
     weight_decay=0.0005
@@ -155,15 +175,15 @@ if __name__ == '__main__':
     import datetime
     if save_model:
         datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        # # save the model
-        # torch.save(model.state_dict(), os.path.join(r"..\data\Models\\", f"model_{datetime}.pth"))
+        # save the model
+        torch.save(model.state_dict(), os.path.join(r"data\Models\\", f"model_{datetime}.pth"))
         
-        # # save metrics the metrics list 
-        # with open(os.path.join(r"..\data\Models\\", f"metrics_{datetime}.txt"), 'w') as f:
-        #     for metric in metrics:
-        #         f.write(f"{metric}\n")
+        # save metrics the metrics list 
+        with open(os.path.join(r"data\Models\\", f"metrics_{datetime}.txt"), 'w') as f:
+            for metric in metrics:
+                f.write(f"{metric}\n")
         # save the evaluator list
-        with open(os.path.join(r"..\data\Models\\", f"IoU_info_{datetime}.txt"), 'w') as f:
+        with open(os.path.join(r"data\Models", f"IoU_info_{datetime}.txt"), 'w') as f:
             for i, info in enumerate(IoU_info):
                 f.write(f"IoU for epoch {i+1}: {info.coco_eval['bbox'].stats}\n")
         

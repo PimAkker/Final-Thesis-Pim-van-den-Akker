@@ -14,8 +14,9 @@ class custom_render_utils:
         self.input_file_type = ".png" # only change this when also changed in blender renderer
         self.output_file_type = ".jpg"
         self.simple_render_image_path_dict = {}
-        self.render_data_mask_path_list = []
-        
+        self.render_masks = {}
+        self.masks_path_dict = {}
+
     def render_data(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
         # render image, instance annoatation and depth
@@ -31,8 +32,9 @@ class custom_render_utils:
         
         if save_inst:
             path_name = os.path.join(folder, f"inst-{path_affix}-{self.image_id}-.npy") 
+            self.masks_path_dict[path_affix]= path_name
             np.save(path_name, result["inst"])
-            self.render_data_mask_path_list.append(path_name)
+            self.render_masks[path_affix]= result["inst"]
             nr_of_inst= len(np.unique(result["inst"]))
             
             if nr_of_inst > 3:
@@ -53,7 +55,7 @@ class custom_render_utils:
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
         
-    def combine_simple_renders(self, path= "data", remove_originals = True, file_nr=""):
+    def combine_simple_renders(self, path= "data", remove_originals = True, file_nr="",render_visible_only=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
         pointcloud_image = np.array(Image.open(self.simple_render_image_path_dict['pointcloud']))
@@ -74,7 +76,8 @@ class custom_render_utils:
         combined_image[pointcloud_image[:,:,3] == 1] = pointcloud_image[pointcloud_image[:,:,3] == 1]
         
         # only show the visible region in the combined image
-        combined_image[visible_region_mask[:,:,3] == 0] = [0,0,0,1]
+        if render_visible_only:
+            combined_image[visible_region_mask[:,:,3] == 0] = [0,0,0,1]
            
          
         cv2.imwrite(os.path.join(path, f"input-{file_nr}-{self.output_file_type}"), combined_image)
@@ -83,32 +86,31 @@ class custom_render_utils:
             # delete the pointcloud and map images
             for key in self.simple_render_image_path_dict:
                 os.remove(self.simple_render_image_path_dict[key])
-    def combine_masks(self, path="data",remove_originals=True):
-        """
-        NOTE: will be removed, not used in the final version
+    def process_masks(self, path="data",remove_originals=False, output_only_visible_region=False):
         """
         
-        
-        mask_prior = np.load(self.render_data_mask_path_list[0])
-        mask_true = np.load(self.render_data_mask_path_list[1])
-        
-        # where mask_prior is 0 where mask_true is not an object has been removed. 
-        # If an object has been removed then +100 to the mask prior value
-        mask_prior_nonzero = mask_prior != 0
-        mask_true_nonzero = mask_true != 0
-        non_present_mask = mask_prior_nonzero != mask_true_nonzero
-        
-        combined_mask = mask_prior.copy()
-        combined_mask[non_present_mask] += 100
-        
-        np.save(f"combined_mask.npy", combined_mask)
-        
-        if remove_originals:
-            # delete the prior and true masks
-            os.remove(self.render_data_mask_path_list[0])
-            os.remove(self.render_data_mask_path_list[1])
-
+        """
+        mask = self.render_masks['mask']
+        visible_region_mask = cv2.imread(self.simple_render_image_path_dict['visible_region_mask'], cv2.IMREAD_UNCHANGED)
+        visible_region_mask = visible_region_mask.astype(np.int64)
+        obj_ids = np.unique(mask)
         
         
+        # first id is the background, so remove it
+        obj_ids = obj_ids[1:]
+        # split the color-encoded mask into a set
+        # of binary masks
+        masks = (mask == obj_ids[:, None, None])
         
+        vis_mask_mask = visible_region_mask[:,:,3] != 0
+        vis_mask_mask = np.tile(vis_mask_mask,(len(obj_ids),1,1))
+        overlap_areas = ((vis_mask_mask==1) & (masks==1))
+        # select the masks that have an overlap with the visible region mask
+        masks_containing_overlap_mask = overlap_areas.any(axis=(1,2))
+        masks_containing_overlap = masks[masks_containing_overlap_mask]
+        masks_containing_overlap = (np.sum(masks_containing_overlap,axis=0)).astype(bool)
+        output_mask = np.zeros_like(mask)
+        output_mask[masks_containing_overlap] = mask[masks_containing_overlap]
+        np.save(self.masks_path_dict['mask'], output_mask)
+    
         

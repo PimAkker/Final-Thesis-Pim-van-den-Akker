@@ -29,7 +29,8 @@ class blender_object_placement:
         input: 
             object_name: name of the object to set the modifier of type string
             modifier_name: name of the modifier to set of type string
-            value: value to set the modifier to of type int, float, boolean or tuple, 
+            value: value to set the modifier to of type int, float, boolean or tuple,
+            NOTE: random choice is not supported for boolean values 
             if tuple then the value is set to a random value between the tuple values if the modifier is of type int or float
             then the value is set to the that value.
         output: None
@@ -84,9 +85,10 @@ class blender_object_placement:
                 value = int(value)
             assert value >= min_val, f"Value: {value} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value <= max_val, f"Value: {value} is too large for {modifier_name} modifier that: {min_val} <= value <= {max_val}"
-
+        elif type(value) == np.bool_:
+            value = bool(value)
         elif type(value) != bool:   
-            raise ValueError(f"Value: {value} is not of type int, bool,  float or tuple")
+            raise ValueError(f"The value for {modifier_name}: {value} is not of type int, bool,  float or tuple")
 
         bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
 

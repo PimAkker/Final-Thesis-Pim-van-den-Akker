@@ -3,11 +3,17 @@
 import os
 import sys
 
+# set file as curdir
+path = os.path.dirname(os.path.abspath(__file__))
+path = "\\".join(path.split("\\")[:-1])
+
+os.chdir(path)
+
 
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
 current_directory = os.getcwd().split("\\")
-assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
+assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
 if current_directory[-1] != root_dir_name:
     # go down in the directory tree until the root directory is found
     while current_directory[-1] != root_dir_name:
@@ -35,14 +41,14 @@ total_start_time = time.time()
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
 nr_of_images = 1
-overwrite_data = True
+overwrite_data = False
 empty_folders = True
 
 obj_ids = category_information
 walls_modifiers = {"Wall width":(0.05,0.2), 
                     "Wall Amount X": (2,5),
                     "Wall Amount Y": (2,5),
-                    "Wall Density": (0.3,0.9),
+                    "Wall Density": (0.5,0.95),
                     "Seed": (0,10000),
                     "Min door width": 0.3,
                     "Max door width": 1.5,
@@ -50,7 +56,21 @@ walls_modifiers = {"Wall width":(0.05,0.2),
                     "Max door rotation": (0,np.pi),
                     "Door density": (0.1,1),                    
                    }
-
+chair_size = (0.4, 0.6)
+chairs_modifiers = {"chair width":chair_size,
+                    "chair length": chair_size,
+                    "leg width": (0.05,0.1),
+                    "circular legs":np.random.choice([True, False]),
+                    "leg type": np.random.choice([True, False]),                                               
+                   }
+round_table_modifiers = {"table legs":(3,5),
+                        "table x width":(0.5,1.5),
+                        "table y width":(0.5,1.5),
+                        "leg radius":(0.05,0.1)
+                        }
+pillar_table_modifiers = {"width":(0.3,1),
+                          "round/square": np.random.choice([True, False])
+                          }
 # force a reload of object_placement_utils to help during development
 importlib.reload(data_gen_utils)
 importlib.reload(custom_render_utils)
@@ -71,6 +91,12 @@ for i in np.arange(file_number, nr_of_images + file_number):
 
     for modifier in list(walls_modifiers.keys()):
         place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
+    for modifier in list(chairs_modifiers.keys()):
+        place_class.set_modifier("chair", modifier, chairs_modifiers[modifier])
+    for modifier in list(round_table_modifiers.keys()):
+        place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
+    for modifier in list(pillar_table_modifiers.keys()):   
+        place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])
     
     # Generate the room
     _, height, width, depth = place_class.get_object_dims(object_name="walls")
@@ -88,13 +114,15 @@ for i in np.arange(file_number, nr_of_images + file_number):
    
     # move a percentage of objects down, this will move them out of the raytrace image
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
-    # simulating that they are removed in real life but present on the map
+    # simulating that they are1
+    # removed in real life but present on the map
     objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
     place_class.move_objects_relative(objects_to_move, [0, 0, -10])
     place_class.set_object_id(obj_ids["chairs removed"], selection=objects_to_move)
     
     place_class.isolate_object("raytrace")
     place_class.configure_camera(position=(0, 0, height/2))
+    place_class.set_modifier("raytrace.001", "visible surface switch", False)
     cru_class.simple_render(folder=images_folder, file_prefix="pointcloud", file_affix="")
     place_class.set_modifier("raytrace.001", "visible surface switch", True)
     cru_class.simple_render(folder=images_folder, file_prefix="visible_region_mask", file_affix="")
@@ -105,11 +133,11 @@ for i in np.arange(file_number, nr_of_images + file_number):
     objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
     place_class.set_object_id(obj_ids["chairs new"], selection=objects_to_delete)
 
-    cru_class.render_data(folder=masks_folder, path_affix=f"mask{i}", save_combined=False, save_rgb=False, save_inst=True)   
+    cru_class.render_data(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
     place_class.delete_objects(objects_to_delete)
     
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
-
+    cru_class.process_masks(path= masks_folder, output_only_visible_region=True)
     place_class.finalize()
     
     cru_class.combine_simple_renders(path=images_folder, remove_originals=True, file_nr=f"{i}")
