@@ -43,11 +43,13 @@ from torchvision.ops.boxes import masks_to_boxes
 import numpy as np
 
 #%%
+import matplotlib.pyplot as plt
+
 image_path = r"data\Images"
 mask_path = r"data\Masks"
 if __name__ == '__main__':
     
-    for file_nr in range(0,1):
+    for file_nr in range(0,10):
         num_classes = len(category_information)
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = get_model_instance_segmentation(num_classes)
@@ -115,51 +117,51 @@ if __name__ == '__main__':
         masks = (pred["masks"] > confidence_threshold).squeeze(1)
         output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
 
+        
+        plt.figure(figsize=(12, 6))
+        plt.subplot(1, 2, 1)
         plt.title("Prediction")
-        plt.figure(figsize=(12, 12))
+        plt.imshow(output_image.permute(1, 2, 0))
+
+    
+        
+        show_image = True
+        show_mask = True
+        draw_bounding = True
+        
+        image_orig = read_image(image_path_temp)
+        mask = torch.from_numpy(np.load(mask_path_temp))
+
+        obj_ids = torch.unique(mask)[1:]
+        num_objs = len(obj_ids)
+        labels = obj_ids // 1000
+        labels = labels.long()
+        labels = labels
+        masks = (mask == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
+        masks = masks
+        boxes = masks_to_boxes(masks)
+        boxes[:, 2] += boxes[:, 0] == boxes[:, 2]
+        boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
+        if show_image:
+            image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
+            image_orig = image_orig[:3, ...]
+        else :
+            image_orig = torch.zeros_like(image_orig)
+        pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in labels]
+        pred_labels = [x.replace("chairs removed", " REMCHAIR") for x in pred_labels]
+        pred_labels = [x.replace("chairs new", " NEWCHAIR") for x in pred_labels]
+
+        if draw_bounding:
+            output_image = draw_bounding_boxes(image_orig, boxes, pred_labels, colors="red")
+        
+        if show_mask:
+            output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
+
+       
+        plt.subplot(1, 2, 2) 
+        plt.title("ground truth")
         plt.imshow(output_image.permute(1, 2, 0))
         plt.show()
-    
-#%% 
-# render just the input image 
-if __name__ == '__main__':
-    
-    show_image = True
-    show_mask = True
-    draw_bounding = True
-    
-    image_orig = read_image(image_path_temp)
-    mask = torch.from_numpy(np.load(mask_path_temp))
-
-    obj_ids = torch.unique(mask)[1:]
-    num_objs = len(obj_ids)
-    labels = obj_ids // 1000
-    labels = labels.long()
-    labels = labels[1:]
-    masks = (mask == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
-    masks = masks[1:]
-    boxes = masks_to_boxes(masks)
-    boxes[:, 2] += boxes[:, 0] == boxes[:, 2]
-    boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
-    if show_image:
-        image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
-        image_orig = image_orig[:3, ...]
-    else :
-        image_orig = torch.zeros_like(image_orig)
-    pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in labels]
-    pred_labels = [x.replace("chairs removed", " REMCHAIR") for x in pred_labels]
-    pred_labels = [x.replace("chairs new", " NEWCHAIR") for x in pred_labels]
-
-    if draw_bounding:
-        output_image = draw_bounding_boxes(image_orig, boxes, pred_labels, colors="red")
-    
-    if show_mask:
-        output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
-
-    plt.title("ground truth")
-    plt.figure(figsize=(12, 12))
-    plt.imshow(output_image.permute(1, 2, 0))
-    plt.show()
 
 
 # %%

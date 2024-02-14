@@ -40,7 +40,7 @@ total_start_time = time.time()
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 1
+nr_of_images = 10
 overwrite_data = False
 empty_folders = True
 
@@ -87,7 +87,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     start_time = time.time()
 
     place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i))
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i), remove_originals=True,render_only_visible=True)
 
     for modifier in list(walls_modifiers.keys()):
         place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
@@ -129,7 +129,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.unisolate()
 
     place_class.delete_single_object("raytrace.001")
-    
+    1
     objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
     place_class.set_object_id(obj_ids["chairs new"], selection=objects_to_delete)
 
@@ -137,10 +137,10 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.delete_objects(objects_to_delete)
     
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
-    cru_class.process_masks(path= masks_folder, output_only_visible_region=True)
     place_class.finalize()
     
-    cru_class.combine_simple_renders(path=images_folder, remove_originals=True, file_nr=f"{i}")
-    print(f"Total time: {time.time() - start_time}")
+    cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}")
+    
+    print(f"Time for this image: {time.time() - start_time}")
 
 print(f"Done! Created {nr_of_images} images in {time.time() - total_start_time} seconds.")

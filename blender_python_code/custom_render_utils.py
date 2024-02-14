@@ -9,14 +9,26 @@ import time
 from PIL import Image
 
 class custom_render_utils:
-    def __init__(self, image_id = "0"):
+    def __init__(self, image_id = "0",remove_originals = True, render_only_visible=False):
+        """
+        inputs: image_id (str): the id of the image will be used for naming all the files in this class
+        remove_originals (bool): if True the original images in mask_path_dict and simple_render_image_path_dict 
+        will be removed after the combined image is created.
+        render_only_visible (bool): if True the mask will only contain the visible region of the mask, this functions
+        only gets triggered when combine_simple_renders is called.
+        
+        """
+        
+        
         self.image_id = image_id
         self.input_file_type = ".png" # only change this when also changed in blender renderer
         self.output_file_type = ".jpg"
         self.simple_render_image_path_dict = {}
         self.render_masks = {}
         self.masks_path_dict = {}
-
+        self.input_file_path = ""
+        self.remove_originals = remove_originals
+        self.render_only_visible_bool = render_only_visible
     def render_data(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
         # render image, instance annoatation and depth
@@ -55,7 +67,7 @@ class custom_render_utils:
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
         
-    def combine_simple_renders(self, path= "data", remove_originals = True, file_nr="",render_visible_only=False):
+    def combine_simple_renders(self, path= "data", file_nr=""):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
         pointcloud_image = np.array(Image.open(self.simple_render_image_path_dict['pointcloud']))
@@ -75,22 +87,26 @@ class custom_render_utils:
         combined_image = map_image.copy()
         combined_image[pointcloud_image[:,:,3] == 1] = pointcloud_image[pointcloud_image[:,:,3] == 1]
         
-        # only show the visible region in the combined image
-        if render_visible_only:
-            combined_image[visible_region_mask[:,:,3] == 0] = [0,0,0,1]
            
-         
-        cv2.imwrite(os.path.join(path, f"input-{file_nr}-{self.output_file_type}"), combined_image)
-        
-        if remove_originals:
+
+        self.input_file_path = os.path.join(path, f"input-{file_nr}-{self.output_file_type}")
+        if self.render_only_visible_bool:
+            self.render_only_visible(combined_image)
+        else:
+            cv2.imwrite(self.input_file_path, combined_image)
+            
+        if self.remove_originals:
             # delete the pointcloud and map images
             for key in self.simple_render_image_path_dict:
                 os.remove(self.simple_render_image_path_dict[key])
-    def process_masks(self, path="data",remove_originals=False, output_only_visible_region=False):
-        """
         
+
+    def render_only_visible(self,combined_image):
         """
-        mask = self.render_masks['mask']
+        This function will only render the visible region of the mask	
+        NOTE: has to be triggered after the creation of visible_region_mask
+        """
+        mask = np.load(self.masks_path_dict['mask'])
         visible_region_mask = cv2.imread(self.simple_render_image_path_dict['visible_region_mask'], cv2.IMREAD_UNCHANGED)
         visible_region_mask = visible_region_mask.astype(np.int64)
         obj_ids = np.unique(mask)
@@ -111,6 +127,15 @@ class custom_render_utils:
         masks_containing_overlap = (np.sum(masks_containing_overlap,axis=0)).astype(bool)
         output_mask = np.zeros_like(mask)
         output_mask[masks_containing_overlap] = mask[masks_containing_overlap]
+        
+        # modify the input file so that it only contains the visible region
+        input_file_only_visible = np.zeros_like(combined_image)
+        input_file_only_visible[masks_containing_overlap] = combined_image[masks_containing_overlap]
+        
         np.save(self.masks_path_dict['mask'], output_mask)
+        cv2.imwrite(self.input_file_path, input_file_only_visible)
     
+        
+        
+        
         
