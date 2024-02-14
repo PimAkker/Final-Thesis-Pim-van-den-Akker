@@ -4,7 +4,7 @@ import bpycv
 import random
 import numpy as np
 import os
-
+import time
 class blender_object_placement:
     """ This class is used to place objects in the scene. It is used to place the room and tables in the scene.
 
@@ -19,6 +19,9 @@ class blender_object_placement:
         self.room_center = bpy.data.objects["walls"].location
         self.default_location = (0,0,0)   
         self.subset_selection = []
+        self.modifier_identifier_dict = {}
+        self.modifier_name_dict = {}
+        self.modifier_data_type_dict = {}
         
         # make sure we are in object mode 
         assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
@@ -35,24 +38,31 @@ class blender_object_placement:
             then the value is set to the that value.
         output: None
         """
-        
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # select active object
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
 
         modifier_name = modifier_name.lower()
-
+        
         geometry_nodes = bpy.data.objects[object_name].modifiers['GeometryNodes']
+        
+        if self.modifier_identifier_dict.get(object_name) is None:
+            self.modifier_identifier_dict[object_name] = [input.identifier for input in geometry_nodes.node_group.inputs][1:]
+            self.modifier_name_dict[object_name] = [input.name for input in geometry_nodes.node_group.inputs][1:]
+            self.modifier_name_dict[object_name] = [name.lower() for name in self.modifier_name_dict[object_name]]
+        
+        modifier_identifier_list = self.modifier_identifier_dict[object_name]
+        modifier_name_list = self.modifier_name_dict[object_name]
 
-        modifier_identifier_list = [input.identifier for input in geometry_nodes.node_group.inputs][1:]
-        modifier_name_list = [input.name for input in geometry_nodes.node_group.inputs][1:]
-        modifier_name_list = [name.lower() for name in modifier_name_list]
 
         assert modifier_name in modifier_name_list, f"modifier_name: {modifier_name} is not in the list of supported modifiers \
         choose from {modifier_name_list}"
-
-        modifier_data_type_list = [input.type for input in geometry_nodes.node_group.inputs][1:]
+        
+        if self.modifier_data_type_dict.get(object_name) is None:
+            self.modifier_data_type_dict[object_name] = [input.type for input in geometry_nodes.node_group.inputs][1:]
+           
+        modifier_data_type_list = self.modifier_data_type_dict[object_name]
 
         modifier_index = modifier_name_list.index(modifier_name)
 
@@ -60,15 +70,18 @@ class blender_object_placement:
         modifier_identifier = modifier_identifier_list[modifier_index]
         modifier_number = int(modifier_identifier.split("_")[1])
 
-        # retreive the maximum and minimum values of the modfiier as defined in the geometry nodes modifier.
+        # retreive the maximum and minimum values of the modfier as defined in the geometry nodes modifier.
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "Walls" should have the "Walls" geometry node modifier
+
 
         if type(value) == int or type(value) == float or type(value) == tuple:
             min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
             max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
+
         # if the modifier is a tuple then set the value as a random value bouded by the tuple
+
         if type(value) == tuple:
             assert value[0] >= min_val, f"Value: {value[0]} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value[1] <= max_val, f"Value: {value[1]} is too large for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
@@ -91,9 +104,12 @@ class blender_object_placement:
             raise ValueError(f"The value for {modifier_name}: {value} is not of type int, bool,  float or tuple")
 
         bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
+ 
 
         obj = bpy.context.active_object
+
         obj.data.update()
+
 
     def set_object_id(self,class_label, object_name = "walls", selection = None):
         """ 
@@ -328,8 +344,8 @@ class blender_object_placement:
         input: None
         output: None
         """
-        if bpy.context.selected_objects != []:
-            bpy.ops.object.select_all(action='DESELECT')
+        for obj in bpy.context.selected_objects:
+            obj.select_set(False)
         
     def finalize(self):
         """ 

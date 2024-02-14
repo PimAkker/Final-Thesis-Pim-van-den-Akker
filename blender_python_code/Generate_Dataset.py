@@ -40,7 +40,7 @@ total_start_time = time.time()
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 10
+nr_of_images = 2
 overwrite_data = False
 empty_folders = True
 
@@ -81,14 +81,17 @@ data_gen_utils.delete_folder_contents(masks_folder,images_folder,empty_folders=e
 file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
 
 
+place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
 for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Creating image {i}/{nr_of_images + file_number}")
     start_time = time.time()
 
-    place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i), remove_originals=True,render_only_visible=True)
+    
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=True)
 
+    
+    mod_time = time.time()
     for modifier in list(walls_modifiers.keys()):
         place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
     for modifier in list(chairs_modifiers.keys()):
@@ -97,14 +100,17 @@ for i in np.arange(file_number, nr_of_images + file_number):
         place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
     for modifier in list(pillar_table_modifiers.keys()):   
         place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])
-    
+    print("Time to set modifiers: ", time.time() - mod_time)
     # Generate the room
+    
+
     _, height, width, depth = place_class.get_object_dims(object_name="walls")
     place_class.place_walls(inst_id=obj_ids["walls"])
     place_class.place_doors(inst_id=obj_ids["doors"])
     place_class.place_objects(object_name="chairs display", inst_id=obj_ids["chairs"])
     place_class.place_objects(object_name="tables display", inst_id=obj_ids["tables"])
     place_class.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
+    
     
     # cru_class.render_data(folder=masks_folder, path_affix=f"True{i}", save_rgb=False, save_combined=False, save_inst=True)   
 
@@ -119,6 +125,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
     place_class.move_objects_relative(objects_to_move, [0, 0, -10])
     place_class.set_object_id(obj_ids["chairs removed"], selection=objects_to_move)
+
     
     place_class.isolate_object("raytrace")
     place_class.configure_camera(position=(0, 0, height/2))
@@ -129,7 +136,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.unisolate()
 
     place_class.delete_single_object("raytrace.001")
-    1
+    
     objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
     place_class.set_object_id(obj_ids["chairs new"], selection=objects_to_delete)
 
@@ -140,6 +147,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.finalize()
     
     cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}")
+
     
     print(f"Time for this image: {time.time() - start_time}")
 
