@@ -177,6 +177,7 @@ class blender_object_placement:
         obj.location = self.default_location
         self.set_object_id(object_name=object_name, class_label=inst_id)
         
+        
     def place_objects(self,inst_id=255, object_name=""):
 
         
@@ -347,6 +348,13 @@ class blender_object_placement:
         for obj in bpy.context.selected_objects:
             obj.select_set(False)
         
+    def delete_duplicates_func(self):
+        """
+        Deletes all objects which are copies of other objects, controlled
+        by self.delete_duplicates
+        """     
+        [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
+    
     def finalize(self):
         """ 
         this function cleans up the scene.
@@ -355,12 +363,11 @@ class blender_object_placement:
         
         """
         if self.delete_duplicates:
-            # delete all objects which are copied
-            [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
-            
+            self.delete_duplicates_func()    
         
         self.unisolate()
         self.blend_deselect_all()
+
         
 def delete_folder_contents(masks_folder, images_folder,empty_folders=False):
     """ 

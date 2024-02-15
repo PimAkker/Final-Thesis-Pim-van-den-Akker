@@ -32,7 +32,7 @@ class custom_render_utils:
     def render_data(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
         # render image, instance annoatation and depth
-        result = bpycv.render_data()
+        result = bpycv.render_data(render_image=False)
 
         rgb_pathname =      os.path.join(folder, f"rgb-{path_affix}-{self.image_id}-{self.input_file_type}")
         depth_pathname =    os.path.join(folder, f"depth-{path_affix}_depth-{self.image_id}-{self.input_file_type}")
@@ -117,13 +117,13 @@ class custom_render_utils:
         # split the color-encoded mask into a set
         # of binary masks
         masks = (mask == obj_ids[:, None, None])
-        
         vis_mask_mask = visible_region_mask[:,:,3] != 0
         vis_mask_mask = np.tile(vis_mask_mask,(len(obj_ids),1,1))
         overlap_areas = ((vis_mask_mask==1) & (masks==1))
         # select the masks that have an overlap with the visible region mask
-        masks_containing_overlap_mask = overlap_areas.any(axis=(1,2))
-        masks_containing_overlap = masks[masks_containing_overlap_mask]
+        masks_containing_overlap_selection = overlap_areas.any(axis=(1,2))
+        masks_containing_overlap_selection[0] = True # force walls visibibility
+        masks_containing_overlap = masks[masks_containing_overlap_selection]
         masks_containing_overlap = (np.sum(masks_containing_overlap,axis=0)).astype(bool)
         output_mask = np.zeros_like(mask)
         output_mask[masks_containing_overlap] = mask[masks_containing_overlap]

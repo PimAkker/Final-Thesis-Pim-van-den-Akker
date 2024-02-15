@@ -40,19 +40,22 @@ total_start_time = time.time()
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 2
+nr_of_images = 10
 overwrite_data = False
-empty_folders = True
+empty_folders = False
+
+render_only_visible_parts_of_map= True
+
 
 obj_ids = category_information
 walls_modifiers = {"Wall width":(0.05,0.2), 
-                    "Wall Amount X": (2,5),
-                    "Wall Amount Y": (2,5),
+                    "Wall Amount X": (0,5),
+                    "Wall Amount Y": (0,5),
                     "Wall Density": (0.5,0.95),
                     "Seed": (0,10000),
-                    "Min door width": 0.3,
-                    "Max door width": 1.5,
-                    "Max wall randomness": (0,0.1),
+                    "Min door width": 0.7,
+                    "Max door width": 1.3,
+                    "Max wall randomness": (0,0.3),
                     "Max door rotation": (0,np.pi),
                     "Door density": (0.1,1),                    
                    }
@@ -85,13 +88,14 @@ place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
 for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Creating image {i}/{nr_of_images + file_number}")
+    
+    place_class.delete_duplicates_func() #delete duplicates at the start to refresh the scene
+    
     start_time = time.time()
 
     
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=True)
-
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map)
     
-    mod_time = time.time()
     for modifier in list(walls_modifiers.keys()):
         place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
     for modifier in list(chairs_modifiers.keys()):
@@ -99,14 +103,11 @@ for i in np.arange(file_number, nr_of_images + file_number):
     for modifier in list(round_table_modifiers.keys()):
         place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
     for modifier in list(pillar_table_modifiers.keys()):   
-        place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])
-    print("Time to set modifiers: ", time.time() - mod_time)
-    # Generate the room
-    
+        place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])    
 
     _, height, width, depth = place_class.get_object_dims(object_name="walls")
     place_class.place_walls(inst_id=obj_ids["walls"])
-    place_class.place_doors(inst_id=obj_ids["doors"])
+    place_class.place_objects(object_name="doors", inst_id=obj_ids["doors"])
     place_class.place_objects(object_name="chairs display", inst_id=obj_ids["chairs"])
     place_class.place_objects(object_name="tables display", inst_id=obj_ids["tables"])
     place_class.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
@@ -122,10 +123,19 @@ for i in np.arange(file_number, nr_of_images + file_number):
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
     # simulating that they are1
     # removed in real life but present on the map
-    objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
-    place_class.move_objects_relative(objects_to_move, [0, 0, -10])
-    place_class.set_object_id(obj_ids["chairs removed"], selection=objects_to_move)
-
+    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
+    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=0.3)
+    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=0.3)
+    
+    place_class.move_objects_relative(chairs_to_remove, [0, 0, -10])
+    place_class.move_objects_relative(tables_to_remove, [0, 0, -10])
+    place_class.move_objects_relative(pillars_to_remove, [0, 0, -10])
+    
+    
+    place_class.set_object_id(obj_ids["chairs removed"], selection=chairs_to_remove)
+    place_class.set_object_id(obj_ids["tables removed"], selection=tables_to_remove)
+    place_class.set_object_id(obj_ids["pillars removed"], selection=pillars_to_remove)
+    
     
     place_class.isolate_object("raytrace")
     place_class.configure_camera(position=(0, 0, height/2))
@@ -137,17 +147,28 @@ for i in np.arange(file_number, nr_of_images + file_number):
 
     place_class.delete_single_object("raytrace.001")
     
-    objects_to_delete = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
-    place_class.set_object_id(obj_ids["chairs new"], selection=objects_to_delete)
-
+    # Here we remove a percentage of the objects and add a percentage of the objects from the map, they will still be 
+    # visible in the pointcloud but not on the map, additionanly we will change the object id of the objects that are added
+    chairs_to_add = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
+    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=0.3)
+    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=0.3)
+    
+    place_class.set_object_id(obj_ids["chairs new"], selection=chairs_to_add)
+    place_class.set_object_id(obj_ids["tables new"], selection=tables_to_remove)
+    place_class.set_object_id(obj_ids["pillars new"], selection=pillars_to_remove)
+    
+    # render the instance segmentation mask
     cru_class.render_data(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
-    place_class.delete_objects(objects_to_delete)
     
+    place_class.delete_objects(chairs_to_add)
+    place_class.delete_objects(tables_to_remove)
+    place_class.delete_objects(pillars_to_remove)
+    
+    # create the map and combine the pointcloud and map to a single image, creating the input for the model
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
-    place_class.finalize()
-    
     cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}")
-
+    
+    place_class.finalize()
     
     print(f"Time for this image: {time.time() - start_time}")
 
