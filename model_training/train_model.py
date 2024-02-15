@@ -56,6 +56,7 @@ if __name__ == '__main__':
     data_root = r'data'
     num_classes = len(category_information)
     
+    continue_from_checkpoint = True
     save_model = True
     num_epochs = 1
     train_percentage = 0.8
@@ -64,6 +65,7 @@ if __name__ == '__main__':
     momentum=0.9
     weight_decay=0.0005
     
+    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-15_13-45-08.pth"
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     
@@ -99,7 +101,9 @@ if __name__ == '__main__':
 
     # get the model using our helper function
     model = get_model_instance_segmentation(num_classes)
-
+    if continue_from_checkpoint:
+        model.load_state_dict(torch.load(weights_path))
+    
     # move model to the right device
     model.to(device)
 
@@ -140,6 +144,7 @@ if __name__ == '__main__':
     loss_box_reg = []
     loss_mask = []
     loss_objectness = []
+    
     loss_rpn_box_reg = []
     loss_classifier = []
 

@@ -49,12 +49,12 @@ image_path = r"data\Images"
 mask_path = r"data\Masks"
 if __name__ == '__main__':
     
-    for file_nr in range(0,10):
+    for file_nr in range(0,3):
         num_classes = len(category_information)
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = get_model_instance_segmentation(num_classes)
         # load the weights
-        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-12_13-56-25.pth"))
+        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-15_14-52-25.pth"))
         model.to(device)
         sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             predictions = model([x, ])
             pred = predictions[0]
 
-        confidence_threshold = 0.2
+        confidence_threshold = 0.5
         
 
         image_orig = (255.0 * (image_orig - image_orig.min()) / (image_orig.max() - image_orig.min())).to(torch.uint8)
