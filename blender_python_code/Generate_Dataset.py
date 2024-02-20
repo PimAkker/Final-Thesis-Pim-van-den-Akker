@@ -35,7 +35,7 @@ import time
 import custom_render_utils
 import importlib
 import blender_python_code.data_gen_utils as data_gen_utils
-from category_information import category_information
+from category_information import category_information, class_factor
 total_start_time = time.time()
 
 masks_folder = r"data\Masks"
@@ -64,7 +64,7 @@ chairs_modifiers = {"chair width":chair_size,
                     "chair length": chair_size,
                     "leg width": (0.05,0.1),
                     "circular legs":np.random.choice([True, False]),
-                    "leg type": np.random.choice([True, False]),                                               
+                    "leg type": False,                                               
                    }
 round_table_modifiers = {"table legs":(3,5),
                         "table x width":(0.5,1.5),
@@ -84,7 +84,7 @@ data_gen_utils.delete_folder_contents(masks_folder,images_folder,empty_folders=e
 file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
 
 
-place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
+place_class = data_gen_utils.blender_object_placement(delete_duplicates=False, class_multiplier=class_factor)
 
 for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Creating image {i}/{nr_of_images + file_number}")

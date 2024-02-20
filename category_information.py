@@ -22,5 +22,5 @@ category_information = {
                         "pillars new": 15
                                           
                         }
-
-                        
+# in the masks the class is multiplied by the class_factor
+class_factor = 1000

@@ -45,8 +45,8 @@ import numpy as np
 #%%
 import matplotlib.pyplot as plt
 
-image_path = r"data\Images"
-mask_path = r"data\Masks"
+image_path = r"data\test_Images"
+mask_path = r"data\test_Masks"
 if __name__ == '__main__':
     
     for file_nr in range(0,3):
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = get_model_instance_segmentation(num_classes)
         # load the weights
-        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-15_14-52-25.pth"))
+        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-16_11-37-42_epochs_10.pth"))
         model.to(device)
         sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
@@ -110,8 +110,8 @@ if __name__ == '__main__':
         # convert masks too booleon
         masks_true = masks_true.bool()
 
-        masks = (pred["masks"] > 0.7).squeeze(1)
-        output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
+        # masks = (pred["masks"] > 0.7).squeeze(1)
+        # output_image = draw_segmentation_masks(output_image, masks_true, alpha=0.5, colors="purple")
 
 
         masks = (pred["masks"] > confidence_threshold).squeeze(1)

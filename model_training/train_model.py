@@ -46,26 +46,36 @@ import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import sys
 
+import os
+from utilities.engine import train_one_epoch, evaluate
+import utilities.utils
+from category_information import category_information, class_factor
+
+# force reload the module
+import importlib
+importlib.reload(utilities.utils)
+
 #%%
 if __name__ == '__main__':
-    import os
-    from utilities.engine import train_one_epoch, evaluate
-    import utilities.utils
-    from category_information import category_information
+
 
     data_root = r'data'
     num_classes = len(category_information)
     
-    continue_from_checkpoint = True
+    continue_from_checkpoint = False
     save_model = True
-    num_epochs = 1
+    num_epochs = 0
     train_percentage = 0.8
     batch_size = 8
     learning_rate = 0.005
     momentum=0.9
     weight_decay=0.0005
     
-    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-15_13-45-08.pth"
+    weights_save_path = r"data\Models"
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-15_13-45-08.pth"
+    
+    save_info_path= r"data\Models\info"
+    
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     
@@ -99,10 +109,10 @@ if __name__ == '__main__':
     )
 
 
-    # get the model using our helper function
+    # get the model
     model = get_model_instance_segmentation(num_classes)
     if continue_from_checkpoint:
-        model.load_state_dict(torch.load(weights_path))
+        model.load_state_dict(torch.load(weights_load_path))
     
     # move model to the right device
     model.to(device)
@@ -170,6 +180,8 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
     
+
+    
     
     
 
@@ -181,20 +193,80 @@ if __name__ == '__main__':
     if save_model:
         datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         # save the model
-        torch.save(model.state_dict(), os.path.join(r"data\Models\\", f"model_{datetime}.pth"))
+        torch.save(model.state_dict(), os.path.join(weights_save_path, f"model_{datetime}_epochs_{num_epochs}.pth"))
         
         # save metrics the metrics list 
-        with open(os.path.join(r"data\Models\\", f"metrics_{datetime}.txt"), 'w') as f:
+        with open(os.path.join(save_info_path, f"metrics_{datetime}.txt"), 'w') as f:
             for metric in metrics:
                 f.write(f"{metric}\n")
         # save the evaluator list
-        with open(os.path.join(r"data\Models", f"IoU_info_{datetime}.txt"), 'w') as f:
+        with open(os.path.join(save_info_path, f"IoU_info_{datetime}.txt"), 'w') as f:
             for i, info in enumerate(IoU_info):
                 f.write(f"IoU for epoch {i+1}: {info.coco_eval['bbox'].stats}\n")
         
 
         
     
-    #%%
+#%% Get the intersection over union for each class
+if __name__ == '__main__':
+    model.eval()
+    num_classes = len(category_information)
+    image_path = r"data\test_Images"
+    mask_path = r"data\test_Masks"
+    
+    # get num of files in path
+    nr_of_files_in_path = len(os.listdir(image_path))
+    label_confidence_threshold = 0.5
+    mask_confidence_threshold = 0.1
+    
+    
+    for file_nr in range(0,nr_of_files_in_path):
+        nr_of_files_in_path = len(os.listdir(image_path))
+        # file_nr  = np.random.randint(0,nr_of_files_in_path)
+        image_path_temp = os.path.join(image_path , f"input-{file_nr}-.jpg")
+        true_mask_path_temp = os.path.join(mask_path, f"inst-mask-{file_nr}-.npy")
 
+        image_orig = read_image(image_path_temp).to(device)
+        mask_true = torch.from_numpy(np.load(true_mask_path_temp)).to(device)
+        eval_transform = get_transform(train=False).to(device)
+        
+        true_labels =(torch.unique(mask_true)//class_factor)[1:]
+        mask_true= mask_true.to(device)
+        masks_true =((mask_true == true_labels[:, None, None]).to(dtype=torch.uint8)).to(device)
+        
+        num_classes_mask = len(torch.unique(true_labels))
+        
+        with torch.no_grad():
+            x = eval_transform(image_orig)
+            # convert RGBA -> RGB and move to device
+            x = x[:3, ...].to(device)
+            predictions = model([x, ])
+            pred = predictions[0]
+        
+        pred_labels, pred_boxes, pred_masks = pred['labels'].to(device), pred['boxes'], pred['masks'].to(device)
+        pred_masks = pred_masks > mask_confidence_threshold
+
+
+        # get the masks for each class
+        pred_masks_per_class = torch.zeros((num_classes_mask, *masks_true.shape[1:]), dtype=torch.bool) 
+        
+        
+        
+        for i, label in enumerate(torch.unique(true_labels)):
+            pred_masks_per_class[i] = torch.any(pred_masks[pred_labels == label], dim=0)
+
+        
+        
+        
+        # calculate the IoU
+        IoU = []
+        class_names = [list(category_information.keys())[list(category_information.values()).index(x)] for x in true_labels]
+        for i in range(len(pred_masks_per_class)):
+            IoU.append(calculate_IoU(true_masks_per_class[i] ,pred_masks_per_class[i]))
+            print(f"IoU for class {class_names[i]}: {IoU[i]}")
+
+
+        
+        
+        
 # %%

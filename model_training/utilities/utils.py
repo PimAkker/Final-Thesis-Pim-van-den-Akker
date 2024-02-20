@@ -281,3 +281,10 @@ def init_distributed_mode(args):
     torch.distributed.barrier()
     setup_for_distributed(args.rank == 0)
     
+def calculate_IoU(pred_mask, true_mask):
+    intersection = torch.logical_and(pred_mask, true_mask).sum().item()
+    union = torch.logical_or(pred_mask, true_mask).sum().item()
+    # fix for division by zero
+    iou = 0 if union == 0 else intersection / union
+    
+    return iou

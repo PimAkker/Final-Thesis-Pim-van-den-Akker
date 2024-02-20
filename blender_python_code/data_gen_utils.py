@@ -9,10 +9,10 @@ class blender_object_placement:
     """ This class is used to place objects in the scene. It is used to place the room and tables in the scene.
 
     """
-    def __init__(self, delete_duplicates=False):
+    def __init__(self, delete_duplicates=False, class_multiplier=1000):
         self.blend_deselect_all()
         self.delete_duplicates = delete_duplicates
-        
+        self.class_multiplier = class_multiplier
         # delete all objects which are copied
         [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
         
@@ -129,7 +129,7 @@ class blender_object_placement:
         # and the last 3 digits are the instance number of the object.
         for i in range(len(objects)):
             assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
-            objects[i]["inst_id"] = class_label*1000+i
+            objects[i]["inst_id"] = class_label*self.class_multiplier+i
         
     def place_walls(self,inst_id=255):
         """ 
