@@ -136,9 +136,7 @@ class blender_object_placement:
         this function places the room in the scene. 
         input: inst_id: instance id of the room
         output: None
-        
         """
-        
         object_name = "walls"
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)

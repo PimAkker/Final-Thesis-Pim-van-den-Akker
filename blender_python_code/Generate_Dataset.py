@@ -40,7 +40,7 @@ total_start_time = time.time()
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 10
+nr_of_images = 1
 overwrite_data = False
 empty_folders = False
 
@@ -116,6 +116,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     # cru_class.render_data(folder=masks_folder, path_affix=f"True{i}", save_rgb=False, save_combined=False, save_inst=True)   
 
     # Generate pointcloud image
+    rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
     place_class.place_raytrace()
     bbox_raytrace, _, _, _ = place_class.get_object_dims("raytrace.001")
    
