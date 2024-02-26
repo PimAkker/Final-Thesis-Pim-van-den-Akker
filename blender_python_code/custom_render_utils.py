@@ -56,6 +56,10 @@ class custom_render_utils:
                 
         if save_combined:
             cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
+        
+
+        
+            
 
     def simple_render(self, folder = r"data", file_prefix = "", file_affix=""):
 
@@ -67,7 +71,7 @@ class custom_render_utils:
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
         
-    def combine_simple_renders(self, path= "data", file_nr=""):
+    def combine_simple_renders(self, path= "data", file_nr="", make_black_and_white=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
         pointcloud_image = np.array(Image.open(self.simple_render_image_path_dict['pointcloud']))
@@ -76,11 +80,11 @@ class custom_render_utils:
         
         # cut out the visible region from the images
 
-        
-        # everywhere where map image opacity is  0 set it to white
-        map_image[map_image[:,:,3] != 0] = [255,255,255,1]
-        
-        # everywhere where pointcloud image opacity is 0 set it to red
+        if make_black_and_white:
+            # everywhere where map image opacity is  0 set it to white
+            map_image[map_image[:,:,3] != 0] = [255,255,255,1]
+            
+            # everywhere where pointcloud image opacity is 0 set it to red
         pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,1]
         
         #  add pointcloud image to map image where the pointcloud image does not have 0 opacity 

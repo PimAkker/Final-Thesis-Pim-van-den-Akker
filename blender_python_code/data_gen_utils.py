@@ -130,6 +130,28 @@ class blender_object_placement:
         for i in range(len(objects)):
             assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
             objects[i]["inst_id"] = class_label*self.class_multiplier+i
+            
+    def set_object_color(self, object_name, color):
+        """ 
+        Sets the color of the object in the scene, the color is set in the emission node of the shader nodes. This means that
+        the object will have the exact color specified
+        input color: tuple of the color in rgb in range 0-255 (r,g,b, alpha)
+        input object_name: name of the object to set the color of note that this has to be the same name as the shader material
+        output: None
+        """
+        # set color from rgb to percentage
+        
+        assert object_name in bpy.data.objects, f"Object {object_name} does not exist"
+        assert bpy.data.materials.get(object_name) is not None, f"Material {object_name} does not exist make sure that the object has a material with the same name as the object and that it is assigned in the geometry nodes of the object if the object is created with geometry nodes"
+
+        assert len(color) == 4, f"Color: {color} is not of shape (r,g,b)"
+        assert all([0 <= c <= 255 for c in color]), f"Color: {color} is not in the range 0-255"
+        
+        color = [c/255 for c in color]
+        
+        bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
+        bpy.data.materials[object_name].node_tree.nodes["Emission"].inputs[0].default_value = color
+
         
     def place_walls(self,inst_id=255):
         """ 
@@ -155,6 +177,7 @@ class blender_object_placement:
         obj.location = self.default_location
         
         self.set_object_id(object_name=object_name, class_label=inst_id)
+        
         
     def place_doors(self,inst_id=255):
 
@@ -223,7 +246,18 @@ class blender_object_placement:
         """
         for obj in object_list:
             obj.hide_render = True
-    
+            
+    def clean_up_materials(self):
+        """
+        Because of the way that the data is labeled in blender, the materials are not cleaned up properly.
+        """
+        # Remove materials from objects with a '.' in the name
+        objects_to_remove_material = [obj for obj in bpy.data.objects if "." in obj.name]
+        for obj in objects_to_remove_material:
+            if obj.data.materials:
+                obj.data.materials.pop(index=0)
+
+        
     def isolate_object(self, object_name):
         """ 
         this function isolates an object in the scene by turning on hide render for all objects except object_name.
@@ -374,16 +408,25 @@ def delete_folder_contents(masks_folder, images_folder,empty_folders=False):
     input: images_folder: folder to delete all files from
     output: None
     """
+    
+
+    # ask the user if they are sure when there are more than 500 images in the folder
     if empty_folders:
+        if len(os.listdir(masks_folder)) > 500:
+            user_input = input(f"Are you sure you want to delete all {len(os.listdir(masks_folder))} files in {masks_folder} and {images_folder}? (y/n): ")
+            if user_input.lower() == "y":    
+                pass
+            else:
+                # crash out of the program
+                raise ValueError("User did not confirm deletion of files")
         for folder in [masks_folder, images_folder]:
-            for file in os.listdir(folder):
-                os.remove(os.path.join(folder, file))
+                    for file in os.listdir(folder):
+                        os.remove(os.path.join(folder, file))
     
 def overwrite_data(overwrite_folder, overwrite_data=False): 
     """
     Return the highest file number in the overwrite folder if 
     overwrite_data is False, else return 0
-    
     """
     file_number = 0
     if not overwrite_data:
@@ -397,3 +440,13 @@ def overwrite_data(overwrite_folder, overwrite_data=False):
                 file_number = max(file_numbers)+1
                 
     return file_number
+
+def create_folders(paths):
+    """
+    Create folders if they do not exist
+    input: paths: list of paths to create
+    output: None
+    """
+    for path in paths:
+        if not os.path.exists(path):
+            os.makedirs(path)	
