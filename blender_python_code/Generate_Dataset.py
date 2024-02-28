@@ -38,11 +38,11 @@ import blender_python_code.data_gen_utils as data_gen_utils
 from category_information import category_information, class_factor
 total_start_time = time.time()
 
-masks_folder = r"data\Masks"
-images_folder = r"data\Images"
+masks_folder = r"data\test_Masks"
+images_folder = r"data\test_Images"
 nr_of_images = 1
 overwrite_data = False
-empty_folders = True
+empty_folders = False
 render_only_visible_parts_of_map= True
 
 
@@ -84,7 +84,7 @@ pillar_table_modifiers = {
 
 # these colors are used for the map not for the annotations
 set_colors = {
-            "walls": (255, 0, 0, 255),  # Red
+            "walls": (255, 255, 255, 255),  # White
             "chairs display": (0, 255, 0, 255),  # Green
             "tables display": (0, 0, 255, 255),  # Blue
             "pillars display": (255, 255, 0, 255),  # Yellow
@@ -106,9 +106,10 @@ file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwr
 
 place_class = data_gen_utils.blender_object_placement(delete_duplicates=False, class_multiplier=class_factor)
 
+color_time = time.time()
 for object_name, color in set_colors.items():
     place_class.set_object_color(object_name, color)
-
+print(f"Time for setting colors: {time.time() - color_time}")
 
 for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Creating image {i}/{nr_of_images + file_number}")

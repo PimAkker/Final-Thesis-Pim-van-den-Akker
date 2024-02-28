@@ -59,16 +59,16 @@ importlib.reload(utilities.utils)
 
 #%%
 if __name__ == '__main__':
-
+    start_time = time.time()
 
     data_root = r'data'
     num_classes = len(category_information)
     
     continue_from_checkpoint = False
     save_model = True
-    num_epochs = 0
-    train_percentage = 0.8
-    test_percentage = 0.2
+    num_epochs = 1
+    train_percentage = 0.1
+    test_percentage = 0.02
     
     percentage_of_data_to_use = 0.1 #for debugging purposes only option to only use a percentage of the data
     
@@ -153,6 +153,7 @@ if __name__ == '__main__':
         IoU_info.append(evaluate(model, data_loader_test, device=device))
 
     print("That's it!")
+    end_time = time.time()
 #%% printing the metrics
 if __name__ == '__main__':
 
@@ -196,23 +197,57 @@ if __name__ == '__main__':
 
 
 #%%
+
 if __name__ == '__main__':
     import datetime
+    import pandas as pd
+    datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    run_folder = os.path.join(save_info_path, datetime)
+    os.makedirs(run_folder, exist_ok=True)
     if save_model:
-        datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        model_info_path = os.path.join(run_folder, "model_info.txt")
+        num_images_trained = len(dataset)
+        total_time = start_time-end_time
+        
+        with open(model_info_path, 'w') as f:
+            f.write(f"Number of images trained: {num_images_trained}\n")
+            f.write(f"Number of epochs: {num_epochs}\n")
+            f.write(f"Date: {datetime}\n")
+            f.write(f"Total training time: {total_time} seconds with time per epoch of {total_time / num_epochs} seconds\n")
+            
+       
+        
+
         # save the model
-        torch.save(model.state_dict(), os.path.join(weights_save_path, f"model_{datetime}_epochs_{num_epochs}.pth"))
+        model_path = os.path.join(run_folder, f"model_{datetime}_epochs_{num_epochs}.pth")
+        torch.save(model.state_dict(), model_path)
+
+        # save IoU info to a file
         
-        # save metrics the metrics list 
-        with open(os.path.join(save_info_path, f"metrics_{datetime}.txt"), 'w') as f:
-            for metric in metrics:
-                f.write(f"{metric}\n")
-        # save the evaluator list
-        with open(os.path.join(save_info_path, f"IoU_info_{datetime}.txt"), 'w') as f:
-            for i, info in enumerate(IoU_info):
-                f.write(f"Bbox IoU for epoch {i+1}: {info.coco_eval['bbox'].stats}\n")
-                f.write(f"Segmentation IoU for epoch {i+1}: {info.coco_eval['segm'].stats}\n")
+        
+        
+        IoU_info_path = os.path.join(run_folder, f"IoU_info_test_set.csv")
+        coco_eval_bbox = np.empty((len(IoU_info), 5))
+        mean_average_precision_box, mean_average_recall_box, mean_average_precision_segm, mean_average_recall_segm = [], [], [], []
+        for i, info in enumerate(IoU_info):
+            bbox_IoU_array = IoU_info[0].coco_eval['bbox'].stats 
+            mean_average_precision_box.append(round(np.mean(bbox_IoU_array[:6]), 6))
+            mean_average_recall_box.append(round(np.mean(bbox_IoU_array[6:]), 6))
+            segm_IoU_array = IoU_info[0].coco_eval['segm'].stats
+            mean_average_precision_segm.append(round(np.mean(segm_IoU_array[:6]), 6))
+            mean_average_recall_segm.append(round(np.mean(segm_IoU_array[6:]), 6))
+
+        data = {"epoch": range(num_epochs),
+                "mean average precision (box)": mean_average_precision_box,
+                "mean average recall (box)": mean_average_recall_box,
+                "mean average precision (segm)": mean_average_precision_segm,
+                "mean average recall (segm)": mean_average_recall_segm}
+
+        
+        df = pd.DataFrame(data)
+        df.to_csv(IoU_info_path, index=False)
+                 
+            
               
-        
         
 # %%

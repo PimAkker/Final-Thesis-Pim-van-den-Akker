@@ -37,13 +37,13 @@ from utilities.dataloader import *
 import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 #%%
-image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Processed_input_images"
-mask_path = r"data\test_Masks"
+image_path = r"data\Images"
+mask_path = r"data\Masks"
 show_image = True
 show_mask = True
-show_ground_truth = False
+show_ground_truth = True
 draw_bounding = True
-render_num_images = 9
+render_num_images = 1
 
 mask_confidence_threshold = 0.95
 label_confidence_threshold = 0.5
