@@ -216,7 +216,9 @@ if __name__ == '__main__':
             f.write(f"Total training time: {total_time} seconds with time per epoch of {total_time / num_epochs} seconds\n")
             
        
-        
+            with open(os.path.join(save_info_path, f"metrics_{datetime}.txt"), 'w') as f:
+                for metric in metrics:
+                    f.write(f"{metric}\n")
 
         # save the model
         model_path = os.path.join(run_folder, f"model_{datetime}_epochs_{num_epochs}.pth")
