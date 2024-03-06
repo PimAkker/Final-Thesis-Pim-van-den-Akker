@@ -38,9 +38,9 @@ import blender_python_code.data_gen_utils as data_gen_utils
 from category_information import category_information, class_factor
 total_start_time = time.time()
 
-masks_folder = r"data\test_Masks"
-images_folder = r"data\test_Images"
-nr_of_images = 1
+masks_folder = r"data\Masks"
+images_folder = r"data\Images"
+nr_of_images = 10
 overwrite_data = False
 empty_folders = False
 render_only_visible_parts_of_map= True
@@ -104,7 +104,7 @@ data_gen_utils.delete_folder_contents(masks_folder,images_folder,empty_folders=e
 file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
 
 
-place_class = data_gen_utils.blender_object_placement(delete_duplicates=False, class_multiplier=class_factor)
+place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
 color_time = time.time()
 for object_name, color in set_colors.items():
@@ -119,7 +119,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     start_time = time.time()
 
     
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map)
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map, exclude_from_render=place_class.original_objects)
     
     for modifier in list(walls_modifiers.keys()):
         place_class.set_modifier("walls", modifier, walls_modifiers[modifier])

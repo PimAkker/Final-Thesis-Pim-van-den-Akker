@@ -9,13 +9,14 @@ import time
 from PIL import Image
 
 class custom_render_utils:
-    def __init__(self, image_id = "0",remove_originals = True, render_only_visible=False):
+    def __init__(self, image_id = "0",remove_originals = True, render_only_visible=False,exclude_from_render= None):
         """
         inputs: image_id (str): the id of the image will be used for naming all the files in this class
         remove_originals (bool): if True the original images in mask_path_dict and simple_render_image_path_dict 
         will be removed after the combined image is created.
         render_only_visible (bool): if True the mask will only contain the visible region of the mask, this functions
         only gets triggered when combine_simple_renders is called.
+        exclude_from_render (list of bpy.types.Object): list of objects that will be excluded from the render
         
         """
         
@@ -23,6 +24,7 @@ class custom_render_utils:
         self.image_id = image_id
         self.input_file_type = ".png" # only change this when also changed in blender renderer
         self.output_file_type = ".jpg"
+        self.exclude_from_render = exclude_from_render
         self.simple_render_image_path_dict = {}
         self.render_masks = {}
         self.masks_path_dict = {}
@@ -30,6 +32,12 @@ class custom_render_utils:
         self.remove_originals = remove_originals
         self.render_only_visible_bool = render_only_visible
     def render_data(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
+        
+        tic = time.time()
+        # to speed up the rendering process, we can exclude some objects from the render
+        if self.exclude_from_render is not None:
+            for obj in self.exclude_from_render:
+                obj.hide_render = True
         
         # render image, instance annoatation and depth
         result = bpycv.render_data(render_image=False)
@@ -57,20 +65,26 @@ class custom_render_utils:
         if save_combined:
             cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
         
-
+        print(f'time for rendering {path_affix}: {time.time()-tic}')
         
             
 
     def simple_render(self, folder = r"data", file_prefix = "", file_affix=""):
+        
+        # to speed up the rendering process, we can exclude some objects from the render
+        if self.exclude_from_render is not None:
+            for obj in self.exclude_from_render:
+                obj.hide_render = True
 
         sys.path.append(os.path.dirname(os.path.realpath(__file__)))
         
         path= os.path.join(os.getcwd(), folder)
         path = os.path.join(path, file_prefix + file_affix+ "-" + self.image_id + "-" + self.input_file_type)
         self.simple_render_image_path_dict[file_prefix]= path
+        tic = time.time()
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
-        
+        print(f'time for rendering {file_prefix}: {time.time()-tic}')
     def combine_simple_renders(self, path= "data", file_nr="", make_black_and_white=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 

@@ -5,23 +5,31 @@ import random
 import numpy as np
 import os
 import time
+from category_information import category_information, class_factor
 class blender_object_placement:
     """ This class is used to place objects in the scene. It is used to place the room and tables in the scene.
 
     """
-    def __init__(self, delete_duplicates=False, class_multiplier=1000):
+    def __init__(self, delete_duplicates=False):
+        
+        
         self.blend_deselect_all()
         self.delete_duplicates = delete_duplicates
-        self.class_multiplier = class_multiplier
+        self.class_multiplier = class_factor
         # delete all objects which are copied
         [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
         
+        self.original_objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+
         self.room_center = bpy.data.objects["walls"].location
         self.default_location = (0,0,0)   
         self.subset_selection = []
         self.modifier_identifier_dict = {}
         self.modifier_name_dict = {}
         self.modifier_data_type_dict = {}
+        
+        self.original_obj_collection_name = "placable objects"
+        self.temp_obj_collection_name = "temp"
         
         # make sure we are in object mode 
         assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
@@ -130,7 +138,14 @@ class blender_object_placement:
         for i in range(len(objects)):
             assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
             objects[i]["inst_id"] = class_label*self.class_multiplier+i
-            
+    def move_from_to_collection(self, object, from_collection, to_collection):
+        """
+        This function moves an object from one collection to another in blender
+        """
+        
+        bpy.data.collections[from_collection].objects.unlink(object)
+        bpy.data.collections[to_collection].objects.link(object)
+        
     def set_object_color(self, object_name, color):
         """ 
         Sets the color of the object in the scene, the color is set in the emission node of the shader nodes. This means that
@@ -171,9 +186,14 @@ class blender_object_placement:
         
         
         bpy.ops.object.convert(target='MESH')
+   
         assert f'{object_name}.001' in bpy.data.objects, f"Object {object_name}.001 does not exist"
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
+        
+        self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
+        
+        
         obj.location = self.default_location
         
         self.set_object_id(object_name=object_name, class_label=inst_id)
@@ -198,6 +218,7 @@ class blender_object_placement:
         obj.location = self.default_location
         self.set_object_id(object_name=object_name, class_label=inst_id)
         
+        self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
         
     def place_objects(self,inst_id=255, object_name=""):
 
@@ -213,12 +234,15 @@ class blender_object_placement:
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
         obj.location = self.default_location
+        self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
+        
+        
         
         # Split mesh into individual objects
         bpy.ops.mesh.separate(type='LOOSE')
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
         self.set_object_id(object_name=object_name, class_label=inst_id)
-    
+        
     def place_raytrace(self, position=(0,0,0)):
         """ 
         This function places a raytrace in the scene. 

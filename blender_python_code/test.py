@@ -32,16 +32,29 @@ import blender_python_code.data_gen_utils as data_gen_utils
 from category_information import category_information
 total_start_time = time.time()
 
-masks_folder = r"data\Masks"
-images_folder = r"data\Images"
-nr_of_images = 1
-overwrite_data = False
-empty_folders = True
-obj_ids = category_information
+# masks_folder = r"data\Masks"
+# images_folder = r"data\Images"
+# nr_of_images = 1
+# overwrite_data = False
+# empty_folders = True
+# obj_ids = category_information
 
-place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
+# place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
    
-bbox_raytrace, _, _, _ = place_class.get_object_dims("raytrace.001")
+# bbox_raytrace, _, _, _ = place_class.get_object_dims("raytrace.001")
 
-objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1, bbox=bbox_raytrace)
-place_class.move_objects_relative(objects_to_move, [0,0,-10])
+# objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1, bbox=bbox_raytrace)
+# place_class.move_objects_relative(objects_to_move, [0,0,-10])
+
+obj = bpy.data.objects["walls.001"]
+
+bpy.data.collections["placable objects"].objects.unlink(obj)
+bpy.data.collections["Copied"].objects.link(obj)
+
+# path  = os.getcwd()
+# bpy.context.scene.render.filepath= path
+# path = os.path.join(path, "test-1.png")
+# bpy.context.scene.render.filepath= path
+# bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
+
+# print(f"Total time: {time.time()-total_start_time}")
