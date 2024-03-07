@@ -184,8 +184,7 @@ class blender_object_placement:
         obj = bpy.context.active_object
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         
-        
-        bpy.ops.object.convert(target='MESH')
+        # bpy.ops.object.convert(target='MESH')
    
         assert f'{object_name}.001' in bpy.data.objects, f"Object {object_name}.001 does not exist"
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
@@ -221,24 +220,28 @@ class blender_object_placement:
         self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
         
     def place_objects(self,inst_id=255, object_name=""):
-
+        
         
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # set object as active
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
         obj = bpy.context.active_object
-
-        bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+        
+        obj = obj.copy()
+        
+        obj.location = self.default_location
+        
+        
+        
         bpy.ops.object.convert(target='MESH')
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
-        obj.location = self.default_location
+        
         self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
         
-        
-        
         # Split mesh into individual objects
+        
         bpy.ops.mesh.separate(type='LOOSE')
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
         self.set_object_id(object_name=object_name, class_label=inst_id)
@@ -360,7 +363,8 @@ class blender_object_placement:
         output: None
         """
         for obj in object_list:
-            bpy.data.objects.remove(obj)       
+            bpy.data.objects.remove(obj)     
+
     
     def move_objects_relative(self, object_list, relative_position):  
         """

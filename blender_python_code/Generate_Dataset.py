@@ -40,7 +40,7 @@ total_start_time = time.time()
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 10
+nr_of_images = 1
 overwrite_data = False
 empty_folders = False
 render_only_visible_parts_of_map= True
@@ -103,13 +103,10 @@ data_gen_utils.create_folders([masks_folder,images_folder])
 data_gen_utils.delete_folder_contents(masks_folder,images_folder,empty_folders=empty_folders)
 file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
 
-
 place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
-color_time = time.time()
 for object_name, color in set_colors.items():
     place_class.set_object_color(object_name, color)
-print(f"Time for setting colors: {time.time() - color_time}")
 
 for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Creating image {i}/{nr_of_images + file_number}")
@@ -117,7 +114,6 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.delete_duplicates_func() #delete duplicates at the start to refresh the scene
     
     start_time = time.time()
-
     
     cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map, exclude_from_render=place_class.original_objects)
     

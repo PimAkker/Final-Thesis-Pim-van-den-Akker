@@ -48,8 +48,8 @@ total_start_time = time.time()
 
 obj = bpy.data.objects["walls.001"]
 
-bpy.data.collections["placable objects"].objects.unlink(obj)
-bpy.data.collections["Copied"].objects.link(obj)
+obj.to_mesh()
+
 
 # path  = os.getcwd()
 # bpy.context.scene.render.filepath= path
