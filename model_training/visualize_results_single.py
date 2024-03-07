@@ -45,8 +45,8 @@ import numpy as np
 #%%
 import matplotlib.pyplot as plt
 
-image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Input_images\box.jpg"
-mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test_Masks\inst-mask-0-.npy"
+image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Images\input-0-.jpg"
+mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Masks\inst-mask-0-.npy"
 if __name__ == '__main__':
     
 

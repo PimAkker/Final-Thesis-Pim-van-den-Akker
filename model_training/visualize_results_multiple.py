@@ -23,6 +23,7 @@ for dir in dirs:
 sys.path.append(os.getcwd())
 
 from PIL import Image
+
 from torchvision.io import read_image
 from torchvision.ops.boxes import masks_to_boxes
 from torchvision import tv_tensors
@@ -43,7 +44,7 @@ show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 1
+render_num_images = 10
 
 mask_confidence_threshold = 0.95
 label_confidence_threshold = 0.5

@@ -138,6 +138,15 @@ class blender_object_placement:
         for i in range(len(objects)):
             assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
             objects[i]["inst_id"] = class_label*self.class_multiplier+i
+    def set_object_id_multiple(self, id_dictionary):
+        """ 
+        This function sets the object id of multiple objects in the scene
+        input: id_dictionary: dictionary of the form {object_name: class_label}
+        output: None
+        """
+        for object_name, class_label in id_dictionary.items():
+            self.set_object_id(class_label, object_name)
+    
     def move_from_to_collection(self, object, from_collection, to_collection):
         """
         This function moves an object from one collection to another in blender
@@ -166,58 +175,7 @@ class blender_object_placement:
         
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
         bpy.data.materials[object_name].node_tree.nodes["Emission"].inputs[0].default_value = color
-
-        
-    def place_walls(self,inst_id=255):
-        """ 
-        this function places the room in the scene. 
-        input: inst_id: instance id of the room
-        output: None
-        """
-        object_name = "walls"
-        self.blend_deselect_all()
-        bpy.data.objects[object_name].select_set(True)
-        # select active object
-        bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
-        
-                
-        obj = bpy.context.active_object
-        bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
-        
-        # bpy.ops.object.convert(target='MESH')
-   
-        assert f'{object_name}.001' in bpy.data.objects, f"Object {object_name}.001 does not exist"
-        bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
-        obj = bpy.context.active_object
-        
-        self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
-        
-        
-        obj.location = self.default_location
-        
-        self.set_object_id(object_name=object_name, class_label=inst_id)
-        
-        
-    def place_doors(self,inst_id=255):
-
-    
-        object_name = "doors"
-        self.blend_deselect_all()
-        bpy.data.objects[object_name].select_set(True)
-        # set object as active
-        bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
-        obj = bpy.context.active_object
-
-        bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
-        bpy.ops.object.convert(target='MESH')
-        bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
-        obj = bpy.context.active_object
-        bpy.ops.mesh.separate(type='LOOSE')
-        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
-        obj.location = self.default_location
-        self.set_object_id(object_name=object_name, class_label=inst_id)
-        
-        self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
+       
         
     def place_objects(self,inst_id=255, object_name=""):
         
@@ -227,21 +185,17 @@ class blender_object_placement:
         # set object as active
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
         obj = bpy.context.active_object
-        
-        obj = obj.copy()
-        
-        obj.location = self.default_location
-        
-        
-        
+
+        bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         bpy.ops.object.convert(target='MESH')
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
-        
+        obj.location = self.default_location
         self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
         
-        # Split mesh into individual objects
         
+        
+        # Split mesh into individual objects
         bpy.ops.mesh.separate(type='LOOSE')
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
         self.set_object_id(object_name=object_name, class_label=inst_id)
