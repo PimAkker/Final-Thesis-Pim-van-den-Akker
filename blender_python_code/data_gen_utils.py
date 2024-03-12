@@ -7,9 +7,7 @@ import os
 import time
 from category_information import category_information, class_factor
 class blender_object_placement:
-    """ This class is used to place objects in the scene. It is used to place the room and tables in the scene.
 
-    """
     def __init__(self, delete_duplicates=False):
         
         
@@ -31,6 +29,7 @@ class blender_object_placement:
         self.original_obj_collection_name = "placable objects"
         self.temp_obj_collection_name = "temp"
         
+        self.highest_instance_id_dict = {}
         # make sure we are in object mode 
         assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
         
@@ -127,6 +126,10 @@ class blender_object_placement:
         input selection: (optional) list of objects to set the id of
         output: None"""
         
+        # Every time this function gets called this ensures that the object is a new instance
+        if object_name not in self.highest_instance_id_dict:
+            self.highest_instance_id_dict[object_name] = -1
+               
         if selection is None:
             # get a list of the objects which are copies of the given object
             objects = [obj for obj in bpy.data.objects if object_name+"." in obj.name]
@@ -136,8 +139,13 @@ class blender_object_placement:
         # are the type of object, the 3rd and 4rth digits are the type of mismatch
         # and the last 3 digits are the instance number of the object.
         for i in range(len(objects)):
-            assert i<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
-            objects[i]["inst_id"] = class_label*self.class_multiplier+i
+            self.highest_instance_id_dict[object_name] += 1
+            assert self.highest_instance_id_dict[object_name]<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
+            objects[i]["inst_id"] = class_label*self.class_multiplier+self.highest_instance_id_dict[object_name]
+            
+            
+            
+            
     def set_object_id_multiple(self, id_dictionary):
         """ 
         This function sets the object id of multiple objects in the scene
@@ -175,8 +183,34 @@ class blender_object_placement:
         
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
         bpy.data.materials[object_name].node_tree.nodes["Emission"].inputs[0].default_value = color
-       
+    
+    def duplicate_move(self, objects_list=[], relative_position=(0,0,0)):
+        """ 
+        Duplicates an object in the scene and moves it relative to its current position
+        input: objects_list: name or object class of the object to duplicate
+        input: relative_position: list of the relative position [x,y,z] to move the object
+        output: None
+        """
+        assert len(relative_position) == 3, "relative_position is not of length 3 give (x,y,z) to move object relative to"
+        assert type(objects_list) == list, "objects_list is not of type list"
         
+        
+        self.blend_deselect_all()
+        for object in objects_list:
+            if type(object) == str:
+                bpy.data.objects[object].select_set(True)
+            else:
+                object.select_set(True)
+        # select active object
+        bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":relative_position, "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+        
+        return bpy.context.selected_objects
+                                                           
+            
+            
+            
+            
+            
     def place_objects(self,inst_id=255, object_name=""):
         
         
@@ -227,6 +261,15 @@ class blender_object_placement:
         """
         for obj in object_list:
             obj.hide_render = True
+            
+    def unhide_objects(self, object_list):
+        """ 
+        this function unhides a list of objects in the scene.
+        input: object_list: list of objects to unhide
+        output: None
+        """
+        for obj in object_list:
+            obj.hide_render = False
             
     def clean_up_materials(self):
         """

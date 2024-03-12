@@ -40,12 +40,13 @@ total_start_time = time.time()
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 10
+nr_of_images = 5
 overwrite_data = False
-empty_folders = False
-render_only_visible_parts_of_map= True
+empty_folders = True
+render_only_visible_parts_of_map= False
 
-
+min_shift_distance = 0.2
+shift_variance = 1
 
 obj_ids = category_information
 walls_modifiers = {
@@ -85,6 +86,7 @@ raytrace_modifiers = {"high freq noise variance": (0, 0.03),
                       "low freq noise variance": (0, 0.2),
                       "lidar block size":(0.02,0.07),
                       }
+
 
 
 # these colors are used for the map not for the annotations
@@ -149,18 +151,17 @@ for i in np.arange(file_number, nr_of_images + file_number):
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
     # simulating that they are1
     # removed in real life but present on the map
-    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
-    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=0.3)
-    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=0.3)
-    
-    
-    place_class.move_objects_relative(chairs_to_remove, [0, 0, -10])
-    place_class.move_objects_relative(tables_to_remove, [0, 0, -10])
-    place_class.move_objects_relative(pillars_to_remove, [0, 0, -10])
+    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  0)
+    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  0)
+    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=0)
     
     place_class.set_object_id(obj_ids["chairs removed"], selection=chairs_to_remove)
     place_class.set_object_id(obj_ids["tables removed"], selection=tables_to_remove)
     place_class.set_object_id(obj_ids["pillars removed"], selection=pillars_to_remove)
+    
+
+    place_class.hide_objects(chairs_to_remove+tables_to_remove+pillars_to_remove)
+    
     
     place_class.isolate_object("raytrace")
     place_class.configure_camera(position=(0, 0, height/2))
@@ -175,23 +176,41 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     # Here we remove a percentage of the objects and add a percentage of the objects from the map, they will still be 
     # visible in the pointcloud but not on the map, additionanly we will change the object id of the objects that are added
-    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=0.3)
-    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=0.3)
-    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=0.3)
+    chairs_to_add = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  1)
+    tables_to_add = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  1)
+    pillars_to_add = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=1)
     
-    place_class.set_object_id(obj_ids["chairs new"], selection=chairs_to_remove)
-    place_class.set_object_id(obj_ids["tables new"], selection=tables_to_remove)
-    place_class.set_object_id(obj_ids["pillars new"], selection=pillars_to_remove)
+    place_class.set_object_id(obj_ids["chairs new"], selection=chairs_to_add)
+    place_class.set_object_id(obj_ids["tables new"], selection=tables_to_add)
+    place_class.set_object_id(obj_ids["pillars new"], selection=pillars_to_add)
     
+
+    chairs_to_move = list(np.random.choice(chairs_to_add, int(len(chairs_to_add) * 1)))
+    tables_to_move = list(np.random.choice(tables_to_add, int(len(tables_to_add) * 1)))
+    chairs_to_move = list(np.random.choice(chairs_to_add, int(len(chairs_to_add) * 1)))
+    tables_to_move = list(np.random.choice(tables_to_add, int(len(tables_to_add) * 1)))
+    pillars_to_move = list(np.random.choice(pillars_to_add, int(len(pillars_to_add) * 1)))
+
+    relative_move = lambda min_shift_distance,shift_variance: [max(min_shift_distance, random.gauss(0, shift_variance)), max(min_shift_distance,random.gauss(0, shift_variance)), -1]
+
+    moved_chairs =  place_class.duplicate_move(objects_list=chairs_to_move, relative_position=relative_move(min_shift_distance,shift_variance))
+    moved_tables =  place_class.duplicate_move(objects_list=tables_to_move, relative_position=relative_move(min_shift_distance,shift_variance))
+    moved_pillars = place_class.duplicate_move(objects_list=pillars_to_move, relative_position=relative_move(min_shift_distance,shift_variance))
+
+    place_class.set_object_id(obj_ids["chairs removed"], selection=moved_chairs)
+    place_class.set_object_id(obj_ids["tables removed"], selection=moved_tables)
+    place_class.set_object_id(obj_ids["pillars removed"], selection=moved_pillars)
+    
+
     # render the instance segmentation mask
-    cru_class.render_data(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
-    clean_up_start_time = time.time()
-    place_class.clean_up_materials()
-    print(f"Time for clean up: {time.time() - clean_up_start_time}")
+    place_class.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
     
-    place_class.delete_objects(chairs_to_remove)
-    place_class.delete_objects(tables_to_remove)
-    place_class.delete_objects(pillars_to_remove)
+    cru_class.render_data(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
+    place_class.clean_up_materials()
+    
+    place_class.delete_objects(chairs_to_add)
+    place_class.delete_objects(tables_to_add)
+    place_class.delete_objects(pillars_to_add)
     
     # create the map and combine the pointcloud and map to a single image, creating the input for the model
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")

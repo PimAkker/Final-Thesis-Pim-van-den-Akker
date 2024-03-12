@@ -37,14 +37,17 @@ from utilities.transforms import *
 from utilities.dataloader import *
 import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
+
+    
+
 #%%
 image_path = r"data\Images"
 mask_path = r"data\Masks"
 show_image = True
 show_mask = True
 show_ground_truth = True
-draw_bounding = True
-render_num_images = 10
+draw_bounding = False
+render_num_images = 5
 
 mask_confidence_threshold = 0.95
 label_confidence_threshold = 0.5
@@ -95,7 +98,13 @@ if __name__ == '__main__':
         pred_boxes = pred["boxes"].long()
         pred_boxes = pred_boxes[pred["scores"] > label_confidence_threshold]
 
-        output_image = draw_bounding_boxes(image_orig, pred_boxes, pred_labels, colors="red")
+
+        if draw_bounding:
+            output_image = draw_bounding_boxes(image_orig, pred_boxes, pred_labels, colors="red")
+        else:
+            output_image = image_orig
+        
+        
         if show_ground_truth == False:
             obj_ids = torch.unique(pred["masks"])
 
@@ -107,11 +116,11 @@ if __name__ == '__main__':
         masks = (pred["masks"] > mask_confidence_threshold).squeeze(1)
         output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
 
-        plt.figure(figsize=(12, 6))
-        plt.subplot(1, 2, 1)
-        plt.title("Prediction")
-        plt.imshow(output_image.permute(1, 2, 0))
-        plt.show()
+        # plt.figure(figsize=(12, 6))
+        # plt.subplot(1, 2, 1)
+        # plt.title("Prediction")
+        # plt.imshow(output_image.permute(1, 2, 0))
+        # plt.show()
         if show_ground_truth:
             mask_true = torch.from_numpy(np.load(mask_path_temp))
 
@@ -136,7 +145,9 @@ if __name__ == '__main__':
 
             if draw_bounding:
                 output_image = draw_bounding_boxes(image_orig, boxes, pred_labels, colors="red")
-
+            else:
+                output_image = image_orig
+            
             if show_mask:
                 output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
 
