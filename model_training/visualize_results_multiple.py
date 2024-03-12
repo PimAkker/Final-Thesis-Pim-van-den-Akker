@@ -46,8 +46,8 @@ mask_path = r"data\Masks"
 show_image = True
 show_mask = True
 show_ground_truth = True
-draw_bounding = False
-render_num_images = 5
+draw_bounding = True
+render_num_images = 100
 
 mask_confidence_threshold = 0.95
 label_confidence_threshold = 0.5

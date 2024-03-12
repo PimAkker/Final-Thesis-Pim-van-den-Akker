@@ -118,7 +118,7 @@ class blender_object_placement:
         obj.data.update()
 
 
-    def set_object_id(self,class_label, object_name = "walls", selection = None):
+    def set_object_id(self,class_label, object_name = None, selection = None):
         """ 
         Gives an unique instance id to all objects of the same type in the scene.
         input class_label: label of the object type
@@ -127,19 +127,21 @@ class blender_object_placement:
         output: None"""
         
         # Every time this function gets called this ensures that the object is a new instance
-        if object_name not in self.highest_instance_id_dict:
-            self.highest_instance_id_dict[object_name] = -1
-               
         if selection is None:
             # get a list of the objects which are copies of the given object
             objects = [obj for obj in bpy.data.objects if object_name+"." in obj.name]
         else:
             objects = selection
-        # Here there first two digits are the inst_id and 
-        # are the type of object, the 3rd and 4rth digits are the type of mismatch
-        # and the last 3 digits are the instance number of the object.
+
         for i in range(len(objects)):
-            self.highest_instance_id_dict[object_name] += 1
+            object_name = objects[i].name.split(".")[0]
+            
+            # check if the object has been given an instance id if not then give it one
+            if object_name not in self.highest_instance_id_dict:
+                self.highest_instance_id_dict[object_name] = 0
+            else:    
+                self.highest_instance_id_dict[object_name] += 1
+                
             assert self.highest_instance_id_dict[object_name]<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
             objects[i]["inst_id"] = class_label*self.class_multiplier+self.highest_instance_id_dict[object_name]
             
@@ -158,7 +160,12 @@ class blender_object_placement:
     def move_from_to_collection(self, object, from_collection, to_collection):
         """
         This function moves an object from one collection to another in blender
+        input object: object to move of type bpy.data.objects
+        input from_collection: name of the collection to move from
+        input to_collection: name of the collection to move to
         """
+        
+        assert type(object) == bpy.types.Object, f"Object: {object} is not of type bpy.types.Object but of type {type(object)}"
         
         bpy.data.collections[from_collection].objects.unlink(object)
         bpy.data.collections[to_collection].objects.link(object)
@@ -421,6 +428,11 @@ class blender_object_placement:
         """
         if self.delete_duplicates:
             self.delete_duplicates_func()    
+        
+        self.highest_instance_id_dict = {}
+        self.modifier_identifier_dict = {}
+        self.modifier_name_dict = {}
+        self.modifier_data_type_dict = {}
         
         self.unisolate()
         self.blend_deselect_all()

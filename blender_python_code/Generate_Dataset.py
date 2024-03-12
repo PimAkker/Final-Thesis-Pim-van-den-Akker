@@ -37,16 +37,21 @@ import importlib
 import blender_python_code.data_gen_utils as data_gen_utils
 from category_information import category_information, class_factor
 total_start_time = time.time()
+from random import uniform
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 5
+nr_of_images = 1
 overwrite_data = False
 empty_folders = True
-render_only_visible_parts_of_map= False
+render_only_visible_parts_of_map= True
 
-min_shift_distance = 0.2
-shift_variance = 1
+objects_to_add_percentage = 0.3
+objects_to_remove_percentage = 0.5
+object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
+
+
+max_shift_distance =.5
 
 obj_ids = category_information
 walls_modifiers = {
@@ -151,9 +156,9 @@ for i in np.arange(file_number, nr_of_images + file_number):
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
     # simulating that they are1
     # removed in real life but present on the map
-    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  0)
-    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  0)
-    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=0)
+    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  objects_to_remove_percentage)
+    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_remove_percentage)
+    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_remove_percentage)
     
     place_class.set_object_id(obj_ids["chairs removed"], selection=chairs_to_remove)
     place_class.set_object_id(obj_ids["tables removed"], selection=tables_to_remove)
@@ -176,26 +181,24 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     # Here we remove a percentage of the objects and add a percentage of the objects from the map, they will still be 
     # visible in the pointcloud but not on the map, additionanly we will change the object id of the objects that are added
-    chairs_to_add = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  1)
-    tables_to_add = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  1)
-    pillars_to_add = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=1)
+    chairs_to_add = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  objects_to_add_percentage)
+    tables_to_add = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_add_percentage)
+    pillars_to_add = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_add_percentage)
     
     place_class.set_object_id(obj_ids["chairs new"], selection=chairs_to_add)
     place_class.set_object_id(obj_ids["tables new"], selection=tables_to_add)
     place_class.set_object_id(obj_ids["pillars new"], selection=pillars_to_add)
     
 
-    chairs_to_move = list(np.random.choice(chairs_to_add, int(len(chairs_to_add) * 1)))
-    tables_to_move = list(np.random.choice(tables_to_add, int(len(tables_to_add) * 1)))
-    chairs_to_move = list(np.random.choice(chairs_to_add, int(len(chairs_to_add) * 1)))
-    tables_to_move = list(np.random.choice(tables_to_add, int(len(tables_to_add) * 1)))
-    pillars_to_move = list(np.random.choice(pillars_to_add, int(len(pillars_to_add) * 1)))
+    chairs_to_move = list(np.random.choice(chairs_to_add, int(len(chairs_to_add) *    object_to_move_percentage)))
+    tables_to_move = list(np.random.choice(tables_to_add, int(len(tables_to_add) *    object_to_move_percentage)))
+    pillars_to_move = list(np.random.choice(pillars_to_add, int(len(pillars_to_add) * object_to_move_percentage)))
 
-    relative_move = lambda min_shift_distance,shift_variance: [max(min_shift_distance, random.gauss(0, shift_variance)), max(min_shift_distance,random.gauss(0, shift_variance)), -1]
+    relative_move = lambda : [random.uniform(-max_shift_distance, max_shift_distance) , random.uniform(-max_shift_distance, max_shift_distance), -1]
 
-    moved_chairs =  place_class.duplicate_move(objects_list=chairs_to_move, relative_position=relative_move(min_shift_distance,shift_variance))
-    moved_tables =  place_class.duplicate_move(objects_list=tables_to_move, relative_position=relative_move(min_shift_distance,shift_variance))
-    moved_pillars = place_class.duplicate_move(objects_list=pillars_to_move, relative_position=relative_move(min_shift_distance,shift_variance))
+    moved_chairs =  place_class.duplicate_move(objects_list=chairs_to_move, relative_position=relative_move())
+    moved_tables =  place_class.duplicate_move(objects_list=tables_to_move, relative_position=relative_move())
+    moved_pillars = place_class.duplicate_move(objects_list=pillars_to_move, relative_position=relative_move())
 
     place_class.set_object_id(obj_ids["chairs removed"], selection=moved_chairs)
     place_class.set_object_id(obj_ids["tables removed"], selection=moved_tables)
