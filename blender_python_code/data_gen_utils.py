@@ -28,8 +28,9 @@ class blender_object_placement:
         
         self.original_obj_collection_name = "placable objects"
         self.temp_obj_collection_name = "temp"
-        
         self.highest_instance_id_dict = {}
+        
+        
         # make sure we are in object mode 
         assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
         
@@ -213,11 +214,6 @@ class blender_object_placement:
         
         return bpy.context.selected_objects
                                                            
-            
-            
-            
-            
-            
     def place_objects(self,inst_id=255, object_name="", seperate_loose=True):
         
         
@@ -438,32 +434,29 @@ class blender_object_placement:
         self.blend_deselect_all()
 
         
-def delete_folder_contents(masks_folder, images_folder,empty_folders=False):
+def delete_folder_contents(folders, empty_folders=False):
     """ 
     this function deletes all files in the given folders
-    input: masks_folder: folder to delete all files from
-    input: images_folder: folder to delete all files from
+    input: folders: list of folders to delete all files from
+    input: empty_folders: flag to confirm deletion of files
     output: None
     """
-    
-
-    # ask the user if they are sure when there are more than 500 images in the folder
+    # ask the user if they are sure when there are more than 500 files in the folders
     if empty_folders:
-        if len(os.listdir(masks_folder)) > 500:
-            user_input = input(f"Are you sure you want to delete all {len(os.listdir(masks_folder))} files in {masks_folder} and {images_folder}? (y/n): ")
-            if user_input.lower() == "y":    
-                pass
-            else:
-                # crash out of the program
+        total_files = sum(len(os.listdir(folder)) for folder in folders)
+        if total_files > 500:
+            user_input = input(f"Are you sure you want to delete all {total_files} files in the folders? (y/n): ")
+            if user_input.lower() != "y":
                 raise ValueError("User did not confirm deletion of files")
-        for folder in [masks_folder, images_folder]:
-                    for file in os.listdir(folder):
-                        os.remove(os.path.join(folder, file))
+        for folder in folders:
+            for file in os.listdir(folder):
+                os.remove(os.path.join(folder, file))
     
 def overwrite_data(overwrite_folder, overwrite_data=False): 
     """
     Return the highest file number in the overwrite folder if 
-    overwrite_data is False, else return 0
+    overwrite_data is False, else return 0. Blender will automatically overwrite any file 
+    with the same name in the folder.
     """
     file_number = 0
     if not overwrite_data:

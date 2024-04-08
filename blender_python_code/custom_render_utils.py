@@ -7,6 +7,7 @@ import os
 import sys
 import time
 from PIL import Image
+from category_information import category_information
 
 class custom_render_utils:
     def __init__(self, image_id = "0",remove_originals = True, render_only_visible=False,exclude_from_render= None):
@@ -31,7 +32,10 @@ class custom_render_utils:
         self.input_file_path = ""
         self.remove_originals = remove_originals
         self.render_only_visible_bool = render_only_visible
-    def render_data(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
+        self.unique_classes = []
+        self.nr_of_instances_per_class = []
+        
+    def render_data_semantic_map(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
         tic = time.time()
         # to speed up the rendering process, we can exclude some objects from the render
@@ -55,7 +59,14 @@ class custom_render_utils:
             self.masks_path_dict[path_affix]= path_name
             np.save(path_name, result["inst"])
             self.render_masks[path_affix]= result["inst"]
-            nr_of_inst= len(np.unique(result["inst"]))
+            
+            unique_inst = np.unique(result["inst"])
+            nr_of_inst= len(unique_inst)
+            
+            #save some metadata about the classes in the image
+            self.unique_classes = np.unique(unique_inst//1000)
+            self.nr_of_instances_per_class = [np.sum(unique_inst//1000 == i) for i in self.unique_classes]
+            
             
             if nr_of_inst > 3:
                 print(f"instance image has {nr_of_inst} unique values")
@@ -152,6 +163,17 @@ class custom_render_utils:
         
         np.save(self.masks_path_dict['mask'], output_mask)
         cv2.imwrite(self.input_file_path, input_file_only_visible)
+    def update_dataframe_with_metadata(self,df):
+        """
+        This function will update the dataframe with the metadata of the classes in the image
+        """
+        class_names = list(category_information.keys())
+
+        self.unique_classes = [class_names[class_num] for class_num in self.unique_classes]
+        
+        for i,class_name in enumerate(self.unique_classes):
+            df.at[int(self.image_id), class_name] = self.nr_of_instances_per_class[i]
+        return df
     
         
         

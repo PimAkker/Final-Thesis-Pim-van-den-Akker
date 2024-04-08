@@ -38,16 +38,18 @@ import blender_python_code.data_gen_utils as data_gen_utils
 from category_information import category_information, class_factor
 total_start_time = time.time()
 from random import uniform
+import pandas as pd
 
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
-nr_of_images = 1
+metadata_folder = r"data\Metadata"
+nr_of_images = 10
 overwrite_data = False
 empty_folders = True
 render_only_visible_parts_of_map= True
 
-objects_to_add_percentage = 0.3
-objects_to_remove_percentage = 0.5
+objects_to_add_percentage = 0.6666
+objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 
 
@@ -111,11 +113,15 @@ importlib.reload(custom_render_utils)
 importlib.reload(bpycv)
 
 
-data_gen_utils.create_folders([masks_folder,images_folder])
-data_gen_utils.delete_folder_contents(masks_folder,images_folder,empty_folders=empty_folders)
+data_gen_utils.create_folders([masks_folder,images_folder, metadata_folder])
+data_gen_utils.delete_folder_contents([masks_folder,images_folder, metadata_folder],empty_folders=empty_folders)
 file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
 
 place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
+
+# Create an empty pandas dataframe
+instance_nr_df = pd.DataFrame(index=range(nr_of_images), columns=category_information.keys())
+
 
 for object_name, color in set_colors.items():
     place_class.set_object_color(object_name, color)
@@ -129,16 +135,16 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map, exclude_from_render=place_class.original_objects)
     
-    # for modifier in list(walls_modifiers.keys()):
-    #     place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
-    # for modifier in list(chairs_modifiers.keys()):
-    #     place_class.set_modifier("chair", modifier, chairs_modifiers[modifier])
-    # for modifier in list(round_table_modifiers.keys()):
-    #     place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
-    # for modifier in list(pillar_table_modifiers.keys()):   
-    #     place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])  
-    # for modifier in list(raytrace_modifiers.keys()):   
-    #     place_class.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
+    for modifier in list(walls_modifiers.keys()):
+        place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
+    for modifier in list(chairs_modifiers.keys()):
+        place_class.set_modifier("chair", modifier, chairs_modifiers[modifier])
+    for modifier in list(round_table_modifiers.keys()):
+        place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
+    for modifier in list(pillar_table_modifiers.keys()):   
+        place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])  
+    for modifier in list(raytrace_modifiers.keys()):   
+        place_class.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
           
 
     _, height, width, depth = place_class.get_object_dims(object_name="walls")
@@ -213,7 +219,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     # render the instance segmentation mask1
     place_class.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
     
-    cru_class.render_data(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
+    cru_class.render_data_semantic_map(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
     place_class.clean_up_materials()
     
     place_class.delete_objects(chairs_to_add)
@@ -224,8 +230,53 @@ for i in np.arange(file_number, nr_of_images + file_number):
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
     cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}", make_black_and_white=False)
     
+    instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
+    
     place_class.finalize()
     
     print(f"Time for this image: {time.time() - start_time}")
 
 print(f"Done! Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
+instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
+
+metadata_file = os.path.join(metadata_folder, "metadata.txt")
+
+# Open the metadata file in write mode
+with open(metadata_file, "w") as f:
+    f.write(f"This file contains the metadata for the generated dataset\n\n")
+    f.write(f"This dataset was created on {time.ctime()}\n\n")
+    f.write(f"Total number of images: {nr_of_images}\n\n")
+    
+    
+    # Write the values of walls_modifiers
+    f.write("Walls Modifiers:\n")
+    for modifier, value in walls_modifiers.items():
+        f.write(f"{modifier}: {value}\n")
+    
+    # Write the values of chairs_modifiers
+    f.write("\nChairs Modifiers:\n")
+    for modifier, value in chairs_modifiers.items():
+        f.write(f"{modifier}: {value}\n")
+    
+    # Write the values of round_table_modifiers
+    f.write("\nRound Table Modifiers:\n")
+    for modifier, value in round_table_modifiers.items():
+        f.write(f"{modifier}: {value}\n")
+    
+    # Write the values of pillar_table_modifiers
+    f.write("\nPillar Table Modifiers:\n")
+    for modifier, value in pillar_table_modifiers.items():
+        f.write(f"{modifier}: {value}\n")
+    
+    # Write the values of raytrace_modifiers
+    f.write("\nRaytrace Modifiers:\n")
+    for modifier, value in raytrace_modifiers.items():
+        f.write(f"{modifier}: {value}\n")
+    
+    # Write the values of set_colors
+    f.write("\nSet Colors:\n")
+    for object_name, color in set_colors.items():
+        f.write(f"{object_name}: {color}\n")
+
+# Print a message to indicate that the metadata file has been created
+print(f"Metadata file created: {metadata_file}")
