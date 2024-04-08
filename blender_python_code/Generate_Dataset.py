@@ -43,7 +43,7 @@ import pandas as pd
 masks_folder = r"data\Masks"
 images_folder = r"data\Images"
 metadata_folder = r"data\Metadata"
-nr_of_images = 10
+nr_of_images = 1
 overwrite_data = False
 empty_folders = True
 render_only_visible_parts_of_map= True
@@ -226,7 +226,8 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.delete_objects(tables_to_add)
     place_class.delete_objects(pillars_to_add)
     
-    # # create the map and combine the pointcloud and map to a single image, creating the input for the model
+    # # create the map and combine the poi
+    # tcloud and map to a single image, creating the input for the model
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
     cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}", make_black_and_white=False)
     
@@ -237,46 +238,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Time for this image: {time.time() - start_time}")
 
 print(f"Done! Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
+
+
 instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
-
-metadata_file = os.path.join(metadata_folder, "metadata.txt")
-
-# Open the metadata file in write mode
-with open(metadata_file, "w") as f:
-    f.write(f"This file contains the metadata for the generated dataset\n\n")
-    f.write(f"This dataset was created on {time.ctime()}\n\n")
-    f.write(f"Total number of images: {nr_of_images}\n\n")
-    
-    
-    # Write the values of walls_modifiers
-    f.write("Walls Modifiers:\n")
-    for modifier, value in walls_modifiers.items():
-        f.write(f"{modifier}: {value}\n")
-    
-    # Write the values of chairs_modifiers
-    f.write("\nChairs Modifiers:\n")
-    for modifier, value in chairs_modifiers.items():
-        f.write(f"{modifier}: {value}\n")
-    
-    # Write the values of round_table_modifiers
-    f.write("\nRound Table Modifiers:\n")
-    for modifier, value in round_table_modifiers.items():
-        f.write(f"{modifier}: {value}\n")
-    
-    # Write the values of pillar_table_modifiers
-    f.write("\nPillar Table Modifiers:\n")
-    for modifier, value in pillar_table_modifiers.items():
-        f.write(f"{modifier}: {value}\n")
-    
-    # Write the values of raytrace_modifiers
-    f.write("\nRaytrace Modifiers:\n")
-    for modifier, value in raytrace_modifiers.items():
-        f.write(f"{modifier}: {value}\n")
-    
-    # Write the values of set_colors
-    f.write("\nSet Colors:\n")
-    for object_name, color in set_colors.items():
-        f.write(f"{object_name}: {color}\n")
-
-# Print a message to indicate that the metadata file has been created
-print(f"Metadata file created: {metadata_file}")
+data_gen_utils.save_metadata(metadata_path=metadata_folder, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers, pillar_table_modifiers, raytrace_modifiers, set_colors])

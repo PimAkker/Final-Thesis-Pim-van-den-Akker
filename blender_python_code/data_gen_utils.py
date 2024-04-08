@@ -480,3 +480,34 @@ def create_folders(paths):
     for path in paths:
         if not os.path.exists(path):
             os.makedirs(path)	
+def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = []):
+    import pandas as pd
+    """
+    Save the metadata to a csv file
+    input: metadata: dictionary of the metadata
+    input: metadata_path: path to save the metadata to
+    output: None
+    """
+    metadata_file = os.path.join(metadata_path, "metadata.txt")
+
+    # Open the metadata file in write mode
+    with open(metadata_file, "w") as f:
+        f.write(f"This file contains the metadata for the generated dataset\n\n")
+        f.write(f"This dataset was created on {time.ctime()}\n\n")
+        f.write(f"Total number of images: {nr_of_images}\n\n")
+        
+        f.write("Ranges of data generation parameters:\n")
+        for i,modifier in enumerate(modifiers_list):
+            modifier_keys = modifier.keys()
+            f.write("\n")
+            f.write(f"")
+            if 'color' in list(modifier_keys)[0].lower():
+                f.write("Colors of objects in RGBA\n")
+            for modifier_key in modifier_keys:
+                
+                f.write(f"{modifier_key}: {modifier[modifier_key]}\n")
+                
+
+
+    # Print a message to indicate that the metadata file has been created
+    print(f"Metadata file created: {metadata_file}")
