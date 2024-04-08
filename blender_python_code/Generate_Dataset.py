@@ -89,7 +89,7 @@ pillar_table_modifiers = {
 }
 raytrace_modifiers = {"high freq noise variance": (0, 0.03), 
                       "low freq noise variance": (0, 0.2),
-                      "lidar block size":(0.02,0.07),
+                      "lidar block size":(0.05,0.07),
                       }
 
 
@@ -101,7 +101,7 @@ set_colors = {
             "tables display": (0, 0, 255, 255),  # Blue
             "pillars display": (255, 255, 0, 255),  # Yellow
             "doors": (255, 0, 255, 255),  # Magenta
-            "raytrace": (0, 255, 255, 255),  # Cyan
+            "raytrace": (255, 0, 0, 255),  # Red
         }
 
 
@@ -129,28 +129,28 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map, exclude_from_render=place_class.original_objects)
     
-    for modifier in list(walls_modifiers.keys()):
-        place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
-    for modifier in list(chairs_modifiers.keys()):
-        place_class.set_modifier("chair", modifier, chairs_modifiers[modifier])
-    for modifier in list(round_table_modifiers.keys()):
-        place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
-    for modifier in list(pillar_table_modifiers.keys()):   
-        place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])  
-    for modifier in list(raytrace_modifiers.keys()):   
-        place_class.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
+    # for modifier in list(walls_modifiers.keys()):
+    #     place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
+    # for modifier in list(chairs_modifiers.keys()):
+    #     place_class.set_modifier("chair", modifier, chairs_modifiers[modifier])
+    # for modifier in list(round_table_modifiers.keys()):
+    #     place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
+    # for modifier in list(pillar_table_modifiers.keys()):   
+    #     place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])  
+    # for modifier in list(raytrace_modifiers.keys()):   
+    #     place_class.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
           
 
     _, height, width, depth = place_class.get_object_dims(object_name="walls")
-    place_class.place_objects(object_name="walls", inst_id=obj_ids["walls"])
+    place_class.place_objects(object_name="walls", inst_id=obj_ids["walls"], seperate_loose=False)
     place_class.place_objects(object_name="doors", inst_id=obj_ids["doors"])
     place_class.place_objects(object_name="chairs display", inst_id=obj_ids["chairs"])
     place_class.place_objects(object_name="tables display", inst_id=obj_ids["tables"])
     place_class.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
     
     # Generate pointcloud image
-    rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
-    place_class.place_raytrace()
+    # rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
+    place_class.place_raytrace(position=(-0.3,-3,0))
    
     # move a percentage of objects down, this will move them out of the raytrace image
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
@@ -163,6 +163,11 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.set_object_id(obj_ids["chairs removed"], selection=chairs_to_remove)
     place_class.set_object_id(obj_ids["tables removed"], selection=tables_to_remove)
     place_class.set_object_id(obj_ids["pillars removed"], selection=pillars_to_remove)
+    
+    place_class.move_objects_relative(chairs_to_remove,  [0, 0, -10])
+    place_class.move_objects_relative(tables_to_remove,  [0, 0, -10])
+    place_class.move_objects_relative(pillars_to_remove, [0, 0, -10])
+    
     
 
     place_class.hide_objects(chairs_to_remove+tables_to_remove+pillars_to_remove)
@@ -205,7 +210,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.set_object_id(obj_ids["pillars removed"], selection=moved_pillars)
     
 
-    # render the instance segmentation mask
+    # render the instance segmentation mask1
     place_class.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
     
     cru_class.render_data(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
@@ -215,7 +220,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     place_class.delete_objects(tables_to_add)
     place_class.delete_objects(pillars_to_add)
     
-    # create the map and combine the pointcloud and map to a single image, creating the input for the model
+    # # create the map and combine the pointcloud and map to a single image, creating the input for the model
     cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
     cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}", make_black_and_white=False)
     

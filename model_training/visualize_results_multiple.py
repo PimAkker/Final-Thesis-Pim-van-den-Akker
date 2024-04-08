@@ -43,11 +43,12 @@ from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 #%%
 image_path = r"data\Images"
 mask_path = r"data\Masks"
+show_input_image = True
 show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 100
+render_num_images = 1
 
 mask_confidence_threshold = 0.95
 label_confidence_threshold = 0.5
@@ -60,14 +61,21 @@ if __name__ == '__main__':
     for file_nr in range(render_num_images):
         print(f"Showing image {file_nr + 1} of {render_num_images} with name {os.path.split(image_path_list[file_nr])[-1]}")
         
+        
         num_classes = len(category_information)
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = get_model_instance_segmentation(num_classes)
-        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-16_11-37-42_epochs_10.pth"))
+        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-03-12_17-28-10\model_2024-03-12_17-28-10_epochs_10.pth"))
         model.to(device)
         sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
         image_orig = read_image(image_path_list[file_nr])
+        
+        if show_input_image:
+            plt.imshow(image_orig.permute(1, 2, 0))
+            plt.axis('off')
+            plt.show()
+            plt.show()
         
         if show_ground_truth:
             mask_path_temp = mask_path_list[file_nr]
@@ -151,9 +159,13 @@ if __name__ == '__main__':
             if show_mask:
                 output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
 
-            plt.subplot(1, 2, 2)
-            plt.title("ground truth")
+            plt.figure()
+            # plt.title(" ground truth")
+
+
             plt.imshow(output_image.permute(1, 2, 0))
+            plt.axis('off')
+            plt.show()
             plt.show()
             
     print("done")

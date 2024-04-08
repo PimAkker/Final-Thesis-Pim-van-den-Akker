@@ -66,11 +66,12 @@ if __name__ == '__main__':
     
     continue_from_checkpoint = False
     save_model = True
-    num_epochs = 1
-    train_percentage = 0.1
-    test_percentage = 0.02
+    num_epochs = 10
     
-    percentage_of_data_to_use = 0.1 #for debugging purposes only option to only use a percentage of the data
+    
+    train_percentage = 0.8
+    test_percentage = 0.2
+    percentage_of_data_to_use = 1 #for debugging purposes only option to only use a percentage of the data
     
     batch_size = 8
     learning_rate = 0.005
@@ -202,21 +203,38 @@ if __name__ == '__main__':
     import datetime
     import pandas as pd
     datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    
+    
     run_folder = os.path.join(save_info_path, datetime)
     os.makedirs(run_folder, exist_ok=True)
     if save_model:
         model_info_path = os.path.join(run_folder, "model_info.txt")
         num_images_trained = len(dataset)
-        total_time = start_time-end_time
+        test_set_size = len(dataset_test)
+        total_time = end_time-start_time
         
         with open(model_info_path, 'w') as f:
             f.write(f"Number of images trained: {num_images_trained}\n")
+            f.write(f"Test set size: {test_set_size}\n")
             f.write(f"Number of epochs: {num_epochs}\n")
             f.write(f"Date: {datetime}\n")
-            f.write(f"Total training time: {total_time} seconds with time per epoch of {total_time / num_epochs} seconds\n")
+            f.write(f"Continue from checkpoint: {continue_from_checkpoint}\n")
+            if continue_from_checkpoint:
+                f.write(f"Path to loaded checkpoint: {weights_load_path}\n")
+            f.write(f"Total training time: {int(total_time)} seconds ({round(total_time/(60*60), 2)} hours) with time per epoch of {round(total_time / num_epochs)} seconds\n")
+            f.write(f"Learning rate: {learning_rate}\n")	
+            f.write(f"Momentum: {momentum}\n")
+            f.write(f"Weight decay: {weight_decay}\n")
+            f.write(f"Batch size: {batch_size}\n")
+            f.write(f"Percentage of data used: {percentage_of_data_to_use*100}%\n")
+            f.write(f"Device: {device}\n")
+            f.write(f"Optimizer: {optimizer}\n")
+            f.write(f"Learning rate scheduler: {lr_scheduler}\n")
+            f.write(f"Model: {model}\n")
+            
             
        
-            with open(os.path.join(save_info_path, f"metrics_{datetime}.txt"), 'w') as f:
+            with open(os.path.join(run_folder, f"metrics_{datetime}.txt"), 'w') as f:
                 for metric in metrics:
                     f.write(f"{metric}\n")
 
@@ -232,10 +250,10 @@ if __name__ == '__main__':
         coco_eval_bbox = np.empty((len(IoU_info), 5))
         mean_average_precision_box, mean_average_recall_box, mean_average_precision_segm, mean_average_recall_segm = [], [], [], []
         for i, info in enumerate(IoU_info):
-            bbox_IoU_array = IoU_info[0].coco_eval['bbox'].stats 
+            bbox_IoU_array = info.coco_eval['bbox'].stats 
             mean_average_precision_box.append(round(np.mean(bbox_IoU_array[:6]), 6))
             mean_average_recall_box.append(round(np.mean(bbox_IoU_array[6:]), 6))
-            segm_IoU_array = IoU_info[0].coco_eval['segm'].stats
+            segm_IoU_array = info.coco_eval['segm'].stats
             mean_average_precision_segm.append(round(np.mean(segm_IoU_array[:6]), 6))
             mean_average_recall_segm.append(round(np.mean(segm_IoU_array[6:]), 6))
 

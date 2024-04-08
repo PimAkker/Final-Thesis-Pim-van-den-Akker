@@ -58,3 +58,8 @@ obj.to_mesh()
 # bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
 
 # print(f"Total time: {time.time()-total_start_time}")
+
+
+
+
+#%%
