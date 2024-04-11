@@ -480,7 +480,7 @@ def create_folders(paths):
     for path in paths:
         if not os.path.exists(path):
             os.makedirs(path)	
-def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = []):
+def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0):
     import pandas as pd
     """
     Save the metadata to a csv file
@@ -493,7 +493,7 @@ def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = []):
     # Open the metadata file in write mode
     with open(metadata_file, "w") as f:
         f.write(f"This file contains the metadata for the generated dataset\n\n")
-        f.write(f"This dataset was created on {time.ctime()}\n\n")
+        f.write(f"This dataset was created on {time.ctime()}\n\n and took {time_taken} seconds to generate\n\n")
         f.write(f"Total number of images: {nr_of_images}\n\n")
         
         f.write("Ranges of data generation parameters:\n")

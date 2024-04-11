@@ -57,16 +57,16 @@ max_shift_distance =.5
 
 obj_ids = category_information
 walls_modifiers = {
-    "Wall width": (0.05, 0.2),
-    "Wall Amount X": (0, 5),
-    "Wall Amount Y": (0, 5),
-    "Wall Density": (0.5, 0.95),
-    "Seed": (0, 10000),
-    "Min door width": 0.7,
-    "Max door width": 1.3,
-    "Max wall randomness": (0, 0.3),
-    "Max door rotation": (0, np.pi),
-    "Door density": (0.1, 1),
+    "wall width": (0.05, 0.2),
+    "wall nr x": (0, 5),
+    "wall nr y": (0, 5),
+    "wall density": (0.5, 0.95),
+    "seed": (0, 10000),
+    "min door width": 0.7,
+    "max door width": 1.3,
+    "max wall randomness": (0, 0.3),
+    "max door rotation": (0, np.pi),
+    "door density": (0.1, 1),
 }
 
 chair_size = (0.4, 0.6)
@@ -241,4 +241,4 @@ print(f"Done! Created {nr_of_images} images in {time.time() - total_start_time} 
 
 
 instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
-data_gen_utils.save_metadata(metadata_path=metadata_folder, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers, pillar_table_modifiers, raytrace_modifiers, set_colors])
+data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=nr_of_images, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers, pillar_table_modifiers, raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time)

@@ -37,24 +37,24 @@ import numpy as np
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-from utilities.coco_eval import *
-from utilities.engine import *
-from utilities.utils import *
-from utilities.transforms import *
-from utilities.dataloader import *
+from  model_training.utilities.coco_eval import *
+from  model_training.utilities.engine import *
+from  model_training.utilities.utils import *
+from  model_training.utilities.transforms import *
+from  model_training.utilities.dataloader import *
 import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import sys
 
 import os
-from utilities.engine import train_one_epoch, evaluate
-import utilities.utils
+from model_training.utilities.engine import train_one_epoch, evaluate
+import model_training.utilities.utils
 from category_information import category_information, class_factor
 
 # force reload the module
 import importlib
-importlib.reload(utilities.utils)
-
+importlib.reload(model_training.utilities.utils)
+import time
 
 
 #%%
@@ -66,14 +66,14 @@ if __name__ == '__main__':
     
     continue_from_checkpoint = False
     save_model = True
-    num_epochs = 10
+    num_epochs = 3
     
     
     train_percentage = 0.8
     test_percentage = 0.2
     percentage_of_data_to_use = 1 #for debugging purposes only option to only use a percentage of the data
     
-    batch_size = 8
+    batch_size = 4
     learning_rate = 0.005
     momentum=0.9
     weight_decay=0.0005
