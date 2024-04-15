@@ -51,35 +51,32 @@ importlib.reload(model_training.utilities.utils)
 import time
 #%%
 if __name__ == '__main__':
-    data_root = r'data'
+    
+    data_root = r'real_world_data\Real_world_data_V1'
     num_classes = len(category_information)
     
-    continue_from_checkpoint = False
-    save_model = True
-    num_epochs = 3
-    
-    
-    train_percentage = 0.8
-    test_percentage = 0.2
-    percentage_of_data_to_use = 1 #for debugging purposes only option to only use a percentage of the data
-    
-    batch_size = 4
-    learning_rate = 0.005
-    momentum=0.9
-    weight_decay=0.0005
     
     weights_save_path = r"data\Models"
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\model_2024-02-15_13-45-08.pth"
-    
-    save_info_path= r"data\Models\info"
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-03-12_18-18-58\model_2024-03-12_18-18-58_epochs_10.pth"
     
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    
-    # device = torch.device('cpu')
-
-    dataset = LoadDataset(data_root, get_transform(train=True))
     dataset_test = LoadDataset(data_root, get_transform(train=False))
-   
-    total_samples = len(dataset)
-    train_samples = int(train_percentage * total_samples*percentage_of_data_to_use)
+    
+    data_loader_test = torch.utils.data.DataLoader(
+    dataset_test,
+    batch_size=1,
+    shuffle=True,
+    num_workers=4,
+    collate_fn=utils.collate_fn
+    )
+#%%
+
+model = get_model_instance_segmentation(num_classes)
+model.load_state_dict(torch.load(weights_load_path))
+
+# move model to the right device
+model.to(device)
+    
+eval_output = evaluate(model, data_loader_test, device=device)
+# %%
