@@ -40,10 +40,10 @@ total_start_time = time.time()
 from random import uniform
 import pandas as pd
 
-masks_folder = r"data\Masks"
-images_folder = r"data\Images"
-metadata_folder = r"data\Metadata"
-nr_of_images = 1
+masks_folder = r"data\test_Masks"
+images_folder = r"data\test_Images"
+metadata_folder = r"data\test_Metadata"
+nr_of_images = 10
 overwrite_data = False
 empty_folders = True
 render_only_visible_parts_of_map= True

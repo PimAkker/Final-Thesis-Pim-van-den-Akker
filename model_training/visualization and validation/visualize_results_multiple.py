@@ -46,14 +46,15 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 
 
-image_path = r"data\Images"
-mask_path = r"data\Masks"
+# image_path = r"data\test_Images"
+image_path = r"real_world_data\Real_world_data_V1\Images"
+mask_path = r"real_world_data\Real_world_data_V1\Masks"
 show_input_image = True
 show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 1
+render_num_images = 10
 
 mask_confidence_threshold = 0.95
 label_confidence_threshold = 0.5
