@@ -234,12 +234,12 @@ if __name__ == '__main__':
             
             
        
-            with open(os.path.join(run_folder, f"metrics_{datetime}.txt"), 'w') as f:
+            with open(os.path.join(run_folder, f"metrics.txt"), 'w') as f:
                 for metric in metrics:
                     f.write(f"{metric}\n")
 
         # save the model
-        model_path = os.path.join(run_folder, f"model_{datetime}_epochs_{num_epochs}.pth")
+        model_path = os.path.join(run_folder, f"weights.pth")
         torch.save(model.state_dict(), model_path)
 
         # save IoU info to a file

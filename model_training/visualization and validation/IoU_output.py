@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     dataset_test = LoadDataset(data_root, get_transform(train=False))
-    
+
     data_loader_test = torch.utils.data.DataLoader(
     dataset_test,
     batch_size=1,
@@ -70,13 +70,25 @@ if __name__ == '__main__':
     num_workers=4,
     collate_fn=utils.collate_fn
     )
-#%%
 
-model = get_model_instance_segmentation(num_classes)
-model.load_state_dict(torch.load(weights_load_path))
 
-# move model to the right device
-model.to(device)
+    model = get_model_instance_segmentation(num_classes)
+    model.load_state_dict(torch.load(weights_load_path))
+
+    # move model to the right device
+    model.to(device)
+        
+    eval_output = evaluate(model, data_loader_test, device=device)
     
-eval_output = evaluate(model, data_loader_test, device=device)
+# %%
+    eval_output.eval_imgs
+    bbox_IoU_array = eval_output.coco_eval['bbox'].stats 
+    print(f"mean average precision (box)   {round(np.mean(bbox_IoU_array[:6]), 6)}")
+    print(f"mean average recall    (box)   {round(np.mean(bbox_IoU_array[6:]), 6)}")
+    
+    segm_IoU_array = eval_output.coco_eval['segm'].stats
+    print(f"mean average precision (segm)  {round(np.mean(segm_IoU_array[:6]), 6)}")
+    print(f"mean average recall    (segm)  {round(np.mean(segm_IoU_array[6:]), 6)}")
+    
+    segm_IoU_array = eval_output.coco_eval['segm'].stats
 # %%
