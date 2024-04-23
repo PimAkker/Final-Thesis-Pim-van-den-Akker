@@ -100,14 +100,16 @@ class custom_render_utils:
     def combine_simple_renders(self, path= "data", file_nr="", make_black_and_white=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
-        pointcloud_image = np.array(Image.open(self.simple_render_image_path_dict['pointcloud']))
-        map_image = np.array(Image.open(self.simple_render_image_path_dict['map']))
 
+        pointcloud_image = (cv2.imread(self.simple_render_image_path_dict['pointcloud'],cv2.IMREAD_UNCHANGED)).astype(np.uint8)
+        map_image = (cv2.imread(self.simple_render_image_path_dict['map'], cv2.IMREAD_UNCHANGED)).astype(np.uint8)
+
+        # show unique rgba values
         if make_black_and_white:
             # everywhere where map image opacity is  0 set it to white
             map_image[map_image[:,:,3] != 0] = [255,255,255,1]
             
-        # everywhere where pointcloud image opacity is 0 set it to red (redundant)
+        # everywhere where pointcloud image opacity is 0 set it to red 
         pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,1]
         
         #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
@@ -132,10 +134,9 @@ class custom_render_utils:
         NOTE: has to be triggered after the creation of visible_region_mask
         """
         mask = np.load(self.masks_path_dict['mask'])
-        visible_region_mask = cv2.imread(self.simple_render_image_path_dict['visible_region_mask'], cv2.IMREAD_UNCHANGED)
-        visible_region_mask = visible_region_mask.astype(np.int64)
-        obj_ids = np.unique(mask)
+        visible_region_mask = cv2.imread(self.simple_render_image_path_dict['visible_region_mask'], cv2.IMREAD_UNCHANGED).astype(np.uint8)
         
+        obj_ids = np.unique(mask)
         
         # first id is the background, so remove it
         obj_ids = obj_ids[1:]
@@ -151,13 +152,9 @@ class custom_render_utils:
         masks_containing_overlap_selection[0] = True # force walls visibibility
         masks_containing_overlap = masks[masks_containing_overlap_selection]
         masks_containing_overlap = (np.sum(masks_containing_overlap,axis=0)).astype(bool)
-        
-        
-        
-        
+               
         output_mask = np.zeros_like(mask)
         output_mask[masks_containing_overlap] = mask[masks_containing_overlap]
-        
         
         # modify the input file so that it only contains the visible region
         input_file_only_visible = np.zeros_like(combined_image)

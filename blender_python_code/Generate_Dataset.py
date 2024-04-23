@@ -48,7 +48,7 @@ overwrite_data = False
 empty_folders = True
 
 # what percentage of the an instance should be visible to the lidar to be included in the input_image/mask
-minimum_overlap_percentage_for_visible = 0.3
+minimum_overlap_percentage_for_visible = 0.1
 
 
 
@@ -232,7 +232,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     # # create the map and combine the poi
     # tcloud and map to a single image, creating the input for the model
-    cru_class.simple_render(folder=r"data", file_prefix="map", file_affix="")
+    cru_class.simple_render(folder=images_folder, file_prefix="map", file_affix="")
     cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}", make_black_and_white=False)
     
     instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
