@@ -10,14 +10,14 @@ from PIL import Image
 from category_information import category_information
 
 class custom_render_utils:
-    def __init__(self, image_id = "0",remove_originals = True, render_only_visible=False,exclude_from_render= None):
+    def __init__(self, image_id = "0",remove_originals = True, minimum_render_overlap_percentage=False,exclude_from_render= None):
         """
         inputs: image_id (str): the id of the image will be used for naming all the files in this class
         remove_originals (bool): if True the original images in mask_path_dict and simple_render_image_path_dict 
         will be removed after the combined image is created.
         render_only_visible (bool): if True the mask will only contain the visible region of the mask, this functions
         only gets triggered when combine_simple_renders is called.
-        exclude_from_render (list of bpy.types.Object): list of objects that will be excluded from the render
+        exclude_from_render (list of bpy.types.Object): list of objects that will be excluded from the render useful for speeding up the rendering process and debugging
         
         """
         
@@ -31,7 +31,7 @@ class custom_render_utils:
         self.masks_path_dict = {}
         self.input_file_path = ""
         self.remove_originals = remove_originals
-        self.render_only_visible_bool = render_only_visible
+        self.minimum_visible_overlap_percentage = minimum_render_overlap_percentage
         self.unique_classes = []
         self.nr_of_instances_per_class = []
         
@@ -96,36 +96,32 @@ class custom_render_utils:
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
         print(f'time for rendering {file_prefix}: {time.time()-tic}')
+        
     def combine_simple_renders(self, path= "data", file_nr="", make_black_and_white=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
         pointcloud_image = np.array(Image.open(self.simple_render_image_path_dict['pointcloud']))
         map_image = np.array(Image.open(self.simple_render_image_path_dict['map']))
-        visible_region_mask = cv2.imread(self.simple_render_image_path_dict['visible_region_mask'], cv2.IMREAD_UNCHANGED)
-        
-        # cut out the visible region from the images
 
         if make_black_and_white:
             # everywhere where map image opacity is  0 set it to white
             map_image[map_image[:,:,3] != 0] = [255,255,255,1]
             
-            # everywhere where pointcloud image opacity is 0 set it to red
+        # everywhere where pointcloud image opacity is 0 set it to red (redundant)
         pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,1]
         
-        #  add pointcloud image to map image where the pointcloud image does not have 0 opacity 
+        #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
         combined_image = map_image.copy()
         combined_image[pointcloud_image[:,:,3] == 1] = pointcloud_image[pointcloud_image[:,:,3] == 1]
-        
-           
 
         self.input_file_path = os.path.join(path, f"input-{file_nr}-{self.output_file_type}")
-        if self.render_only_visible_bool:
+        if self.minimum_visible_overlap_percentage != 0:
             self.render_only_visible(combined_image)
         else:
             cv2.imwrite(self.input_file_path, combined_image)
             
         if self.remove_originals:
-            # delete the pointcloud and map images
+            # delete the pointcloud and map images that are used to create the combined image
             for key in self.simple_render_image_path_dict:
                 os.remove(self.simple_render_image_path_dict[key])
         
@@ -143,19 +139,25 @@ class custom_render_utils:
         
         # first id is the background, so remove it
         obj_ids = obj_ids[1:]
-        # split the color-encoded mask into a set
-        # of binary masks
+        # split the color-encoded mask into a set of binary masks
         masks = (mask == obj_ids[:, None, None])
         vis_mask_mask = visible_region_mask[:,:,3] != 0
         vis_mask_mask = np.tile(vis_mask_mask,(len(obj_ids),1,1))
         overlap_areas = ((vis_mask_mask==1) & (masks==1))
+        
         # select the masks that have an overlap with the visible region mask
-        masks_containing_overlap_selection = overlap_areas.any(axis=(1,2))
+        overlap_percentage_per_mask = np.sum(overlap_areas, axis=(1,2)) / np.sum(masks, axis=(1,2))
+        masks_containing_overlap_selection = overlap_percentage_per_mask > self.minimum_visible_overlap_percentage
         masks_containing_overlap_selection[0] = True # force walls visibibility
         masks_containing_overlap = masks[masks_containing_overlap_selection]
         masks_containing_overlap = (np.sum(masks_containing_overlap,axis=0)).astype(bool)
+        
+        
+        
+        
         output_mask = np.zeros_like(mask)
         output_mask[masks_containing_overlap] = mask[masks_containing_overlap]
+        
         
         # modify the input file so that it only contains the visible region
         input_file_only_visible = np.zeros_like(combined_image)

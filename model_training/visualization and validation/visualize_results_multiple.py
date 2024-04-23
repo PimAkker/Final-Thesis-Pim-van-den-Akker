@@ -47,8 +47,8 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 
 # image_path = r"data\test_Images"
-image_path = r"real_world_data\Real_world_data_V1\Images"
-mask_path = r"real_world_data\Real_world_data_V1\Masks"
+image_path = r"data\test_Images"
+mask_path = r"data\test_Masks"
 show_input_image = False
 show_image = True
 show_mask = True

@@ -27,7 +27,7 @@ root = os.getcwd()
 for dir in dirs:
     sys.path.append(os.path.join(root, dir))
 sys.path.append(os.getcwd())
-import bpy
+
 import bpycv
 import random
 import numpy as np
@@ -37,7 +37,7 @@ import importlib
 import blender_python_code.data_gen_utils as data_gen_utils
 from category_information import category_information, class_factor
 total_start_time = time.time()
-from random import uniform
+
 import pandas as pd
 
 masks_folder = r"data\test_Masks"
@@ -46,7 +46,11 @@ metadata_folder = r"data\test_Metadata"
 nr_of_images = 10
 overwrite_data = False
 empty_folders = True
-render_only_visible_parts_of_map= True
+
+# what percentage of the an instance should be visible to the lidar to be included in the input_image/mask
+minimum_overlap_percentage_for_visible = 0.3
+
+
 
 objects_to_add_percentage = 0.6666
 objects_to_remove_percentage = 0.333
@@ -133,7 +137,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     start_time = time.time()
     
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),render_only_visible=render_only_visible_parts_of_map, exclude_from_render=place_class.original_objects)
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, exclude_from_render=place_class.original_objects)
     
     for modifier in list(walls_modifiers.keys()):
         place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
