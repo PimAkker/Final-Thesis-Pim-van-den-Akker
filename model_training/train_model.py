@@ -4,19 +4,19 @@ import os
 import sys
 
 path = os.path.dirname(os.path.abspath(__file__))
-path = "\\".join(path.split("\\")[:-1])
+path = "\\".join(path.split(os.sep)[:-1])
 
 os.chdir(path)
 
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
-current_directory = os.getcwd().split("\\")
+current_directory = os.getcwd().split(os.sep)
 assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
 if current_directory[-1] != root_dir_name:
     # go down in the directory tree until the root directory is found
     while current_directory[-1] != root_dir_name:
         os.chdir("..")
-        current_directory = os.getcwd().split("\\")
+        current_directory = os.getcwd().split(os.sep)
         
 sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
 sys.path.append(os.getcwd())

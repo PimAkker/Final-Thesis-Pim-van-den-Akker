@@ -7,10 +7,34 @@ import os
 import time
 from category_information import category_information, class_factor
 class blender_object_placement:
+    """
+    A class for managing object placement in Blender.
+
+    Attributes:
+        delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
+            left empty after the script is run.
+        class_multiplier (int): A multiplier for the class label when assigning object IDs. Should be globally 
+            set in the category_information.py file.
+        original_objects (list): A list of original objects in the scene. 
+        room_center (tuple): The location of the room center.
+        default_location (tuple): The default location for objects.
+        subset_selection (list): A list of selected objects.
+        modifier_identifier_dict (dict): A dictionary mapping object names to modifier identifiers.
+        modifier_name_dict (dict): A dictionary mapping object names to modifier names.
+        modifier_data_type_dict (dict): A dictionary mapping object names to modifier data types.
+        original_obj_collection_name (str): The name of the collection containing original objects.
+        temp_obj_collection_name (str): The name of the temporary collection.
+        highest_instance_id_dict (dict): A dictionary mapping object names to the highest instance ID.
+    """
 
     def __init__(self, delete_duplicates=False):
-        
-        
+        """
+        Initializes the blender_object_placement class.
+
+        Args:
+            delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
+                left empty after the script is run.
+        """
         self.blend_deselect_all()
         self.delete_duplicates = delete_duplicates
         self.class_multiplier = class_factor
@@ -30,21 +54,63 @@ class blender_object_placement:
         self.temp_obj_collection_name = "temp"
         self.highest_instance_id_dict = {}
         
+        # make sure we are in object mode 
+        assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
+class blender_object_placement:
+    
+    def __init__(self, delete_duplicates=False):
+        """
+        Initializes the DataGeneratorUtils class.
+
+        Args:
+            delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
+            left empty after the script is run.
+        """
+        self.blend_deselect_all()
+        self.delete_duplicates = delete_duplicates
+        self.class_multiplier = class_factor
+        # delete all objects which are copied
+        [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
+        
+        self.original_objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+
+        self.room_center = bpy.data.objects["walls"].location
+        self.default_location = (0,0,0)   
+        self.subset_selection = []
+        self.modifier_identifier_dict = {}
+        self.modifier_name_dict = {}
+        self.modifier_data_type_dict = {}
+        
+        self.original_obj_collection_name = "placable objects"
+        self.temp_obj_collection_name = "temp"
+        self.highest_instance_id_dict = {}
         
         # make sure we are in object mode 
         assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
         
     def set_modifier(self, object_name, modifier_name, value):
         """ 
-        this function sets the value of a modifier in the geometry nodes modifier of an object.
-        input: 
-            object_name: name of the object to set the modifier of type string
-            modifier_name: name of the modifier to set of type string
-            value: value to set the modifier to of type int, float, boolean or tuple,
-            NOTE: random choice is not supported for boolean values 
-            if tuple then the value is set to a random value between the tuple values if the modifier is of type int or float
-            then the value is set to the that value.
-        output: None
+        Sets the value of a modifier in the geometry nodes modifier of an object.
+
+        Args:
+            object_name (str): Name of the object to set the modifier.
+            modifier_name (str): Name of the modifier to set.
+            value (int, float, bool, tuple): Value to set the modifier to.
+                - If the modifier is of type int or float, the value can be a single value or a tuple representing a range.
+                - If the modifier is of type bool, the value should be a boolean.
+                - If the modifier is of any other type, a ValueError will be raised.
+
+        Returns:
+            None
+
+        Raises:
+            AssertionError: If the modifier_name is not in the list of supported modifiers.
+            AssertionError: If the value is out of range for the modifier.
+
+        Note:
+            - Random choice is not supported for boolean values. So this should be done manually.
+            - If the value is a tuple, the modifier value will be set to a random value within the tuple range if the modifier is of type int or float.
+            - The object_name should be the same as the geometry node name. For example, if the object is named "walls", it should have the "walls" geometry node modifier.
         """
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
@@ -112,20 +178,25 @@ class blender_object_placement:
             raise ValueError(f"The value for {modifier_name}: {value} is not of type int, bool,  float or tuple")
 
         bpy.context.object.modifiers["GeometryNodes"][modifier_identifier] = value
- 
+
 
         obj = bpy.context.active_object
 
         obj.data.update()
 
 
-    def set_object_id(self,class_label, object_name = None, selection = None):
+    def set_object_id(self, class_label, object_name=None, selection=None):
         """ 
-        Gives an unique instance id to all objects of the same type in the scene.
-        input class_label: label of the object type
-        input object_name: (optional) name of the object to set the id of
-        input selection: (optional) list of objects to set the id of
-        output: None"""
+        Gives a unique instance id to all objects of the same type in the scene.
+
+        Args:
+            class_label (int): The label of the object type.
+            object_name (str, optional): The name of the object to set the id of.
+            selection (list, optional): A list of objects to set the id of.
+
+        Returns:
+            None
+        """
         
         # Every time this function gets called this ensures that the object is a new instance
         if selection is None:
@@ -143,29 +214,34 @@ class blender_object_placement:
             else:    
                 self.highest_instance_id_dict[object_name] += 1
                 
-            assert self.highest_instance_id_dict[object_name]<1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
-            objects[i]["inst_id"] = class_label*self.class_multiplier+self.highest_instance_id_dict[object_name]
+            assert self.highest_instance_id_dict[object_name] < 1000, f"there are too many {object_name} in the scene, there can be no more than 999 objects of the same type in the scene"
+            objects[i]["inst_id"] = class_label * self.class_multiplier + self.highest_instance_id_dict[object_name]
             
             
             
             
     def set_object_id_multiple(self, id_dictionary):
         """ 
-        This function sets the object id of multiple objects in the scene
-        input: id_dictionary: dictionary of the form {object_name: class_label}
-        output: None
+        This function sets the object id of multiple objects in the scene.
+
+        Args:
+            id_dictionary (dict): A dictionary of the form {object_name: class_label}.
+
+        Returns:
+            None
         """
         for object_name, class_label in id_dictionary.items():
             self.set_object_id(class_label, object_name)
     
     def move_from_to_collection(self, object, from_collection, to_collection):
         """
-        This function moves an object from one collection to another in blender
-        input object: object to move of type bpy.data.objects
-        input from_collection: name of the collection to move from
-        input to_collection: name of the collection to move to
+        Moves an object from one collection to another in Blender.
+
+        Args:
+            object (bpy.types.Object): The object to move.
+            from_collection (str): The name of the collection to move from.
+            to_collection (str): The name of the collection to move to.
         """
-        
         assert type(object) == bpy.types.Object, f"Object: {object} is not of type bpy.types.Object but of type {type(object)}"
         
         bpy.data.collections[from_collection].objects.unlink(object)
@@ -173,35 +249,53 @@ class blender_object_placement:
         
     def set_object_color(self, object_name, color):
         """ 
-        Sets the color of the object in the scene, the color is set in the emission node of the shader nodes. This means that
-        the object will have the exact color specified
-        input color: tuple of the color in rgb in range 0-255 (r,g,b, alpha)
-        input object_name: name of the object to set the color of note that this has to be the same name as the shader material
-        output: None
-        """
-        # set color from rgb to percentage
-        
-        assert object_name in bpy.data.objects, f"Object {object_name} does not exist"
-        assert bpy.data.materials.get(object_name) is not None, f"Material {object_name} does not exist make sure that the object has a material with the same name as the object and that it is assigned in the geometry nodes of the object if the object is created with geometry nodes"
+        Sets the color of the object in the scene.
 
-        assert len(color) == 4, f"Color: {color} is not of shape (r,g,b)"
+        The color is set in the emission node of the shader nodes, which means that
+        the object will have the exact color specified. Shader should be set as in 
+        :https://blender.stackexchange.com/questions/154471/render-solid-color-in-eevee
+        and settings as per the first comment.
+
+        Args:
+            object_name (str): Name of the object to set the color of. Note that this
+                has to be the same name as the shader material.
+            color (tuple): Tuple of the color in RGB format, with values ranging from
+                0 to 255 (r, g, b, alpha).
+
+        Raises:
+            AssertionError: If the object does not exist or if the material with the
+                same name as the object does not exist. Also raised if the color tuple
+                is not of shape (r, g, b, a) or if any color value is not in the range 0-255.
+
+        Returns:
+            None
+        """
+        # set color from RGB to percentage
+
+        assert object_name in bpy.data.objects, f"Object {object_name} does not exist"
+        assert bpy.data.materials.get(object_name) is not None, f"Material {object_name} does not exist. Make sure that the object has a material with the same name as the object and that it is assigned in the geometry nodes of the object if the object is created with geometry nodes"
+
+        assert len(color) == 4, f"Color: {color} is not of shape (r, g, b)"
         assert all([0 <= c <= 255 for c in color]), f"Color: {color} is not in the range 0-255"
-        
+
         color = [c/255 for c in color]
-        
+
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
         bpy.data.materials[object_name].node_tree.nodes["Emission"].inputs[0].default_value = color
     
     def duplicate_move(self, objects_list=[], relative_position=(0,0,0)):
         """ 
-        Duplicates an object in the scene and moves it relative to its current position
-        input: objects_list: name or object class of the object to duplicate
-        input: relative_position: list of the relative position [x,y,z] to move the object
-        output: None
+        Duplicates an object in the scene and moves it relative to its current position.
+        
+        Args:
+            objects_list (list): A list of names or object classes of the objects to duplicate.
+            relative_position (tuple): A tuple representing the relative position [x, y, z] to move the object.
+        
+        Returns:
+            list: A list of the duplicated objects.
         """
         assert len(relative_position) == 3, "relative_position is not of length 3 give (x,y,z) to move object relative to"
         assert type(objects_list) == list, "objects_list is not of type list"
-        
         
         self.blend_deselect_all()
         for object in objects_list:
@@ -209,14 +303,27 @@ class blender_object_placement:
                 bpy.data.objects[object].select_set(True)
             else:
                 object.select_set(True)
+        
         # select active object
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":relative_position, "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         
         return bpy.context.selected_objects
                                                            
-    def place_objects(self,inst_id=255, object_name="", seperate_loose=True):
-        
-        
+    def place_objects(self, inst_id=255, object_name="", seperate_loose=True):
+        """
+        Place objects in the scene. This copies an object with name object_name and places it in the scene.
+        However for ease of use the we call this as a function to place objects in the scene.
+
+        Args:
+            inst_id (int): Instance ID for the object.
+            object_name (str): Name of the object to be placed. Must already exist in the scene.
+            seperate_loose (bool): Flag indicating whether to split the mesh into individual objects. For example
+            if an object consist of multiple chairs the flag will split the chairs into individual objects.
+            Each seperate chair will have its own instance id.
+
+        Returns:
+            None
+        """
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # set object as active
@@ -236,12 +343,14 @@ class blender_object_placement:
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
         self.set_object_id(object_name=object_name, class_label=inst_id)
         
-    def place_raytrace(self, position=(0,0,0)):
+    def place_LiDAR(self, position=(0,0,0)):
         """ 
         This function places a raytrace in the scene. 
-        Input: position: tuple x, y,z position of the raytrace
-        output: None
-        
+        Args:
+            position (tuple): The x, y, z position of the raytrace.
+
+        Returns:
+            None
         """
         self.blend_deselect_all()
         object_name = "raytrace"
@@ -251,32 +360,47 @@ class blender_object_placement:
         bpy.ops.object.duplicate_move_linked(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0,0,0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
-        
+
         # bpy.ops.object.convert(target='MESH')
         self.raytrace_position = position
-        obj.location = self.raytrace_position 
+        obj.location = self.raytrace_position
         
     def hide_objects(self, object_list):
         """ 
-        this function hides a list of objects in the scene.
-        input: object_list: list of objects to hide
-        output: None
+        Hides a list of objects in the scene.
+
+        Args:
+            object_list (list): List of bpy objects to hide.
+        Returns:
+            None
         """
         for obj in object_list:
             obj.hide_render = True
             
     def unhide_objects(self, object_list):
         """ 
-        this function unhides a list of objects in the scene.
-        input: object_list: list of objects to unhide
-        output: None
+        Unhides a list of objects in the scene.
+
+        Args:
+            object_list (list): List of objects to unhide.
+
+        Returns:
+            None
         """
         for obj in object_list:
             obj.hide_render = False
             
     def clean_up_materials(self):
         """
-        Because of the way that the data is labeled in blender, the materials are not cleaned up properly.
+        This method is used to clean up materials in Blender. Due to the way the data is labeled, 
+        materials may not be cleaned up properly. This method identifies objects with a '.' in 
+        their name and removes any associated materials from them. Prevents issues with rendering.
+
+        Args:
+            None
+
+        Returns:
+            None
         """
         # Remove materials from objects with a '.' in the name
         objects_to_remove_material = [obj for obj in bpy.data.objects if "." in obj.name]
@@ -287,10 +411,14 @@ class blender_object_placement:
         
     def isolate_object(self, object_name):
         """ 
-        this function isolates an object in the scene by turning on hide render for all objects except object_name.
+        This function isolates an object in the scene by turning on hide render for all objects except object_name.
         This will make sure that only object_name is visible in the render.
-        input: object_name: name of the object to be isolated
-        output: None
+
+        Args:
+            object_name (str): Name of the object to be isolated.
+
+        Returns:
+            None
         """
         # only select the duplicate
         if "." not in object_name:
@@ -305,51 +433,60 @@ class blender_object_placement:
                   
     def unisolate(self):
         """ 
-        this function unisolates all objects in the scene. Showing everything in the render.
-        input: object_name: name of the object to be unisolated
-        output: None
-        
+        Unisolates all objects in the scene, showing everything in the render.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
         """
         
         for obj in bpy.data.objects:
             obj.hide_render = False
             
     def delete_single_object(self, object_name):
-        """Deletes an object from the scene"""
+        """Deletes an object from the scene.
+
+        Args:
+            object_name (str): The name of the object to be deleted.
+
+        """
         bpy.data.objects.remove(bpy.data.objects[object_name])
     
-    def select_subset_of_objects(self,object_type_name="Chairs display", selection_percentage=1, bbox=None):
+    def select_subset_of_objects(self, object_type_name="Chairs display", selection_percentage=1, bbox=None):
         """
-        select a subset of objects of a given type or within a given bounding box
-        input: object_type_name: name of the object type to select taken from the category_information.py file
-        selection: percentage of objects to select
-        within_bouding_box: (optional) tuple of the bounding box to select objects from
-        output: tuple of all objects of the given type and the objects to select
+        Select a subset of objects of a given type or within a given bounding box.
+
+        Args:
+            object_type_name (str): Name of the object type to select, taken from the category_information.py file.
+            selection_percentage (float): Percentage of objects to select (0-1).
+            bbox (tuple): Optional tuple of the bounding box to select objects from. ()
+
+        Returns:
+            list: List of selected objects.
+
         """
         object_type_name = object_type_name.lower()
-        
-        
-        objects = [obj for obj in bpy.data.objects if object_type_name+"." in obj.name]
-        # exclude objects that are in self.subset_selection
+
+        objects = [obj for obj in bpy.data.objects if object_type_name + "." in obj.name]
+        # Exclude objects that are in self.subset_selection
         objects = [obj for obj in objects if obj not in self.subset_selection]
+
         if bbox is not None:
             bbox = np.array(bbox)
             xmin, xmax = np.min(bbox[:, 0]), np.max(bbox[:, 0])
             ymin, ymax = np.min(bbox[:, 1]), np.max(bbox[:, 1])
 
-            
-            # select objects within the bounding box
+            # Select objects within the bounding box
             objects_in_bbox = []
             for obj in objects:
                 if xmin <= obj.location.x <= xmax and ymin <= obj.location.y <= ymax:
                     objects_in_bbox.append(obj)
-            
+
             objects = objects_in_bbox
-            
-        
-        
-        select_amount = int(len(objects)*selection_percentage)
-        
+
+        select_amount = int(len(objects) * selection_percentage)
         select_indexes = random.sample(range(len(objects)), select_amount)
         selected_objects = [objects[i] for i in select_indexes]
         self.subset_selection += selected_objects
@@ -358,20 +495,28 @@ class blender_object_placement:
     
     def delete_objects(self, object_list):
         """
-        Deletes a number of random objects from the scene
-        input: object_list: list of objects to delete
-        output: None
+        Deletes a number of random objects from the scene.
+
+        Args:
+            object_list (list): List of objects to delete.
+
+        Returns:
+            None
         """
         for obj in object_list:
-            bpy.data.objects.remove(obj)     
+            bpy.data.objects.remove(obj)
 
     
     def move_objects_relative(self, object_list, relative_position):  
         """
-        move a list of objects in the scene relative to their current position
-        input: object_list: list of objects to move
-        input: relative_position: list of the relative position [x,y,z] to move the objects
-        output: None
+        Move a list of objects in the scene relative to their current position.
+
+        Args:
+            object_list (list): List of bpy objects to move.
+            relative_position (list or tuple): List of the relative position [x, y, z] to move the objects.
+
+        Returns:
+            None
         """
         relative_position = np.array(relative_position)
         object_positions = [np.array(obj.location) for obj in object_list]
@@ -380,18 +525,25 @@ class blender_object_placement:
 
     
     def configure_camera(self, position=(0,0,0)):
-        """ Set the camera position to the given position"""
+        """Set the camera position to the given position.
+
+        Args:
+            position (tuple): The position to set the camera to.
+        """
+        
         # Set the camera position to the given height
         bpy.data.objects["Camera"].location = position
-
-        # Extract walls object and get the height width and depth
+        # TODO: implement camera dimensions
         
     def get_object_dims(self, object_name="walls"):
-        """Get the dimensions of the object
-        input: object_name: name of the object to get the dimensions of
-        output: height, width, depth of the object
+        """Get the dimensions of the object.
+
+        Args:
+            object_name (str): Name of the object to get the dimensions of.
+
+        Returns:
+            tuple: A tuple containing the bounding box, height, width, and depth of the object.
         """
-   
         object = bpy.data.objects[object_name]
         bbox = object.bound_box
         height = np.abs(bbox[4][2]) + np.abs(bbox[0][2])
@@ -402,8 +554,12 @@ class blender_object_placement:
     def blend_deselect_all(self):
         """
         This function deselects all objects in the scene.
-        input: None
-        output: None
+        
+        Parameters:
+        - self: The instance of the class.
+        
+        Returns:
+        - None
         """
         for obj in bpy.context.selected_objects:
             obj.select_set(False)
@@ -417,10 +573,17 @@ class blender_object_placement:
     
     def finalize(self):
         """ 
-        this function cleans up the scene.
-        input: None
-        output: None
+        Cleans up the scene by performing various operations.
         
+        This function is responsible for cleaning up the scene by performing
+        various operations such as deleting duplicates, resetting dictionaries,
+        and deselecting all objects. Should be called at the end of the script.
+        
+        Parameters:
+            None
+        
+        Returns:
+            None
         """
         if self.delete_duplicates:
             self.delete_duplicates_func()    
@@ -436,10 +599,18 @@ class blender_object_placement:
         
 def delete_folder_contents(folders, empty_folders=False):
     """ 
-    this function deletes all files in the given folders
-    input: folders: list of folders to delete all files from
-    input: empty_folders: flag to confirm deletion of files
-    output: None
+    Deletes all files in the given folders.
+
+    Args:
+        folders (list): List of folders to delete all files from.
+        empty_folders (bool): Flag to confirm deletion of files. Defaults to False.
+
+    Raises:
+        ValueError: If the user does not confirm deletion of files. Will ask for confirmation if there are 
+        more than 500 files. TODO: test if this still works in blender scripting
+
+    Returns:
+        None
     """
     # ask the user if they are sure when there are more than 500 files in the folders
     if empty_folders:
@@ -456,37 +627,55 @@ def overwrite_data(overwrite_folder, overwrite_data=False):
     """
     Return the highest file number in the overwrite folder if 
     overwrite_data is False, else return 0. Blender will automatically overwrite any file 
-    with the same name in the folder.
+    with the same name in the folder (by default).
+
+    Parameters:
+    - overwrite_folder (str): The path to the folder where the data files are stored.
+    - overwrite_data (bool): If True, the function will return 0. If False, the function 
+      will return the highest file number in the folder plus 1.
+
+    Returns:
+    - file_number (int): The highest file number in the overwrite folder if overwrite_data is False, else 0.
     """
     file_number = 0
     if not overwrite_data:
-            
-            file_names = os.listdir(overwrite_folder)
+        file_names = os.listdir(overwrite_folder)
         # split the files names by  "-"
-            file_names = [file.split("-") for file in file_names]
+        file_names = [file.split("-") for file in file_names]
         # get the file numbers
-            if file_names != []:
-                file_numbers = [int(file[-2]) for file in file_names]
-                file_number = max(file_numbers)+1
+        if file_names != []:
+            file_numbers = [int(file[-2]) for file in file_names]
+            file_number = max(file_numbers)+1
                 
     return file_number
 
 def create_folders(paths):
     """
-    Create folders if they do not exist
-    input: paths: list of paths to create
-    output: None
+    Create folders if they do not exist.
+
+    Args:
+        paths (list): List of paths to create.
+
+    Returns:
+        None
     """
     for path in paths:
         if not os.path.exists(path):
-            os.makedirs(path)	
+            os.makedirs(path)
 def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0):
     import pandas as pd
     """
-    Save the metadata to a csv file
-    input: metadata: dictionary of the metadata
-    input: metadata_path: path to save the metadata to
-    output: None
+    Save the metadata to a csv file. Consisting of the ranges of data generation parameters, 
+    the number of images, and the time taken to generate the dataset.
+
+    Args:
+        metadata_path (str): Path to save the metadata to.
+        nr_of_images (int): Total number of images.
+        modifiers_list (list): List of dictionaries containing the ranges of data generation parameters.
+        time_taken (float): Time taken to generate the dataset.
+
+    Returns:
+        None
     """
     metadata_file = os.path.join(metadata_path, "metadata.txt")
 

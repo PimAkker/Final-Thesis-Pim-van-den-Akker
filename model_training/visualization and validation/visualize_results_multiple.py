@@ -46,9 +46,13 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 
 
-# image_path = r"data\test_Images"
+
 image_path = r"data\test_Images"
 mask_path = r"data\test_Masks"
+
+# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V1\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V1\Masks'
+
 show_input_image = False
 show_image = True
 show_mask = True
@@ -77,7 +81,7 @@ if __name__ == '__main__':
         num_classes = len(category_information)
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = get_model_instance_segmentation(num_classes)
-        model.load_state_dict(torch.load(r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-04-11_11-49-12\model_2024-04-11_11-49-12_epochs_3.pth"))
+        model.load_state_dict(torch.load(r"data\Models\info\2024-04-23_13-57-08\weights.pth"))
         model.to(device)
     
     

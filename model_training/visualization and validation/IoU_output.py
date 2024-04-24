@@ -6,17 +6,17 @@ import os
 import sys
 
 path = os.path.dirname(os.path.abspath(__file__))
-path = "\\".join(path.split("\\")[:-1])
+path = "\\".join(path.split(os.sep)[:-1])
 os.chdir(path)
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
-current_directory = os.getcwd().split("\\")
+current_directory = os.getcwd().split(os.sep)
 assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
 if current_directory[-1] != root_dir_name:
     # go down in the directory tree until the root directory is found
     while current_directory[-1] != root_dir_name:
         os.chdir("..")
-        current_directory = os.getcwd().split("\\")
+        current_directory = os.getcwd().split(os.sep)
         
 sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
 sys.path.append(os.getcwd())
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     
     
     weights_save_path = r"data\Models"
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-03-12_18-18-58\model_2024-03-12_18-18-58_epochs_10.pth"
+    weights_load_path = r"data\Models\info\2024-04-23_13-57-08\weights.pth"
     
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

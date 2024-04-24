@@ -14,5 +14,5 @@ place_class = blender_object_placement(delete_duplicates=False)
 place_class.place_room()
 # place_class.place_tables(num_tables=5,inst_id=100)
 
-place_class.place_raytrace(position=(1,2,0))
+place_class.place_LiDAR(position=(1,2,0))
 place_class.finalize()

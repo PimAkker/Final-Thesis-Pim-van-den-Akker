@@ -5,20 +5,22 @@ import sys
 
 # set file as curdir
 path = os.path.dirname(os.path.abspath(__file__))
-path = "\\".join(path.split("\\")[:-1])
-
 os.chdir(path)
+path =path.split(os.sep)
+
+
+
 
 
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
-current_directory = os.getcwd().split("\\")
+current_directory = os.getcwd().split(os.sep)
 assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
 if current_directory[-1] != root_dir_name:
     # go down in the directory tree until the root directory is found
     while current_directory[-1] != root_dir_name:
         os.chdir("..")
-        current_directory = os.getcwd().split("\\")
+        current_directory = os.getcwd().split(os.sep)
 
 
 # add all the subdirectories to the path
@@ -121,114 +123,114 @@ data_gen_utils.create_folders([masks_folder,images_folder, metadata_folder])
 data_gen_utils.delete_folder_contents([masks_folder,images_folder, metadata_folder],empty_folders=empty_folders)
 file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
 
-place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
+pc = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
 # Create an empty pandas dataframe
 instance_nr_df = pd.DataFrame(index=range(nr_of_images), columns=category_information.keys())
 
 
 for object_name, color in set_colors.items():
-    place_class.set_object_color(object_name, color)
+    pc.set_object_color(object_name, color)
 
 for i in np.arange(file_number, nr_of_images + file_number):
     print(f"Creating image {i}/{nr_of_images + file_number}")
     
-    place_class.delete_duplicates_func() #delete duplicates at the start to refresh the scene
+    pc.delete_duplicates_func() #delete duplicates at the start to refresh the scene
     
     start_time = time.time()
     
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, exclude_from_render=place_class.original_objects)
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, exclude_from_render=pc.original_objects)
     
     for modifier in list(walls_modifiers.keys()):
-        place_class.set_modifier("walls", modifier, walls_modifiers[modifier])
+        pc.set_modifier("walls", modifier, walls_modifiers[modifier])
     for modifier in list(chairs_modifiers.keys()):
-        place_class.set_modifier("chair", modifier, chairs_modifiers[modifier])
+        pc.set_modifier("chair", modifier, chairs_modifiers[modifier])
     for modifier in list(round_table_modifiers.keys()):
-        place_class.set_modifier("round table", modifier, round_table_modifiers[modifier])
+        pc.set_modifier("round table", modifier, round_table_modifiers[modifier])
     for modifier in list(pillar_table_modifiers.keys()):   
-        place_class.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])  
+        pc.set_modifier("pillar", modifier, pillar_table_modifiers[modifier])  
     for modifier in list(raytrace_modifiers.keys()):   
-        place_class.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
+        pc.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
           
 
-    _, height, width, depth = place_class.get_object_dims(object_name="walls")
-    place_class.place_objects(object_name="walls", inst_id=obj_ids["walls"], seperate_loose=False)
-    place_class.place_objects(object_name="doors", inst_id=obj_ids["doors"])
-    place_class.place_objects(object_name="chairs display", inst_id=obj_ids["chairs"])
-    place_class.place_objects(object_name="tables display", inst_id=obj_ids["tables"])
-    place_class.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
+    _, height, width, depth = pc.get_object_dims(object_name="walls")
+    pc.place_objects(object_name="walls", inst_id=obj_ids["walls"], seperate_loose=False)
+    pc.place_objects(object_name="doors", inst_id=obj_ids["doors"])
+    pc.place_objects(object_name="chairs display", inst_id=obj_ids["chairs"])
+    pc.place_objects(object_name="tables display", inst_id=obj_ids["tables"])
+    pc.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
     
     # Generate pointcloud image
     # rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
-    place_class.place_raytrace(position=(-0.3,-3,0))
+    pc.place_LiDAR(position=(-0.3,-3,0))
    
     # move a percentage of objects down, this will move them out of the raytrace image
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
-    # simulating that they are1
-    # removed in real life but present on the map
-    chairs_to_remove = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  objects_to_remove_percentage)
-    tables_to_remove = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_remove_percentage)
-    pillars_to_remove = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_remove_percentage)
+    # simulating that they are removed in real life but present on the map
+    chairs_to_remove = pc.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  objects_to_remove_percentage)
+    tables_to_remove = pc.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_remove_percentage)
+    pillars_to_remove = pc.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_remove_percentage)
     
-    place_class.set_object_id(obj_ids["chairs removed"], selection=chairs_to_remove)
-    place_class.set_object_id(obj_ids["tables removed"], selection=tables_to_remove)
-    place_class.set_object_id(obj_ids["pillars removed"], selection=pillars_to_remove)
+    pc.set_object_id(obj_ids["chairs removed"], selection=chairs_to_remove)
+    pc.set_object_id(obj_ids["tables removed"], selection=tables_to_remove)
+    pc.set_object_id(obj_ids["pillars removed"], selection=pillars_to_remove)
     
-    place_class.move_objects_relative(chairs_to_remove,  [0, 0, -10])
-    place_class.move_objects_relative(tables_to_remove,  [0, 0, -10])
-    place_class.move_objects_relative(pillars_to_remove, [0, 0, -10])
+    pc.move_objects_relative(chairs_to_remove,  [0, 0, -10])
+    pc.move_objects_relative(tables_to_remove,  [0, 0, -10])
+    pc.move_objects_relative(pillars_to_remove, [0, 0, -10])
     
     
 
-    place_class.hide_objects(chairs_to_remove+tables_to_remove+pillars_to_remove)
+    pc.hide_objects(chairs_to_remove+tables_to_remove+pillars_to_remove)
     
     
-    place_class.isolate_object("raytrace")
-    place_class.configure_camera(position=(0, 0, height/2))
-    place_class.set_modifier("raytrace.001", "visible surface switch", False)
+    pc.isolate_object("raytrace")
+    # place_class.configure_camera(position=(0, 0, height/2))
+    pc.set_modifier("raytrace.001", "visible surface switch", False)
     cru_class.simple_render(folder=images_folder, file_prefix="pointcloud", file_affix="")
-    place_class.set_modifier("raytrace.001", "visible surface switch", True)
+    pc.set_modifier("raytrace.001", "visible surface switch", True)
     cru_class.simple_render(folder=images_folder, file_prefix="visible_region_mask", file_affix="")
     
-    place_class.unisolate()
+    pc.unisolate()
 
-    place_class.delete_single_object("raytrace.001")
+    pc.delete_single_object("raytrace.001")
     
     # Here we remove a percentage of the objects and add a percentage of the objects from the map, they will still be 
     # visible in the pointcloud but not on the map, additionanly we will change the object id of the objects that are added
-    chairs_to_add = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  objects_to_add_percentage)
-    tables_to_add = place_class.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_add_percentage)
-    pillars_to_add = place_class.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_add_percentage)
+    chairs_to_add = pc.select_subset_of_objects(object_type_name="chairs display", selection_percentage=  objects_to_add_percentage)
+    tables_to_add = pc.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_add_percentage)
+    pillars_to_add = pc.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_add_percentage)
     
-    place_class.set_object_id(obj_ids["chairs new"], selection=chairs_to_add)
-    place_class.set_object_id(obj_ids["tables new"], selection=tables_to_add)
-    place_class.set_object_id(obj_ids["pillars new"], selection=pillars_to_add)
+    pc.set_object_id(obj_ids["chairs new"], selection=chairs_to_add)
+    pc.set_object_id(obj_ids["tables new"], selection=tables_to_add)
+    pc.set_object_id(obj_ids["pillars new"], selection=pillars_to_add)
     
 
     chairs_to_move = list(np.random.choice(chairs_to_add, int(len(chairs_to_add) *    object_to_move_percentage)))
     tables_to_move = list(np.random.choice(tables_to_add, int(len(tables_to_add) *    object_to_move_percentage)))
     pillars_to_move = list(np.random.choice(pillars_to_add, int(len(pillars_to_add) * object_to_move_percentage)))
 
-    relative_move = lambda : [random.uniform(-max_shift_distance, max_shift_distance) , random.uniform(-max_shift_distance, max_shift_distance), -1]
+    # this move the objects in a random direction and shifts them down, this will make them invisible in the pointcloud
+    relative_move = lambda : [random.uniform(-max_shift_distance, max_shift_distance) , random.uniform(-max_shift_distance, max_shift_distance), -10]
 
-    moved_chairs =  place_class.duplicate_move(objects_list=chairs_to_move, relative_position=relative_move())
-    moved_tables =  place_class.duplicate_move(objects_list=tables_to_move, relative_position=relative_move())
-    moved_pillars = place_class.duplicate_move(objects_list=pillars_to_move, relative_position=relative_move())
+    moved_chairs =  pc.duplicate_move(objects_list=chairs_to_move, relative_position=relative_move())
+    moved_tables =  pc.duplicate_move(objects_list=tables_to_move, relative_position=relative_move())
+    moved_pillars = pc.duplicate_move(objects_list=pillars_to_move, relative_position=relative_move())
 
-    place_class.set_object_id(obj_ids["chairs removed"], selection=moved_chairs)
-    place_class.set_object_id(obj_ids["tables removed"], selection=moved_tables)
-    place_class.set_object_id(obj_ids["pillars removed"], selection=moved_pillars)
+    pc.set_object_id(obj_ids["chairs removed"], selection=moved_chairs)
+    pc.set_object_id(obj_ids["tables removed"], selection=moved_tables)
+    pc.set_object_id(obj_ids["pillars removed"], selection=moved_pillars)
     
 
     # render the instance segmentation mask1
-    place_class.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
+    pc.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
     
     cru_class.render_data_semantic_map(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
-    place_class.clean_up_materials()
+    pc.clean_up_materials()
     
-    place_class.delete_objects(chairs_to_add)
-    place_class.delete_objects(tables_to_add)
-    place_class.delete_objects(pillars_to_add)
+    pc.delete_objects(chairs_to_add)
+    pc.delete_objects(tables_to_add)
+    pc.delete_objects(pillars_to_add)
     
     # # create the map and combine the poi
     # tcloud and map to a single image, creating the input for the model
@@ -237,7 +239,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
     
-    place_class.finalize()
+    pc.finalize()
     
     print(f"Time for this image: {time.time() - start_time}")
 
