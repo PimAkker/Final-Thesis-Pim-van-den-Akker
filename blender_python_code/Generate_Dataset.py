@@ -5,8 +5,6 @@ import sys
 
 # set file as curdir
 path = os.path.dirname(os.path.abspath(__file__))
-os.chdir(path)
-path =path.split(os.sep)
 
 
 
@@ -42,9 +40,9 @@ total_start_time = time.time()
 
 import pandas as pd
 
-masks_folder = r"data\test_Masks"
-images_folder = r"data\test_Images"
-metadata_folder = r"data\test_Metadata"
+masks_folder = r"data\Masks"
+images_folder = r"data\Images"
+metadata_folder = r"data\Metadata"
 nr_of_images = 10
 overwrite_data = False
 empty_folders = True
@@ -63,10 +61,10 @@ max_shift_distance =.5
 
 obj_ids = category_information
 walls_modifiers = {
-    "wall width": (0.05, 0.2),
-    "wall nr x": (0, 5),
-    "wall nr y": (0, 5),
-    "wall density": (0.5, 0.95),
+    "wall width": (0.1, 0.3),
+    "wall nr x": (0, 2),
+    "wall nr y": (0, 2),
+    "wall density": (0.5, 1),
     "seed": (0, 10000),
     "min door width": 0.7,
     "max door width": 1.3,
@@ -75,7 +73,7 @@ walls_modifiers = {
     "door density": (0.1, 1),
 }
 
-chair_size = (0.4, 0.6)
+chair_size = (0.8, 1)
 chairs_modifiers = {
     "chair width": chair_size,
     "chair length": chair_size,
@@ -84,20 +82,21 @@ chairs_modifiers = {
     "leg type": False,
 }
 
+table_size = (1, 1.5)
 round_table_modifiers = {
-    "table legs": (3, 5),
-    "table x width": (0.5, 1.5),
-    "table y width": (0.5, 1.5),
-    "leg radius": (0.05, 0.1),
+    "table legs": (4, 6),
+    "table x width": table_size,
+    "table y width": table_size,
+    "leg radius": (0.05, 0.12),
 }
 
 pillar_table_modifiers = {
-    "width": (0.3, 1),
+    "width": (0.5, 1),
     "round/square": np.random.choice([True, False]),
 }
 raytrace_modifiers = {"high freq noise variance": (0, 0.03), 
-                      "low freq noise variance": (0, 0.2),
-                      "lidar block size":(0.05,0.07),
+                      "low freq noise variance": (0, 0.1),
+                      "lidar block size":(0.08,0.12),
                       }
 
 

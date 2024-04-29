@@ -154,7 +154,7 @@ if __name__ == '__main__':
             obj_ids = torch.unique(mask_true)[1:]
             num_objs = len(obj_ids)
             labels = obj_ids // 1000
-            labels = labels.long()
+            labels = labels.long()s
             labels = labels
             masks = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
             masks = masks
