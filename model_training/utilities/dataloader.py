@@ -28,6 +28,7 @@ class LoadDataset(torch.utils.data.Dataset):
         img_path = os.path.join(self.root, "Images", self.imgs[idx])
         mask_path = os.path.join(self.root, "Masks", self.masks[idx])
         mask = torch.from_numpy(np.load(mask_path,allow_pickle=True))
+        
         # instances are encoded as different colors
         obj_ids = torch.unique(mask)
         # first id is the background, so remove it
@@ -71,7 +72,9 @@ class LoadDataset(torch.utils.data.Dataset):
 
         if self.transforms is not None:
             img, target = self.transforms(img, target)
-
+        # only select the rgb channels
+        img = img[:3]
+        
         return img, target
 
     def __len__(self):

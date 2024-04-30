@@ -24,7 +24,7 @@ class custom_render_utils:
         
         self.image_id = image_id
         self.input_file_type = ".png" # only change this when also changed in blender renderer
-        self.output_file_type = ".jpg"
+        self.output_file_type = ".png"
         self.exclude_from_render = exclude_from_render
         self.simple_render_image_path_dict = {}
         self.render_masks = {}
@@ -106,15 +106,15 @@ class custom_render_utils:
 
         # show unique rgba values
         if make_black_and_white:
-            # everywhere where map image opacity is  0 set it to white
-            map_image[map_image[:,:,3] != 0] = [255,255,255,1]
+            # everywhere where map image opacity is not  0 set it to white
+            map_image[map_image[:,:,3] != 0] = [255,255,255,255]
             
         # everywhere where pointcloud image opacity is 0 set it to red 
-        pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,1]
+        pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,255]
         
         #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
         combined_image = map_image.copy()
-        combined_image[pointcloud_image[:,:,3] == 1] = pointcloud_image[pointcloud_image[:,:,3] == 1]
+        combined_image[pointcloud_image[:,:,3] == 255] = pointcloud_image[pointcloud_image[:,:,3] == 255]
 
         self.input_file_path = os.path.join(path, f"input-{file_nr}-{self.output_file_type}")
         if self.minimum_visible_overlap_percentage != 0:
@@ -127,7 +127,7 @@ class custom_render_utils:
             for key in self.simple_render_image_path_dict:
                 os.remove(self.simple_render_image_path_dict[key])
         
-
+    
     def render_only_visible(self,combined_image):
         """
         This function will only render the visible region of the mask	
@@ -161,7 +161,7 @@ class custom_render_utils:
         input_file_only_visible[masks_containing_overlap] = combined_image[masks_containing_overlap]
         
         np.save(self.masks_path_dict['mask'], output_mask)
-        cv2.imwrite(self.input_file_path, input_file_only_visible)
+        cv2.imwrite(self.input_file_path, input_file_only_visible,[int(cv2.IMWRITE_JPEG_QUALITY), 100])
     def update_dataframe_with_metadata(self,df):
         """
         This function will update the dataframe with the metadata of the classes in the image
