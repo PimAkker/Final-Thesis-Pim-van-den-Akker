@@ -19,8 +19,7 @@ category_information = {
                         "tables new": 12,     
                         "pillars": 13,
                         "pillars removed": 14,
-                        "pillars new": 15
-                                          
+                        "pillars new": 15           
                         }
 # in the masks the class is multiplied by the class_factor
 class_factor = 1000

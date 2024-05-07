@@ -7,7 +7,8 @@ import sys
 path = os.path.dirname(os.path.abspath(__file__))
 
 
-
+# ensure we are in the correct directory
+os.chdir(os.path.dirname(path))
 
 
 # ensure we are in the correct directory
@@ -56,6 +57,7 @@ objects_to_add_percentage = 0.6666
 objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 
+force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 
 max_shift_distance =.5
 
@@ -64,13 +66,13 @@ walls_modifiers = {
     "wall width": (0.1, 0.3),
     "wall nr x": (0, 2),
     "wall nr y": (0, 2),
-    "wall density": (0.5, 1),
+    "wall density": (0.7, 1),
     "seed": (0, 10000),
     "min door width": 0.7,
     "max door width": 1.3,
     "max wall randomness": (0, 0.3),
-    "max door rotation": (0, np.pi),
-    "door density": (0.1, 1),
+    "max door rotation": (np.pi/4, np.pi),
+    "door density": (0.5, 1),
 }
 
 chair_size = (0.8, 1)
@@ -120,7 +122,7 @@ importlib.reload(bpycv)
 
 data_gen_utils.create_folders([masks_folder,images_folder, metadata_folder])
 data_gen_utils.delete_folder_contents([masks_folder,images_folder, metadata_folder],empty_folders=empty_folders)
-file_number = data_gen_utils.overwrite_data(images_folder,overwrite_data= overwrite_data)
+file_number = data_gen_utils.overwrite_data(images_folder, overwrite_data = overwrite_data)
 
 pc = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
@@ -136,9 +138,15 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     pc.delete_duplicates_func() #delete duplicates at the start to refresh the scene
     
+    
     start_time = time.time()
     
-    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, exclude_from_render=pc.original_objects)
+    cru_class = custom_render_utils.custom_render_utils(image_id=str(i),
+                                                        remove_intermediary_images=True,
+                                                        minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, 
+                                                        exclude_from_render=pc.original_objects,
+                                                        force_map_visibility=force_object_visibility)
+                                                        
     
     for modifier in list(walls_modifiers.keys()):
         pc.set_modifier("walls", modifier, walls_modifiers[modifier])
@@ -160,8 +168,8 @@ for i in np.arange(file_number, nr_of_images + file_number):
     pc.place_objects(object_name="pillars display", inst_id=obj_ids["pillars"])
     
     # Generate pointcloud image
-    # rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
-    pc.place_LiDAR(position=(-0.3,-3,0))
+    rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
+    pc.place_LiDAR(position=rand_pos_in_room)
    
     # move a percentage of objects down, this will move them out of the raytrace image
     # and will therefore not be seen in the pointcloud but will be seen in the mask and map
@@ -200,8 +208,8 @@ for i in np.arange(file_number, nr_of_images + file_number):
     tables_to_add = pc.select_subset_of_objects(object_type_name="tables display", selection_percentage=  objects_to_add_percentage)
     pillars_to_add = pc.select_subset_of_objects(object_type_name="pillars display", selection_percentage=objects_to_add_percentage)
     
-    pc.set_object_id(obj_ids["chairs new"], selection=chairs_to_add)
-    pc.set_object_id(obj_ids["tables new"], selection=tables_to_add)
+    pc.set_object_id(obj_ids["chairs new"],  selection=chairs_to_add)
+    pc.set_object_id(obj_ids["tables new"],  selection=tables_to_add)
     pc.set_object_id(obj_ids["pillars new"], selection=pillars_to_add)
     
 
@@ -224,12 +232,12 @@ for i in np.arange(file_number, nr_of_images + file_number):
     # render the instance segmentation mask1
     pc.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
     
+
+    
     cru_class.render_data_semantic_map(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
     pc.clean_up_materials()
     
-    pc.delete_objects(chairs_to_add)
-    pc.delete_objects(tables_to_add)
-    pc.delete_objects(pillars_to_add)
+    pc.delete_objects(object_list = chairs_to_add + tables_to_add + pillars_to_add)
     
     # # create the map and combine the poi
     # tcloud and map to a single image, creating the input for the model
@@ -238,7 +246,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
     
-    pc.finalize()
+    # pc.finalize()
     
     print(f"Time for this image: {time.time() - start_time}")
 

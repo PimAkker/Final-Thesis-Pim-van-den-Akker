@@ -52,7 +52,7 @@ import time
 #%%
 if __name__ == '__main__':
     
-    data_root = r'real_world_data\Real_world_data_V1'
+    data_root = r'real_world_data\Real_world_data_V2'
     num_classes = len(category_information)
     
     

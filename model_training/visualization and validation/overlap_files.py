@@ -77,38 +77,40 @@ if __name__ == "__main__":
 
     
     # room 1
-    room = "room1"
-    rotation_angle = 92
-    translation = [294,95]
-    flip_x = False
-    flip_y = False
-    scale_x = 79
-    scale_y = 85
+    # room = "room1"
+    # rotation_angle = 92
+    # translation = [294,95]
+    # flip_x = False
+    # flip_y = False
+    # scale_x = 79
+    # scale_y = 85
+    
+    
     
     # room 2
-    # room = "room2"
-    # rotation_angle = -1
-    # translation = [132,127]
-    # flip_x = False
-    # flip_y = False
-    # scale_x = 78
-    # scale_y = 84
+    room = "room2"
+    rotation_angle = -1
+    translation = [132,127]
+    flip_x = False
+    flip_y = False
+    scale_x = 78
+    scale_y = 84
 
-    # room = "room3"
-    # rotation_angle = -2
-    # translation = [125,164]
-    # flip_x = False
-    # flip_y = False
-    # scale_x = 74
-    # scale_y = 79
+    #room = "room3"
+    #rotation_angle = -2
+    #translation = [125,164]
+    #flip_x = False
+    #flip_y = False
+    #scale_x = 74
+    #scale_y = 79
     
-    # room = "room4"
-    # rotation_angle = -178
-    # translation = [315,364]
-    # flip_x = False
-    # flip_y = False
-    # scale_x = 173
-    # scale_y = 190
+    #room = "room4"
+   # rotation_angle = -178
+  #  translation = [315,364]
+ #   flip_x = False
+#    flip_y = False
+#    scale_x = 173
+#    scale_y = 190
     
     save_folder = r"../../real_world_data/raw_csv/svg files"
     
@@ -141,35 +143,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from IPython.display import display
-def import_svg_output_jpg(input_path, output_image_height=270):
+def import_svg_output_png(input_path, output_image_height=270):
     
     # Get all the svg files in the input path
-    svg_files = glob.glob(os.path.join(input_path, "*.svg"))
+    svg_files =  glob.glob(os.path.join(input_path, "*.svg"))
     
     # Create the output folder
-    output_folder = os.path.join(input_path, "output_jpg")
+    output_folder = os.path.join(input_path, "output_png")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
-    # Convert the svg files to jpg
+    # Convert the svg files to png
     for svg_file in svg_files:
-        output_file = os.path.join(output_folder, os.path.basename(svg_file).replace(".svg", ".jpg"))
-        cairosvg.svg2png(url=svg_file, write_to=output_file)
+        output_file = os.path.join(output_folder, os.path.basename(svg_file).replace(".svg", ".png"))
+        cairosvg.svg2png(url=svg_file, write_to=output_file)     
         
         # Resize the image
         img = Image.open(output_file)
-        img = img.resize((output_image_height, output_image_height), Image.ANTIALIAS)
+        input_image_width = img.size[0]
+        input_image_height = img.size[1]
+        
+        scaled_output_image_width = int(output_image_height * input_image_width / input_image_height)
+        img = img.resize((scaled_output_image_width, output_image_height), Image.ANTIALIAS)
         img.save(output_file)
         
         # Display the image
         display(img)
-    
-    
-    
-
-
-
-       
-import_svg_output_jpg(r"../../real_world_data/raw_csv/svg files")
+        
+import_svg_output_png(r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\raw_csv\svg files")
         
 # %%

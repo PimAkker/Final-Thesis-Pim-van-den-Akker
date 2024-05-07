@@ -52,8 +52,9 @@ def convert_coco_to_mask(coco_json_path, output_path):
         np.save(os.path.join(output_path, image_name + '.npy'), output_mask)
 #%%        
 if __name__ == '__main__':
-    coco_json_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V1\labels_my-project-name_2024-04-15-01-45-36.json'
-    output_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V1\Masks'
+    
+    coco_json_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\labels_real_world_data.json'
+    output_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
     convert_coco_to_mask(coco_json_path, output_path)
     print('Done')
 # %%

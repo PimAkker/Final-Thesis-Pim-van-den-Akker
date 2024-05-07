@@ -493,16 +493,24 @@ class blender_object_placement:
 
         return selected_objects
     
-    def delete_objects(self, object_list):
+    def delete_objects(self, object_list=None, object_name=None):
         """
-        Deletes a number of random objects from the scene.
+        Deletes either a list of objects or all objects of a given name from the scene.
 
         Args:
             object_list (list): List of objects to delete.
+            object_name (str): Name of the object to delete. If None, all objects in object_list will be deleted.
 
         Returns:
             None
         """
+        assert object_list is not None or object_name is not None, "Either object_list or object_name must be provided"
+        assert not (object_list is not None and object_name is not None), "Only one of object_list or object_name should be provided"
+        
+        
+        if object_name is not None:
+            object_list = [obj for obj in bpy.data.objects if object_name in obj.name]
+        
         for obj in object_list:
             bpy.data.objects.remove(obj)
 

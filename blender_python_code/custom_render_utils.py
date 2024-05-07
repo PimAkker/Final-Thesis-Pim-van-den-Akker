@@ -10,10 +10,10 @@ from PIL import Image
 from category_information import category_information
 
 class custom_render_utils:
-    def __init__(self, image_id = "0",remove_originals = True, minimum_render_overlap_percentage=False,exclude_from_render= None):
+    def __init__(self, image_id = "0",remove_intermediary_images = True, minimum_render_overlap_percentage=False,exclude_from_render= None, force_map_visibility = []):
         """
         inputs: image_id (str): the id of the image will be used for naming all the files in this class
-        remove_originals (bool): if True the original images in mask_path_dict and simple_render_image_path_dict 
+        remove_intermediary_images (bool): if True the original images in mask_path_dict and simple_render_image_path_dict 
         will be removed after the combined image is created.
         render_only_visible (bool): if True the mask will only contain the visible region of the mask, this functions
         only gets triggered when combine_simple_renders is called.
@@ -30,10 +30,11 @@ class custom_render_utils:
         self.render_masks = {}
         self.masks_path_dict = {}
         self.input_file_path = ""
-        self.remove_originals = remove_originals
+        self.remove_originals = remove_intermediary_images
         self.minimum_visible_overlap_percentage = minimum_render_overlap_percentage
         self.unique_classes = []
         self.nr_of_instances_per_class = []
+        self.force_map_visibility = force_map_visibility
         
     def render_data_semantic_map(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
@@ -111,7 +112,7 @@ class custom_render_utils:
             
         # everywhere where pointcloud image opacity is 0 set it to red 
         pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,255]
-        
+                           
         #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
         combined_image = map_image.copy()
         combined_image[pointcloud_image[:,:,3] == 255] = pointcloud_image[pointcloud_image[:,:,3] == 255]
@@ -148,9 +149,21 @@ class custom_render_utils:
         
         # select the masks that have an overlap with the visible region mask
         overlap_percentage_per_mask = np.sum(overlap_areas, axis=(1,2)) / np.sum(masks, axis=(1,2))
+        
+        # only render that have a significant overlap with the visible region mask
         masks_containing_overlap_selection = overlap_percentage_per_mask > self.minimum_visible_overlap_percentage
-        masks_containing_overlap_selection[0] = True # force walls visibibility
+        
+        obj_id_classes= obj_ids//1000
+        force_visibility_categories = [category_information[object_name] for object_name in self.force_map_visibility]
+        index_to_force_visibility_obj_ids = [i for i, obj_id_class in enumerate(obj_id_classes) if obj_id_class in force_visibility_categories]
+
+        # force the visibility of the objects that are in the force_map_visibility list
+        for index in index_to_force_visibility_obj_ids:
+            masks_containing_overlap_selection[index] = True
+            
         masks_containing_overlap = masks[masks_containing_overlap_selection]
+        
+        # combine the masks that have an overlap with the visible region mask
         masks_containing_overlap = (np.sum(masks_containing_overlap,axis=0)).astype(bool)
                
         output_mask = np.zeros_like(mask)

@@ -50,8 +50,8 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 image_path = r"data\test_Images"
 mask_path = r"data\test_Masks"
 
-# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V1\Images'
-# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V1\Masks'
+image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
+mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
 
 show_input_image = False
 show_image = True
@@ -60,10 +60,10 @@ show_ground_truth = True
 draw_bounding = True
 render_num_images = 10
 
-mask_confidence_threshold = 0.95
+mask_confidence_threshold = 0.9
 label_confidence_threshold = 0.5
 
-image_path_list = [os.path.join(image_path, file) for file in os.listdir(image_path) if file.endswith(".jpg")]
+image_path_list = [os.path.join(image_path, file) for file in os.listdir(image_path) if file.endswith(".png")]
 if show_ground_truth:
     mask_path_list = [os.path.join(mask_path, file) for file in os.listdir(mask_path) if file.endswith(".npy")]
 def replace_label_name(list, from_name, to_name):
@@ -154,7 +154,7 @@ if __name__ == '__main__':
             obj_ids = torch.unique(mask_true)[1:]
             num_objs = len(obj_ids)
             labels = obj_ids // 1000
-            labels = labels.long()s
+            labels = labels.long()
             labels = labels
             masks = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
             masks = masks
