@@ -182,9 +182,8 @@ class blender_object_placement:
 
 
         obj = bpy.context.active_object
-        if obj.hide_viewport == True:
-            obj.hide_viewport = False 
-            warn(f"Object {object_name} was hidden in the viewport, but has been automatically set to unhidden, if you want to hide the object use the hide_objects() function")
+        
+        assert obj is not None, f"Object: {object_name} is a Nonetype, this may indicate that the object is set to hide in viewport, unhide the object in the viewport to set the modifier. To hide an object in the render use the hide_objects() function"        
 
         obj.data.update()
 

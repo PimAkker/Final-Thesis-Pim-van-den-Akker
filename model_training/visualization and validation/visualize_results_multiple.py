@@ -48,11 +48,11 @@ from numpy import random
 
 
 
-# image_path = r"data\Images"
-# mask_path = r"data\Masks"
+image_path = r"data\Images"
+mask_path = r"data\Masks"
 
-image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
-mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
+# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
 
 show_input_image = False
 show_image = True
