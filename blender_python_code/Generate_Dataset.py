@@ -3,11 +3,8 @@
 import os
 import sys
 
-# set file as curdir
+
 path = os.path.dirname(os.path.abspath(__file__))
-
-
-# ensure we are in the correct directory
 os.chdir(os.path.dirname(path))
 
 
@@ -96,9 +93,9 @@ pillar_table_modifiers = {
     "width": (0.5, 1),
     "round/square": np.random.choice([True, False]),
 }
-raytrace_modifiers = {"high freq noise variance": (0, 0.03), 
-                      "low freq noise variance": (0, 0.1),
-                      "lidar block size":(0.08,0.12),
+raytrace_modifiers = {"high freq noise variance": (0.04, 0.1), 
+                      "low freq noise variance": (0, 0.22),
+                      "lidar block size":(0.15,0.25),
                       }
 
 
@@ -246,7 +243,7 @@ for i in np.arange(file_number, nr_of_images + file_number):
     
     instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
     
-    # pc.finalize()
+    pc.finalize()
     
     print(f"Time for this image: {time.time() - start_time}")
 

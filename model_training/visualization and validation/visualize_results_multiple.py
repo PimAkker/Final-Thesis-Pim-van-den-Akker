@@ -38,6 +38,7 @@ from utilities.dataloader import *
 import matplotlib.pyplot as plt
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+from numpy import random
     
 
 #%%
@@ -47,8 +48,8 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 
 
-image_path = r"data\test_Images"
-mask_path = r"data\test_Masks"
+# image_path = r"data\Images"
+# mask_path = r"data\Masks"
 
 image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
 mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
@@ -59,6 +60,8 @@ show_mask = True
 show_ground_truth = True
 draw_bounding = True
 render_num_images = 10
+
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-05-08_08-42-37\weights.pth'
 
 mask_confidence_threshold = 0.9
 label_confidence_threshold = 0.5
@@ -72,16 +75,17 @@ def replace_label_name(list, from_name, to_name):
 
 if __name__ == '__main__':
     
+    image_indices =  list(range(len(image_path_list)))
+    random_indices = random.choice(image_indices, render_num_images, replace=False)
     
-
-    for file_nr in range(render_num_images):
-        print(f"Showing image {file_nr + 1} of {render_num_images} with name {os.path.split(image_path_list[file_nr])[-1]}")
+    for i, file_nr in enumerate(random_indices):
+        print(f"Showing image {i + 1} of {render_num_images} with name {os.path.split(image_path_list[file_nr])[-1]}")
         
         
         num_classes = len(category_information)
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = get_model_instance_segmentation(num_classes)
-        model.load_state_dict(torch.load(r"data\Models\info\2024-04-23_13-57-08\weights.pth"))
+        model.load_state_dict(torch.load(model_weights_path))
         model.to(device)
     
     

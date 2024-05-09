@@ -57,7 +57,7 @@ if __name__ == '__main__':
     
     
     weights_save_path = r"data\Models"
-    weights_load_path = r"data\Models\info\2024-04-23_13-57-08\weights.pth"
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-05-08_08-42-37\weights.pth"
     
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
