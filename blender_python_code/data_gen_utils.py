@@ -6,6 +6,7 @@ import numpy as np
 import os
 import time
 from category_information import category_information, class_factor
+from warnings import warn
 class blender_object_placement:
     """
     A class for managing object placement in Blender.
@@ -114,7 +115,7 @@ class blender_object_placement:
         """
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
-        # select active object
+        
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
 
         modifier_name = modifier_name.lower()
@@ -181,6 +182,9 @@ class blender_object_placement:
 
 
         obj = bpy.context.active_object
+        if obj.hide_viewport == True:
+            obj.hide_viewport = False 
+            warn(f"Object {object_name} was hidden in the viewport, but has been automatically set to unhidden, if you want to hide the object use the hide_objects() function")
 
         obj.data.update()
 
