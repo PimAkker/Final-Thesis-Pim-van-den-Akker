@@ -3,23 +3,12 @@ import torch
 import os
 import sys
 
-utils_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "utilities"))
-sys.path.append(utils_path)
+
+# ensure we are in the correct directory
 root_dir_name = 'Blender'
-
-current_directory = os.getcwd().split("\\")
-assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
-if current_directory[-1] != root_dir_name:
-    # go down in the directory tree until the root directory is found
-    while current_directory[-1] != root_dir_name:
-        os.chdir("..")
-        current_directory = os.getcwd().split("\\")
-
-# add all the subdirectories to the path
-dirs  = os.listdir()
-root = os.getcwd()
-for dir in dirs:
-    sys.path.append(os.path.join(root, dir))
+root_dir_path = os.path.abspath(__file__).split(root_dir_name)[0] + root_dir_name
+os.chdir(root_dir_path)
+sys.path.extend([os.path.join(root_dir_path, dir) for dir in os.listdir(root_dir_path)])
 sys.path.append(os.getcwd())
 
 from PIL import Image

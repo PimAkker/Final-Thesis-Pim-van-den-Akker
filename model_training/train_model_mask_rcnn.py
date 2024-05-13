@@ -10,16 +10,10 @@ os.chdir(path)
 
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
-current_directory = os.getcwd().split(os.sep)
-assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
-if current_directory[-1] != root_dir_name:
-    # go down in the directory tree until the root directory is found
-    while current_directory[-1] != root_dir_name:
-        os.chdir("..")
-        current_directory = os.getcwd().split(os.sep)
-        
-sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
-sys.path.append(os.getcwd())
+root_dir_path = os.path.abspath(__file__).split(root_dir_name)[0] + root_dir_name
+os.chdir(root_dir_path)
+sys.path.extend([os.path.join(root_dir_path, dir) for dir in os.listdir(root_dir_path)])
+
 import torch
 import numpy as np
 from  model_training.utilities.coco_eval import *
@@ -59,7 +53,7 @@ if __name__ == '__main__':
     weight_decay=0.0005
     
     weights_save_path = r"data\Models"
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-04-23_13-57-08\weights.pth"
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-05-13_14-31-24\weights.pth"
     
     save_info_path= r"data\Models\info"
     
@@ -177,6 +171,7 @@ if __name__ == '__main__':
 #%%
 
 if __name__ == '__main__':
+    
     import datetime
     import pandas as pd
     datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -184,6 +179,7 @@ if __name__ == '__main__':
     
     run_folder = os.path.join(save_info_path, datetime)
     os.makedirs(run_folder, exist_ok=True)
+    print(f'saving model info to {run_folder}...')
     if save_model:
         model_info_path = os.path.join(run_folder, "model_info.txt")
         num_images_trained = len(dataset)
@@ -243,6 +239,7 @@ if __name__ == '__main__':
         
         df = pd.DataFrame(data)
         df.to_csv(IoU_info_path, index=False)
+    print(f'model info saved to {run_folder}')
                  
             
               
