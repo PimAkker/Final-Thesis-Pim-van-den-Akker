@@ -2,19 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-
-
-path = os.path.dirname(os.path.abspath(__file__))
-os.chdir(os.path.dirname(path))
-
-
-# ensure we are in the correct directory
-root_dir_name = 'Blender'
-root_dir_path = os.path.abspath(__file__).split(root_dir_name)[0] + root_dir_name
-os.chdir(root_dir_path)
-sys.path.extend([os.path.join(root_dir_path, dir) for dir in os.listdir(root_dir_path)])
-
-
 import bpycv
 import random
 import numpy as np
@@ -26,6 +13,27 @@ from category_information import category_information
 total_start_time = time.time()
 
 import pandas as pd
+  
+
+def fix_values(modifier_list, fix_values_names):
+    """
+    fix a value to the mean in the modifier, useful for ablation studies
+    
+    args: 
+        modifier_list: list of dictionaries with the modifiers
+        fix_values_names: list of names of the values to fix
+        
+    returns:
+        modifier_list: list of dictionaries with the modifiers with the fixed values
+    """
+    for modifier_dict in modifier_list:
+        for fix_value_name in fix_values_names:
+            if fix_value_name in modifier_dict:
+                modifier_dict[fix_value_name] = np.mean(modifier_dict[fix_value_name])
+    
+
+    return modifier_list
+
 
 def generate_dataset(nr_of_images=1,
                      folder_name="",  
@@ -41,21 +49,22 @@ def generate_dataset(nr_of_images=1,
                      chairs_modifiers={}, 
                      round_table_modifiers={},
                      raytrace_modifiers={}, 
-                     minimum_overlap_percentage_for_visible=0.1):
+                     minimum_overlap_percentage_for_visible=0.1,
+                     ablation_parameter=[],
+                     ):
     """
     Function to generate a dataset of images with corresponding masks and metadata
     """
     total_start_time = time.time()
     
-    masks_folder = os.path.join(folder_name, r"\Masks")
-    images_folder =   os.path.join(folder_name, r"\Images")
-    metadata_folder = os.path.join(folder_name, r"\Metadata")
+    masks_folder = os.path.join(folder_name, r"Masks")
+    images_folder =   os.path.join(folder_name, r"Images")
+    metadata_folder = os.path.join(folder_name, r"Metadata")
 
-    # force a reload of object_placement_utils to help during development
-    importlib.reload(data_gen_utils)
-    importlib.reload(custom_render_utils)
-    importlib.reload(bpycv)
 
+    
+    # for ablation studies we can fix the values of the modifiers
+    fix_values([walls_modifiers, chairs_modifiers, round_table_modifiers, raytrace_modifiers], ablation_parameter)
 
     data_gen_utils.create_folders([masks_folder,images_folder, metadata_folder])
     data_gen_utils.delete_folder_contents([masks_folder,images_folder, metadata_folder],empty_folders=empty_folders)
@@ -187,5 +196,5 @@ def generate_dataset(nr_of_images=1,
     print(f"Done! Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
 
     instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
-    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=nr_of_images, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers, pillar_table_modifiers, raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time)
+    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter)
 

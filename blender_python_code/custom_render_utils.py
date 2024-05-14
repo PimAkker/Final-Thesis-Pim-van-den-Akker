@@ -1,13 +1,13 @@
 import cv2
-import bpy
+import bpy # type: ignore
 import bpycv
-import random
-import numpy as np
 import os
 import sys
-import time
-from PIL import Image
+import numpy as np
+
 from category_information import category_information
+import time
+# from category_information import category_information
 
 class custom_render_utils:
     def __init__(self, image_id = "0",remove_intermediary_images = True, minimum_render_overlap_percentage=False,exclude_from_render= None, force_map_visibility = []):

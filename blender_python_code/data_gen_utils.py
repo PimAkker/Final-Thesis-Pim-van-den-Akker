@@ -7,6 +7,7 @@ import os
 import time
 from category_information import category_information, class_factor
 from warnings import warn
+import numbers
 class blender_object_placement:
     """
     A class for managing object placement in Blender.
@@ -150,7 +151,7 @@ class blender_object_placement:
         # "Walls" should have the "Walls" geometry node modifier
 
 
-        if type(value) == int or type(value) == float or type(value) == tuple:
+        if self.is_numeric(value) or type(value) == tuple:
             min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
             max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
@@ -166,7 +167,7 @@ class blender_object_placement:
             elif modifier_data_type_list[modifier_index] == "INT":
                 value = np.random.randint(int(value[0]), int(value[1])) 
 
-        elif type(value) == int or type(value) == float:
+        elif self.is_numeric(value):
             if modifier_data_type_list[modifier_index] == "VALUE":
                 value = float(value)
             elif modifier_data_type_list[modifier_index] == "INT":
@@ -186,8 +187,18 @@ class blender_object_placement:
         assert obj is not None, f"Object: {object_name} is a Nonetype, this may indicate that the object is set to hide in viewport, unhide the object in the viewport to set the modifier. To hide an object in the render use the hide_objects() function"        
 
         obj.data.update()
+    def is_numeric(self,value):
+        """Checks if a value is numeric, including both NumPy and Python numeric types. Excluding boolean types."""
+        if type(value) == bool or type(value) == np.bool_:
+            return False
+        else:
+            return (
+                np.issubdtype(type(value), np.number)  # NumPy numeric types
+                or isinstance(value, numbers.Number)    # Python numeric types
+            )
 
 
+        
     def set_object_id(self, class_label, object_name=None, selection=None):
         """ 
         Gives a unique instance id to all objects of the same type in the scene.
@@ -673,7 +684,7 @@ def create_folders(paths):
     for path in paths:
         if not os.path.exists(path):
             os.makedirs(path)
-def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0):
+def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0, ablation_parameter = []):
     import pandas as pd
     """
     Save the metadata to a csv file. Consisting of the ranges of data generation parameters, 
@@ -692,6 +703,8 @@ def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_t
 
     # Open the metadata file in write mode
     with open(metadata_file, "w") as f:
+        if len(ablation_parameter) > 0:
+            f.write(f'This dataset was created for the ablation study with the following parameter(s): {ablation_parameter}\n\n')
         f.write(f"This file contains the metadata for the generated dataset\n\n")
         f.write(f"This dataset was created on {time.ctime()}\n\n and took {time_taken} seconds to generate\n\n")
         f.write(f"Total number of images: {nr_of_images}\n\n")
