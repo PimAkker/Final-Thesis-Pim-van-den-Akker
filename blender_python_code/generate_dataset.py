@@ -15,21 +15,26 @@ total_start_time = time.time()
 import pandas as pd
   
 
-def fix_values(modifier_list, fix_values_names):
+def modify_values_for_ablation(modifier_list, fix_values_dicts):
     """
-    fix a value to the mean in the modifier, useful for ablation studies
+    change a value for during ablation studies, this will change the value to the mean of the range of the value
+    
     
     args: 
         modifier_list: list of dictionaries with the modifiers
-        fix_values_names: list of names of the values to fix
+        fix_values_dict: dictionary of values which can either have a fixed value or a 'mean'
+            value, if the value is 'mean' the value will be changed to the mean of the range of the value
         
     returns:
         modifier_list: list of dictionaries with the modifiers with the fixed values
     """
     for modifier_dict in modifier_list:
-        for fix_value_name in fix_values_names:
+        for fix_value_name in fix_values_dicts:
             if fix_value_name in modifier_dict:
-                modifier_dict[fix_value_name] = np.mean(modifier_dict[fix_value_name])
+                if fix_values_dicts[fix_value_name] == 'mean':
+                    modifier_dict[fix_value_name] = np.mean(modifier_dict[fix_value_name])
+                else:
+                    modifier_dict[fix_value_name] = fix_values_dicts[fix_value_name]
     
 
     return modifier_list
@@ -50,7 +55,7 @@ def generate_dataset(nr_of_images=1,
                      round_table_modifiers={},
                      raytrace_modifiers={}, 
                      minimum_overlap_percentage_for_visible=0.1,
-                     ablation_parameter=[],
+                     ablation_parameter={},
                      ):
     """
     Function to generate a dataset of images with corresponding masks and metadata
@@ -64,7 +69,7 @@ def generate_dataset(nr_of_images=1,
 
     
     # for ablation studies we can fix the values of the modifiers
-    fix_values([walls_modifiers, chairs_modifiers, round_table_modifiers, raytrace_modifiers], ablation_parameter)
+    modify_values_for_ablation([walls_modifiers, chairs_modifiers, round_table_modifiers, raytrace_modifiers], ablation_parameter)
 
     data_gen_utils.create_folders([masks_folder,images_folder, metadata_folder])
     data_gen_utils.delete_folder_contents([masks_folder,images_folder, metadata_folder],empty_folders=empty_folders)
@@ -193,8 +198,9 @@ def generate_dataset(nr_of_images=1,
         
         print(f"Time for this image: {time.time() - start_time}")
 
-    print(f"Done! Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
+    print(f"Finished dataset, Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
+
 
     instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
-    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter)
-
+    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter)
+print("Done!")

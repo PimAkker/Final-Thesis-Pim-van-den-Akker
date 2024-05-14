@@ -68,6 +68,10 @@ class blender_object_placement:
             delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
             left empty after the script is run.
         """
+        
+        # make sure the user has opened a file in blender
+        assert bpy.data.filepath != "", "No file is opened, have you opened a file in blender?"
+        
         self.blend_deselect_all()
         self.delete_duplicates = delete_duplicates
         self.class_multiplier = class_factor

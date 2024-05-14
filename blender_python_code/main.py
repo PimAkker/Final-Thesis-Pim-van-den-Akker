@@ -33,7 +33,7 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 50
+nr_of_images = 1
 overwrite_data = False
 empty_folders = True
 minimum_overlap_percentage_for_visible = 0.1
@@ -45,7 +45,21 @@ max_shift_distance =.5
 output_parent_folder = r"data/ablation/"
 
 
-ablate_over_parameters = ["wall width", "wall nr x", "low freq noise variance"] # the parameters that will be ablated over one by one 
+ablate_over_parameters = [{"wall width":'mean'}, 
+                          {"wall nr x":0, "wall nr y":0}, 
+                          {"low freq noise variance":'mean'},
+                          {"wall density":'mean'},
+                          {"min door width":1.0, "max door width":1.0},
+                          {'max door rotation':0},
+                          {'max wall randomness':0},
+                          {'door density':'mean'},
+                          {'chair width':'mean', 'chair length':'mean'},
+                          {"table_legs":4},
+                          {"table x width":'mean', "table y width":'mean'},
+                          {"leg radius":'mean'},
+                          {"high freq noise variance":0},
+                          {"low freq noise variance":0}                  
+                          ] # the parameters that will be ablated over one by one 
 
 obj_ids = category_information
 
@@ -100,22 +114,38 @@ set_colors = {
 
 output_parent_folder = os.path.join(os.getcwd(), output_parent_folder)
 
+
 for fixed_modifier in ablate_over_parameters:
+
+    try: 
+        generate_dataset.generate_dataset(nr_of_images=nr_of_images, 
+                        folder_name=os.path.join(output_parent_folder,f"{list(fixed_modifier)}"),
+                        overwrite_data=overwrite_data,
+                        empty_folders=empty_folders, 
+                        minimum_overlap_percentage_for_visible=minimum_overlap_percentage_for_visible, 
+                        objects_to_add_percentage=objects_to_add_percentage, 
+                        objects_to_remove_percentage=objects_to_remove_percentage, 
+                        object_to_move_percentage=object_to_move_percentage,
+                        force_object_visibility=force_object_visibility, 
+                        max_shift_distance=max_shift_distance, 
+                        walls_modifiers=walls_modifiers, 
+                        chairs_modifiers=chairs_modifiers, 
+                        round_table_modifiers=round_table_modifiers,
+                        raytrace_modifiers=raytrace_modifiers, 
+                        set_colors=set_colors, 
+                        ablation_parameter=fixed_modifier)
+        
     
+    except Exception as e:
+        # when an error occurs write it to the error log but continue with the next 
+        # ablation parameter
+        
+        import datetime
+        errorlog_location = os.path.join(os.getcwd(), "error_log.txt")
+        with open(os.path.join(output_parent_folder,("error_log.txt")), "a") as f:
+            f.write(f"Error in fixed modifier {fixed_modifier} \n")
+            f.write(f"time: {datetime.datetime.now()} \n")
+            f.write("\n")
+            f.write(f"{e} \n")
+            f.write("\n")
     
-    generate_dataset.generate_dataset(nr_of_images=nr_of_images, 
-                    folder_name=os.path.join(output_parent_folder,f"{fixed_modifier} - ablation"),
-                    overwrite_data=overwrite_data,
-                    empty_folders=empty_folders, 
-                    minimum_overlap_percentage_for_visible=minimum_overlap_percentage_for_visible, 
-                    objects_to_add_percentage=objects_to_add_percentage, 
-                    objects_to_remove_percentage=objects_to_remove_percentage, 
-                    object_to_move_percentage=object_to_move_percentage,
-                    force_object_visibility=force_object_visibility, 
-                    max_shift_distance=max_shift_distance, 
-                    walls_modifiers=walls_modifiers, 
-                    chairs_modifiers=chairs_modifiers, 
-                    round_table_modifiers=round_table_modifiers,
-                    raytrace_modifiers=raytrace_modifiers, 
-                    set_colors=set_colors, 
-                    ablation_parameter=fixed_modifier)

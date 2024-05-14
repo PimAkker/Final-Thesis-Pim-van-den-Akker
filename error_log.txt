@@ -1,0 +1,60 @@
+Error in fixed modifier {'wall width': 'mean'} 
+time: 2024-05-14 15:24:21.554593 
+
+ 
+
+Error in fixed modifier {'wall nr x': 0, 'wall nr y': 0} 
+time: 2024-05-14 15:24:21.556603 
+
+ 
+
+Error in fixed modifier {'low freq noise variance': 'mean'} 
+time: 2024-05-14 15:24:21.558602 
+
+ 
+
+Error in fixed modifier {"wall density:'mean'"} 
+time: 2024-05-14 15:24:21.559601 
+
+ 
+
+Error in fixed modifier {'wall width': 'mean'} 
+time: 2024-05-14 15:24:33.739707 
+
+test 
+
+Error in fixed modifier {'wall nr x': 0, 'wall nr y': 0} 
+time: 2024-05-14 15:24:33.741764 
+
+test 
+
+Error in fixed modifier {'low freq noise variance': 'mean'} 
+time: 2024-05-14 15:24:33.742758 
+
+test 
+
+Error in fixed modifier {"wall density:'mean'"} 
+time: 2024-05-14 15:24:33.744173 
+
+test 
+
+Error in fixed modifier {'wall width': 'mean'} 
+time: 2024-05-14 15:26:39.457692 
+
+test 
+
+Error in fixed modifier {'wall nr x': 0, 'wall nr y': 0} 
+time: 2024-05-14 15:26:39.457692 
+
+test 
+
+Error in fixed modifier {'low freq noise variance': 'mean'} 
+time: 2024-05-14 15:26:39.457692 
+
+test 
+
+Error in fixed modifier {"wall density:'mean'"} 
+time: 2024-05-14 15:26:39.457692 
+
+test 
+
