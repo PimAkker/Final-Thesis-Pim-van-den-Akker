@@ -42,7 +42,7 @@ objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 max_shift_distance =.5
-output_parent_folder = r"data/"
+output_parent_folder = r"data/ablation/"
 
 
 ablate_over_parameters = ["wall width", "wall nr x", "low freq noise variance"] # the parameters that will be ablated over one by one 
