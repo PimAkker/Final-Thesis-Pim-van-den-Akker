@@ -118,7 +118,7 @@ output_parent_folder = os.path.join(os.getcwd(), output_parent_folder)
 for fixed_modifier in ablate_over_parameters:
 
     try: 
-        generate_dataset.generate_dataset(nr_of_images=nr_of_images, 
+        gen = generate_dataset.generate_dataset(nr_of_images=nr_of_images, 
                         folder_name=os.path.join(output_parent_folder,f"{list(fixed_modifier)}"),
                         overwrite_data=overwrite_data,
                         empty_folders=empty_folders, 
