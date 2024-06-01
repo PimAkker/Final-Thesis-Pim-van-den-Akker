@@ -1,36 +1,36 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import os
-import sys
+# #!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
+# import os
+# import sys
 
 
-# ensure we are in the correct directory
-root_dir_name = 'Blender'
-current_directory = os.getcwd().split("\\")
-assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
-if current_directory[-1] != root_dir_name:
-    # go down in the directory tree until the root directory is found
-    while current_directory[-1] != root_dir_name:
-        os.chdir("..")
-        current_directory = os.getcwd().split("\\")
+# # ensure we are in the correct directory
+# root_dir_name = 'Blender'
+# current_directory = os.getcwd().split("\\")
+# assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain {root_dir_name}"
+# if current_directory[-1] != root_dir_name:
+#     # go down in the directory tree until the root directory is found
+#     while current_directory[-1] != root_dir_name:
+#         os.chdir("..")
+#         current_directory = os.getcwd().split("\\")
 
 
-# add all the subdirectories to the path
-dirs  = os.listdir()
-root = os.getcwd()
-for dir in dirs:
-    sys.path.append(os.path.join(root, dir))
-sys.path.append(os.getcwd())
-import bpy
-import bpycv
-import random
-import numpy as np
-import time
-import custom_render_utils
-import importlib
-import blender_python_code.data_gen_utils as data_gen_utils
-from category_information import category_information
-total_start_time = time.time()
+# # add all the subdirectories to the path
+# dirs  = os.listdir()
+# root = os.getcwd()
+# for dir in dirs:
+#     sys.path.append(os.path.join(root, dir))
+# sys.path.append(os.getcwd())
+# import bpy
+# import bpycv
+# import random
+# import numpy as np
+# import time
+# import custom_render_utils
+# import importlib
+# import blender_python_code.data_gen_utils as data_gen_utils
+# from category_information import category_information
+# total_start_time = time.time()
 
 # masks_folder = r"data\Masks"
 # images_folder = r"data\Images"
@@ -46,9 +46,37 @@ total_start_time = time.time()
 # objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1, bbox=bbox_raytrace)
 # place_class.move_objects_relative(objects_to_move, [0,0,-10])
 
-obj = bpy.data.objects["walls.001"]
+# obj = bpy.data.objects["walls.001"]
 
-obj.to_mesh()
+# obj.to_mesh()
+
+def map_range(x, a, b, c, d):
+    """
+    Remaps the input value x from the range [a, b] to the range [c, d].
+
+    Parameters:
+    x (float): The input value within the range [a, b].
+    a (float): The lower bound of the input range.
+    b (float): The upper bound of the input range.
+    c (float): The lower bound of the output range.
+    d (float): The upper bound of the output range.
+
+    Returns:
+    float: The remapped value in the range [c, d].
+    """
+    y = c + ((x - a) / (b - a)) * (d - c)
+    return y
+
+# Example usage:
+x = 0  # Example input value within the range [0, 1]
+a = 0    # Lower bound of input range
+b = 1    # Upper bound of input range
+c = -1   # Lower bound of output range
+d = 1    # Upper bound of output range
+
+remapped_value = map_range(x, a, b, c, d)
+print(f"The remapped value is: {remapped_value}")
+
 
 
 # path  = os.getcwd()

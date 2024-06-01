@@ -33,7 +33,7 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 1
+nr_of_images = 10
 overwrite_data = False
 empty_folders = True
 minimum_overlap_percentage_for_visible = 0.1
@@ -46,19 +46,19 @@ output_parent_folder = r"data/ablation/"
 
 
 ablate_over_parameters = [{"wall width":'mean'}, 
-                          {"wall nr x":0, "wall nr y":0}, 
-                          {"low freq noise variance":'mean'},
-                          {"wall density":'mean'},
-                          {"min door width":1.0, "max door width":1.0},
-                          {'max door rotation':0},
-                          {'max wall randomness':0},
-                          {'door density':'mean'},
-                          {'chair width':'mean', 'chair length':'mean'},
-                          {"table_legs":4},
-                          {"table x width":'mean', "table y width":'mean'},
-                          {"leg radius":'mean'},
-                          {"high freq noise variance":0},
-                          {"low freq noise variance":0}                  
+                        #   {"wall nr x":0, "wall nr y":0}, 
+                        #   {"low freq noise variance":'mean'},
+                        #   {"wall density":'mean'},
+                        #   {"min door width":1.0, "max door width":1.0},
+                        #   {'max door rotation':0},
+                        #   {'max wall randomness':0},
+                        #   {'door density':'mean'},
+                        #   {'chair width':'mean', 'chair length':'mean'},
+                        #   {"table_legs":4},
+                        #   {"table x width":'mean', "table y width":'mean'},
+                        #   {"leg radius":'mean'},
+                        #   {"high freq noise variance":0},
+                        #   {"low freq noise variance":0}                  
                           ] # the parameters that will be ablated over one by one 
 
 obj_ids = category_information
@@ -97,8 +97,8 @@ pillar_table_modifiers = {
     "width": (0.5, 1),
     "round/square": np.random.choice([True, False]),
 }
-raytrace_modifiers = {"high freq noise variance": (0.04, 0.1), 
-                      "low freq noise variance": (0, 0.22),
+raytrace_modifiers = {"high freq noise variance": (0.08, 0.2), 
+                      "low freq noise variance": (0, 0.44),
                       "lidar block size":(0.15,0.25),
                       }
 
