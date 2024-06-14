@@ -10,7 +10,7 @@ import time
 # from category_information import category_information
 
 class custom_render_utils:
-    def __init__(self, image_id = "0",remove_intermediary_images = True, minimum_render_overlap_percentage=False,exclude_from_render= None, force_map_visibility = []):
+    def __init__(self, image_id = "0",remove_intermediary_images = True, minimum_render_overlap_percentage=False,exclude_from_render= None, force_map_visibility = [], output_resolution = [270,270]):
         """
         inputs: image_id (str): the id of the image will be used for naming all the files in this class
         remove_intermediary_images (bool): if True the original images in mask_path_dict and simple_render_image_path_dict 
@@ -35,6 +35,11 @@ class custom_render_utils:
         self.unique_classes = []
         self.nr_of_instances_per_class = []
         self.force_map_visibility = force_map_visibility
+        
+        # set the render resolution
+        bpy.context.scene.render.resolution_x = output_resolution[0]
+        bpy.context.scene.render.resolution_y = output_resolution[1]
+        
         
     def render_data_semantic_map(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
@@ -110,8 +115,8 @@ class custom_render_utils:
             # everywhere where map image opacity is not  0 set it to white
             map_image[map_image[:,:,3] != 0] = [255,255,255,255]
             
-        # everywhere where pointcloud image opacity is 0 set it to red 
-        pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,255]
+        # everywhere where pointcloud image opacity is not 0 set it to red 
+        # pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,255]
                            
         #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
         combined_image = map_image.copy()
@@ -175,6 +180,7 @@ class custom_render_utils:
         
         np.save(self.masks_path_dict['mask'], output_mask)
         cv2.imwrite(self.input_file_path, input_file_only_visible,[int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        
     def update_dataframe_with_metadata(self,df):
         """
         This function will update the dataframe with the metadata of the classes in the image

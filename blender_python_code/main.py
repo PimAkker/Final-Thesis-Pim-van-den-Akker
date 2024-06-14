@@ -33,19 +33,21 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 10
+nr_of_images = 100
 overwrite_data = False
-empty_folders = True
-minimum_overlap_percentage_for_visible = 0.1
+empty_folders = False
+minimum_overlap_percentage_for_visible = 0
 objects_to_add_percentage = 0.6666
 objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 max_shift_distance =.5
-output_parent_folder = r"data/ablation/"
+output_parent_folder = r"data/test/"
+output_map_resolution = [1080,1080] # the pixels of the map
 
 
-ablate_over_parameters = [{"wall width":'mean'}, 
+ablate_over_parameters = [
+                            # {"wall width":'mean'}, 
                         #   {"wall nr x":0, "wall nr y":0}, 
                         #   {"low freq noise variance":'mean'},
                         #   {"wall density":'mean'},
@@ -74,20 +76,26 @@ walls_modifiers = {
     "max wall randomness": (0, 0.3),
     "max door rotation": (np.pi/4, np.pi),
     "door density": (0.5, 1),
+    
+    
 }
 
-chair_size = (0.8, 1)
+chair_size = (0.6, 0.8)
 chairs_modifiers = {
     "chair width": chair_size,
     "chair length": chair_size,
+    "leg height": chair_size,
+    "back rest offset": (0.3,0.8),
+    "back seat height": (0.3,0.8),
     "leg width": (0.05, 0.1),
     "circular legs": np.random.choice([True, False]),
-    "leg type": False,
+    "leg type": (0,3)
+    
 }
 
-table_size = (1, 1.5)
+table_size = (0.8, 1.2)
 round_table_modifiers = {
-    "table legs": (4, 6),
+    "table legs": (4),
     "table x width": table_size,
     "table y width": table_size,
     "leg radius": (0.05, 0.12),
@@ -104,19 +112,22 @@ raytrace_modifiers = {"high freq noise variance": (0.08, 0.2),
 
 # these colors are used for the map not for the annotations
 set_colors = {
-            "walls": (255, 255, 255, 255),  # White
+            "walls": (0, 0, 0, 255),  # Black
             "chairs display": (0, 255, 0, 255),  # Green
             "tables display": (0, 0, 255, 255),  # Blue
             "pillars display": (255, 255, 0, 255),  # Yellow
             "doors": (255, 0, 255, 255),  # Magenta
-            "raytrace": (255, 0, 0, 255),  # Red
+            "raytrace": (255, 0, 0, 0),  # Red
         }
 
 output_parent_folder = os.path.join(os.getcwd(), output_parent_folder)
 
+if ablate_over_parameters == []:
+    ablate_over_parameters = [{}]
 
 for fixed_modifier in ablate_over_parameters:
 
+    
     try: 
         gen = generate_dataset.generate_dataset(nr_of_images=nr_of_images, 
                         folder_name=os.path.join(output_parent_folder,f"{list(fixed_modifier)}"),
@@ -133,7 +144,9 @@ for fixed_modifier in ablate_over_parameters:
                         round_table_modifiers=round_table_modifiers,
                         raytrace_modifiers=raytrace_modifiers, 
                         set_colors=set_colors, 
-                        ablation_parameter=fixed_modifier)
+                        ablation_parameter=fixed_modifier,
+                        map_resolution=output_map_resolution
+                        )
         
     
     except Exception as e:

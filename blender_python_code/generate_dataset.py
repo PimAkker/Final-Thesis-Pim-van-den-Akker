@@ -56,6 +56,7 @@ def generate_dataset(nr_of_images=1,
                      raytrace_modifiers={}, 
                      minimum_overlap_percentage_for_visible=0.1,
                      ablation_parameter={},
+                     map_resolution=[270,270]
                      ):
     """
     Function to generate a dataset of images with corresponding masks and metadata
@@ -96,7 +97,8 @@ def generate_dataset(nr_of_images=1,
                                                             remove_intermediary_images=True,
                                                             minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, 
                                                             exclude_from_render=pc.original_objects,
-                                                            force_map_visibility=force_object_visibility)
+                                                            force_map_visibility=force_object_visibility,
+                                                            output_resolution=map_resolution)
                                                             
         
         for modifier in list(walls_modifiers.keys()):

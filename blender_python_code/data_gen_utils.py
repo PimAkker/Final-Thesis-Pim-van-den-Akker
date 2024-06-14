@@ -293,7 +293,7 @@ class blender_object_placement:
         assert object_name in bpy.data.objects, f"Object {object_name} does not exist"
         assert bpy.data.materials.get(object_name) is not None, f"Material {object_name} does not exist. Make sure that the object has a material with the same name as the object and that it is assigned in the geometry nodes of the object if the object is created with geometry nodes"
 
-        assert len(color) == 4, f"Color: {color} is not of shape (r, g, b)"
+        assert len(color) == 4, f"Color: {color} is not of shape (r, g, b, a)"
         assert all([0 <= c <= 255 for c in color]), f"Color: {color} is not in the range 0-255"
 
         color = [c/255 for c in color]
