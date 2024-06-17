@@ -56,7 +56,8 @@ def generate_dataset(nr_of_images=1,
                      raytrace_modifiers={}, 
                      minimum_overlap_percentage_for_visible=0.1,
                      ablation_parameter={},
-                     map_resolution=[270,270]
+                     map_resolution=[270,270],
+                     LiDAR_height=1.5
                      ):
     """
     Function to generate a dataset of images with corresponding masks and metadata
@@ -77,7 +78,7 @@ def generate_dataset(nr_of_images=1,
     file_number = data_gen_utils.overwrite_data(images_folder, overwrite_data = overwrite_data)
 
     #  The object placement class, keeps track of object placement and can place objects in the scene
-    pc = data_gen_utils.blender_object_placement(delete_duplicates=False)
+    pc = data_gen_utils.blender_object_placement(delete_duplicates=True)
 
     # Create an empty pandas dataframe
     instance_nr_df = pd.DataFrame(index=range(nr_of_images), columns=category_information.keys())
@@ -89,7 +90,6 @@ def generate_dataset(nr_of_images=1,
         print(f"Creating image {i}/{nr_of_images + file_number}")
         
         pc.delete_duplicates_func() #delete duplicates at the start to refresh the scene
-        
         
         start_time = time.time()
         
@@ -112,15 +112,15 @@ def generate_dataset(nr_of_images=1,
             pc.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
             
 
-        _, _, width, depth = pc.get_object_dims(object_name="walls")
+        _, height, width, depth = pc.get_object_dims(object_name="walls")
         pc.place_objects(object_name="walls", inst_id=category_information["walls"], seperate_loose=False)
         pc.place_objects(object_name="doors", inst_id=category_information["doors"])
         pc.place_objects(object_name="chairs display", inst_id=category_information["chairs"])
         pc.place_objects(object_name="tables display", inst_id=category_information["tables"])
         pc.place_objects(object_name="pillars display", inst_id=category_information["pillars"])
         
-        # Generate pointcloud image
-        rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), 0]
+    
+        rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), np.random.uniform(LiDAR_height[0],LiDAR_height[1])-height/2]
         pc.place_LiDAR(position=rand_pos_in_room)
     
         # move a percentage of objects down, this will move them out of the raytrace image

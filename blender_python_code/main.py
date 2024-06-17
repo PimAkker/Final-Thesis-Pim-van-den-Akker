@@ -33,17 +33,18 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 100
+nr_of_images = 20
 overwrite_data = False
-empty_folders = False
-minimum_overlap_percentage_for_visible = 0
+empty_folders = True
+minimum_overlap_percentage_for_visible = 0.1
 objects_to_add_percentage = 0.6666
 objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 max_shift_distance =.5
-output_parent_folder = r"data/test/"
-output_map_resolution = [1080,1080] # the pixels of the map
+output_parent_folder = r"data/test1/"
+output_map_resolution = [280,280] # the pixels of the map
+
 
 
 ablate_over_parameters = [
@@ -67,17 +68,16 @@ obj_ids = category_information
 
 walls_modifiers = {
     "wall width": (0.1, 0.3),
-    "wall nr x": (0, 2),
-    "wall nr y": (0, 2),
+    "wall nr x": (0, 3),
+    "wall nr y": (0, 3),
     "wall density": (0.7, 1),
     "seed": (0, 10000),
     "min door width": 0.7,
     "max door width": 1.3,
-    "max wall randomness": (0, 0.3),
+    "max wall randomness": (0, 1.6),
     "max door rotation": (np.pi/4, np.pi),
     "door density": (0.5, 1),
-    
-    
+    "height":3   
 }
 
 chair_size = (0.6, 0.8)
@@ -86,7 +86,7 @@ chairs_modifiers = {
     "chair length": chair_size,
     "leg height": chair_size,
     "back rest offset": (0.3,0.8),
-    "back seat height": (0.3,0.8),
+    "back rest height": (0.3,0.8),
     "leg width": (0.05, 0.1),
     "circular legs": np.random.choice([True, False]),
     "leg type": (0,3)
@@ -99,12 +99,16 @@ round_table_modifiers = {
     "table x width": table_size,
     "table y width": table_size,
     "leg radius": (0.05, 0.12),
+    
 }
 
 pillar_table_modifiers = {
     "width": (0.5, 1),
     "round/square": np.random.choice([True, False]),
 }
+LiDAR_height = (0.2, 1.4)
+# LiDAR_height = (0.2)
+
 raytrace_modifiers = {"high freq noise variance": (0.08, 0.2), 
                       "low freq noise variance": (0, 0.44),
                       "lidar block size":(0.15,0.25),
@@ -112,7 +116,7 @@ raytrace_modifiers = {"high freq noise variance": (0.08, 0.2),
 
 # these colors are used for the map not for the annotations
 set_colors = {
-            "walls": (0, 0, 0, 255),  # Black
+            "walls": (255,255, 255, 255),  # Black
             "chairs display": (0, 255, 0, 255),  # Green
             "tables display": (0, 0, 255, 255),  # Blue
             "pillars display": (255, 255, 0, 255),  # Yellow
@@ -145,8 +149,10 @@ for fixed_modifier in ablate_over_parameters:
                         raytrace_modifiers=raytrace_modifiers, 
                         set_colors=set_colors, 
                         ablation_parameter=fixed_modifier,
-                        map_resolution=output_map_resolution
+                        map_resolution=output_map_resolution,
+                        LiDAR_height=LiDAR_height
                         )
+        
         
     
     except Exception as e:

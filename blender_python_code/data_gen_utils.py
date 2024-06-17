@@ -13,51 +13,10 @@ class blender_object_placement:
     A class for managing object placement in Blender.
 
     Attributes:
-        delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
-            left empty after the script is run.
-        class_multiplier (int): A multiplier for the class label when assigning object IDs. Should be globally 
-            set in the category_information.py file.
-        original_objects (list): A list of original objects in the scene. 
-        room_center (tuple): The location of the room center.
-        default_location (tuple): The default location for objects.
-        subset_selection (list): A list of selected objects.
-        modifier_identifier_dict (dict): A dictionary mapping object names to modifier identifiers.
-        modifier_name_dict (dict): A dictionary mapping object names to modifier names.
-        modifier_data_type_dict (dict): A dictionary mapping object names to modifier data types.
-        original_obj_collection_name (str): The name of the collection containing original objects.
-        temp_obj_collection_name (str): The name of the temporary collection.
-        highest_instance_id_dict (dict): A dictionary mapping object names to the highest instance ID.
+ 
     """
 
-    def __init__(self, delete_duplicates=False):
-        """
-        Initializes the blender_object_placement class.
 
-        Args:
-            delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
-                left empty after the script is run.
-        """
-        self.blend_deselect_all()
-        self.delete_duplicates = delete_duplicates
-        self.class_multiplier = class_factor
-        # delete all objects which are copied
-        [bpy.data.objects.remove(obj) for obj in bpy.data.objects if "." in obj.name]
-        
-        self.original_objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
-
-        self.room_center = bpy.data.objects["walls"].location
-        self.default_location = (0,0,0)   
-        self.subset_selection = []
-        self.modifier_identifier_dict = {}
-        self.modifier_name_dict = {}
-        self.modifier_data_type_dict = {}
-        
-        self.original_obj_collection_name = "placable objects"
-        self.temp_obj_collection_name = "temp"
-        self.highest_instance_id_dict = {}
-        
-        # make sure we are in object mode 
-        assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
 class blender_object_placement:
     
     def __init__(self, delete_duplicates=False):
@@ -67,6 +26,20 @@ class blender_object_placement:
         Args:
             delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
             left empty after the script is run.
+                delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
+                left empty after the script is run.
+            class_multiplier (int): A multiplier for the class label when assigning object IDs. Should be globally 
+                set in the category_information.py file.
+            original_objects (list): A list of original objects in the scene. 
+            room_center (tuple): The location of the room center.
+            default_location (tuple): The default location for objects.
+            subset_selection (list): A list of selected objects.
+            modifier_identifier_dict (dict): A dictionary mapping object names to modifier identifiers.
+            modifier_name_dict (dict): A dictionary mapping object names to modifier names.
+            modifier_data_type_dict (dict): A dictionary mapping object names to modifier data types.
+            original_obj_collection_name (str): The name of the collection containing original objects.
+            temp_obj_collection_name (str): The name of the temporary collection.
+            highest_instance_id_dict (dict): A dictionary mapping object names to the highest instance ID.
         """
         
         # make sure the user has opened a file in blender
@@ -621,6 +594,8 @@ class blender_object_placement:
         
         self.unisolate()
         self.blend_deselect_all()
+        self.subset_selection = []
+        
 
         
 def delete_folder_contents(folders, empty_folders=False):
