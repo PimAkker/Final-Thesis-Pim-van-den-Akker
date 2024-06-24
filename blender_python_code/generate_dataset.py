@@ -68,8 +68,6 @@ def generate_dataset(nr_of_images=1,
     images_folder =   os.path.join(folder_name, r"Images")
     metadata_folder = os.path.join(folder_name, r"Metadata")
 
-
-    
     # for ablation studies we can fix the values of the modifiers
     modify_values_for_ablation([walls_modifiers, chairs_modifiers, round_table_modifiers, raytrace_modifiers], ablation_parameter)
 
@@ -78,7 +76,7 @@ def generate_dataset(nr_of_images=1,
     file_number = data_gen_utils.overwrite_data(images_folder, overwrite_data = overwrite_data)
 
     #  The object placement class, keeps track of object placement and can place objects in the scene
-    pc = data_gen_utils.blender_object_placement(delete_duplicates=True)
+    pc = data_gen_utils.blender_object_placement(delete_duplicates=False)
 
     # Create an empty pandas dataframe
     instance_nr_df = pd.DataFrame(index=range(nr_of_images), columns=category_information.keys())
@@ -134,9 +132,9 @@ def generate_dataset(nr_of_images=1,
         pc.set_object_id(category_information["tables removed"], selection=tables_to_remove)
         pc.set_object_id(category_information["pillars removed"], selection=pillars_to_remove)
         
-        pc.move_objects_relative(chairs_to_remove,  [0, 0, -10])
-        pc.move_objects_relative(tables_to_remove,  [0, 0, -10])
-        pc.move_objects_relative(pillars_to_remove, [0, 0, -10])
+        pc.move_objects_relative(chairs_to_remove,  [0, 0, -height])
+        pc.move_objects_relative(tables_to_remove,  [0, 0, -height])
+        pc.move_objects_relative(pillars_to_remove, [0, 0, -height])
         
         
 
@@ -170,7 +168,7 @@ def generate_dataset(nr_of_images=1,
         pillars_to_move = list(np.random.choice(pillars_to_add, int(len(pillars_to_add) * object_to_move_percentage)))
 
         # this move the objects in a random direction and shifts them down, this will make them invisible in the pointcloud
-        relative_move = lambda : [random.uniform(-max_shift_distance, max_shift_distance) , random.uniform(-max_shift_distance, max_shift_distance), -10]
+        relative_move = lambda : [random.uniform(-max_shift_distance, max_shift_distance) , random.uniform(-max_shift_distance, max_shift_distance), -height]
 
         moved_chairs =  pc.duplicate_move(objects_list=chairs_to_move, relative_position=relative_move())
         moved_tables =  pc.duplicate_move(objects_list=tables_to_move, relative_position=relative_move())
@@ -184,14 +182,15 @@ def generate_dataset(nr_of_images=1,
         # render the instance segmentation mask1
         pc.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
         
+        
         cru_class.render_data_semantic_map(folder=masks_folder, path_affix=f"mask", save_combined=False, save_rgb=False, save_inst=True)   
         pc.clean_up_materials()
         
         pc.delete_objects(object_list = chairs_to_add + tables_to_add + pillars_to_add)
         
-        # # create the map and combine the poi
-        # tcloud and map to a single image, creating the input for the model
+        # # create the map and combine the poitcloud and map to a single image, creating the input for the model
         cru_class.simple_render(folder=images_folder, file_prefix="map", file_affix="")
+        
         cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}", make_black_and_white=False)
         
         instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
@@ -204,5 +203,5 @@ def generate_dataset(nr_of_images=1,
 
 
     instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
-    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter)
-print("Done!")
+    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter, map_resolution=map_resolution, LiDAR_height=LiDAR_height)
+    print("Done!")

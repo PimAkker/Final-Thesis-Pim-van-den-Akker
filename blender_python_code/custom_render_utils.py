@@ -82,7 +82,7 @@ class custom_render_utils:
         if save_combined:
             cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
         
-        print(f'time for rendering {path_affix}: {time.time()-tic}')
+        print(f'time for rendering semantic map {path_affix}: {time.time()-tic}')
         
             
 
@@ -183,15 +183,19 @@ class custom_render_utils:
         
     def update_dataframe_with_metadata(self,df):
         """
-        This function will update the dataframe with the metadata of the classes in the image
+        This function will update the dataframe with the metadata of the number of each class per image.
         """
+        start_time = time.time()
+        
         class_names = list(category_information.keys())
 
         self.unique_classes = [class_names[class_num] for class_num in self.unique_classes]
         
         for i,class_name in enumerate(self.unique_classes):
             df.at[int(self.image_id), class_name] = self.nr_of_instances_per_class[i]
+        print(f"Time for updating dataframe with metadata: {time.time()-start_time}")
         return df
+        
     
         
         

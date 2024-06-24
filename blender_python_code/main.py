@@ -33,7 +33,7 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 20
+nr_of_images = 4000
 overwrite_data = False
 empty_folders = True
 minimum_overlap_percentage_for_visible = 0.1
@@ -42,7 +42,7 @@ objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 max_shift_distance =.5
-output_parent_folder = r"data/test1/"
+output_parent_folder = r"data/test/same_height"
 output_map_resolution = [280,280] # the pixels of the map
 
 
@@ -89,7 +89,7 @@ chairs_modifiers = {
     "back rest height": (0.3,0.8),
     "leg width": (0.05, 0.1),
     "circular legs": np.random.choice([True, False]),
-    "leg type": (0,3)
+    "leg type": (0)
     
 }
 
@@ -106,7 +106,7 @@ pillar_table_modifiers = {
     "width": (0.5, 1),
     "round/square": np.random.choice([True, False]),
 }
-LiDAR_height = (0.2, 1.4)
+LiDAR_height = (0.2, 0.21)
 # LiDAR_height = (0.2)
 
 raytrace_modifiers = {"high freq noise variance": (0.08, 0.2), 

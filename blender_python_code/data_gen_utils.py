@@ -8,31 +8,23 @@ import time
 from category_information import category_information, class_factor
 from warnings import warn
 import numbers
-class blender_object_placement:
-    """
-    A class for managing object placement in Blender.
-
-    Attributes:
- 
-    """
-
 
 class blender_object_placement:
     
     def __init__(self, delete_duplicates=False):
         """
-        Initializes the DataGeneratorUtils class.
+        Initializes the DataGeneratorUtils class And performs some basic checks.
 
         Args:
-            delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
-            left empty after the script is run.
+            delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will have no 
+            duplicated objects after running.
                 delete_duplicates (bool): Whether to delete duplicate objects. This means that the scene will be 
                 left empty after the script is run.
             class_multiplier (int): A multiplier for the class label when assigning object IDs. Should be globally 
                 set in the category_information.py file.
             original_objects (list): A list of original objects in the scene. 
             room_center (tuple): The location of the room center.
-            default_location (tuple): The default location for objects.
+            default_location (tuple): The default location for objects, this should be in view of the camera.
             subset_selection (list): A list of selected objects.
             modifier_identifier_dict (dict): A dictionary mapping object names to modifier identifiers.
             modifier_name_dict (dict): A dictionary mapping object names to modifier names.
@@ -44,6 +36,7 @@ class blender_object_placement:
         
         # make sure the user has opened a file in blender
         assert bpy.data.filepath != "", "No file is opened, have you opened a file in blender?"
+        assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
         
         self.blend_deselect_all()
         self.delete_duplicates = delete_duplicates
@@ -65,7 +58,7 @@ class blender_object_placement:
         self.highest_instance_id_dict = {}
         
         # make sure we are in object mode 
-        assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
+        4
         
     def set_modifier(self, object_name, modifier_name, value):
         """ 
@@ -112,6 +105,9 @@ class blender_object_placement:
         assert modifier_name in modifier_name_list, f"modifier_name: {modifier_name} is not in the list of supported modifiers \
         choose from {modifier_name_list}"
         
+        if isinstance(value, tuple):
+            assert not any(isinstance(v, bool) for v in value), f"Boolean value is not supported for random choice for {object_name}:{modifier_name}, select either True or False"
+        
         if self.modifier_data_type_dict.get(object_name) is None:
             self.modifier_data_type_dict[object_name] = [input.type for input in geometry_nodes.node_group.inputs][1:]
            
@@ -125,8 +121,7 @@ class blender_object_placement:
 
         # retreive the maximum and minimum values of the modfier as defined in the geometry nodes modifier.
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
-        # "Walls" should have the "Walls" geometry node modifier
-
+        # "walls" should have the "walls" geometry node modifier
 
         if self.is_numeric(value) or type(value) == tuple:
             min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
@@ -138,6 +133,7 @@ class blender_object_placement:
         if type(value) == tuple:
             assert value[0] >= min_val, f"Value: {value[0]} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value[1] <= max_val, f"Value: {value[1]} is too large for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
+            assert max_val != 0, f"{modifier_name} modifier has a max value of 0, this is not allowed"
             
             if modifier_data_type_list[modifier_index] == "VALUE":
                 value = np.random.uniform(float(value[0]), float(value[1]))
@@ -213,7 +209,7 @@ class blender_object_placement:
             
     def set_object_id_multiple(self, id_dictionary):
         """ 
-        This function sets the object id of multiple objects in the scene.
+        This function sets the object id of multiple objects in the scene using set_object_id().
 
         Args:
             id_dictionary (dict): A dictionary of the form {object_name: class_label}.
@@ -261,14 +257,15 @@ class blender_object_placement:
         Returns:
             None
         """
-        # set color from RGB to percentage
+        
 
         assert object_name in bpy.data.objects, f"Object {object_name} does not exist"
         assert bpy.data.materials.get(object_name) is not None, f"Material {object_name} does not exist. Make sure that the object has a material with the same name as the object and that it is assigned in the geometry nodes of the object if the object is created with geometry nodes"
 
         assert len(color) == 4, f"Color: {color} is not of shape (r, g, b, a)"
         assert all([0 <= c <= 255 for c in color]), f"Color: {color} is not in the range 0-255"
-
+        
+        # set color from RGB to percentage usable by Blender
         color = [c/255 for c in color]
 
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
@@ -663,7 +660,7 @@ def create_folders(paths):
     for path in paths:
         if not os.path.exists(path):
             os.makedirs(path)
-def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0, ablation_parameter = []):
+def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0, ablation_parameter = [], map_resolution=[], LiDAR_height=()):
     import pandas as pd
     """
     Save the metadata to a csv file. Consisting of the ranges of data generation parameters, 
@@ -687,6 +684,8 @@ def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_t
         f.write(f"This file contains the metadata for the generated dataset\n\n")
         f.write(f"This dataset was created on {time.ctime()}\n\n and took {time_taken} seconds to generate\n\n")
         f.write(f"Total number of images: {nr_of_images}\n\n")
+        f.write(f"Map resolution: {map_resolution}\n\n")
+        f.write(f"LiDAR height range: {LiDAR_height}\n\n")
         
         f.write("Ranges of data generation parameters:\n")
         for i,modifier in enumerate(modifiers_list):
