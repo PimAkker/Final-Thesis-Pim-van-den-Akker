@@ -32,7 +32,7 @@ class LoadDataset(torch.utils.data.Dataset):
         # instances are encoded as different colors
         obj_ids = torch.unique(mask)
         # first id is the background, so remove it
-        obj_ids = obj_ids[1:]
+        obj_ids = obj_ids[2:]
         num_objs = len(obj_ids)
     
         img = read_image(img_path)

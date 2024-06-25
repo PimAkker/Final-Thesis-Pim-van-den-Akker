@@ -32,36 +32,45 @@ from numpy import random
 
 #%%
 
-# image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\[]\images"
-# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\[]\masks"
+image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
+mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
 
-image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
-mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
+# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
 
 show_input_image = False
 show_image = True
 show_mask = True
-show_ground_truth = True
+show_ground_truth = False
 draw_bounding = True
 render_num_images = 5
+randomize_images = True
  
-model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\2024-05-13_14-31-24\weights.pth'
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_heights_no_background\weights.pth'
 
 mask_confidence_threshold = 0.9
-label_confidence_threshold = 0.5
+
+number_of_pred_mask_to_show = 20
+label_confidence_threshold = 0.6
+
 
 image_path_list = [os.path.join(image_path, file) for file in os.listdir(image_path) if file.endswith(".png")]
 if show_ground_truth:
     mask_path_list = [os.path.join(mask_path, file) for file in os.listdir(mask_path) if file.endswith(".npy")]
+
 def replace_label_name(list, from_name, to_name):
     [x.replace(from_name, to_name) for x in list]
     return list
 
+
+
 if __name__ == '__main__':
     
     image_indices =  list(range(len(image_path_list)))
-    # random_indices = random.choice(image_indices, render_num_images, replace=False)
-    random_indices = image_indices
+    if randomize_images:
+        random_indices = random.choice(image_indices, render_num_images, replace=False)
+    else:
+        random_indices = image_indices
     for i, file_nr in enumerate(random_indices):
         print(f"Showing image {i + 1} of {render_num_images} with name {os.path.split(image_path_list[file_nr])[-1]}")
         
@@ -108,7 +117,7 @@ if __name__ == '__main__':
         pred_labels = pred_labels[pred["scores"] > label_confidence_threshold]
         pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in pred_labels]
         
-        
+        # For easier reading change the label names
         pred_labels = replace_label_name(pred_labels, "chairs removed", " REMCHAIR")
         pred_labels = replace_label_name(pred_labels, "chairs new", " NEWCHAIR")
         pred_labels = replace_label_name(pred_labels, "pillars new", "NEWPIL")
@@ -129,13 +138,16 @@ if __name__ == '__main__':
         if show_ground_truth == False:
             obj_ids = torch.unique(pred["masks"])
 
-        obj_ids = obj_ids[1:]
+        obj_ids = obj_ids[2:]
         num_objs = len(obj_ids)
 
         masks = (pred["masks"] > mask_confidence_threshold).squeeze(1)
-        output_image = draw_segmentation_masks(output_image, masks, alpha=.5, colors="blue")
+        mask_confidence_scores = torch.sum(masks, dim=(1, 2)) # this is the confidence score for each mask between 0 and masks.size(1) * masks.size(2)
+        
+        _, indices = torch.topk(mask_confidence_scores, k=min(number_of_pred_mask_to_show, len(mask_confidence_scores)))
+        masks = masks[indices, ...]
+        output_image = draw_segmentation_masks(output_image, masks, alpha=.5)
         plt.imshow(output_image.permute(1, 2, 0))
-
         if show_ground_truth:
             mask_true = torch.from_numpy(np.load(mask_path_temp))
 
@@ -145,7 +157,7 @@ if __name__ == '__main__':
             labels = labels.long()
             labels = labels
             masks = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
-            masks = masks
+
             boxes = masks_to_boxes(masks)
             boxes[:, 2] += boxes[:, 0] == boxes[:, 2]
             boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
