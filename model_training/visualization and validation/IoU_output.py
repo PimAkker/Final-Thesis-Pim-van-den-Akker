@@ -1,33 +1,31 @@
-data = {
-    'Combined': {
-        'mean_avg_precision_box': 0.271212,
-        'mean_avg_recall_box': 0.350593,
-        'mean_avg_precision_segm': 0.252115,
-        'mean_avg_recall_segm': 0.321692
-    },
-    'walls': {
-        'mean_avg_precision_box': float('nan'),
-        'mean_avg_recall_box': float('nan'),
-        'mean_avg_precision_segm': float('nan'),
-        'mean_avg_recall_segm': float('nan')
-    },
-    'doors': {
-        'mean_avg_precision_box': 0.871125,
-        'mean_avg_recall_box': 0.755579,
-        'mean_avg_precision_segm': 0.836305,
-        'mean_avg_recall_segm': 0.701997
-    },
-    'chairs': {
-        'mean_avg_precision_box': 0.439714,
-        'mean_avg_recall_box': 0.620355,
-        'mean_avg_precision_segm': 0.479178,
-        'mean_avg_recall_segm': 0.622565
-    },
-    'chairs removed': {
-        'mean_avg_precision_box': 0.471889,
-        'mean_avg_recall_box': 0.559618,
-        'mean_avg_precision_segm': 0.413386,
-        'mean_avg_recall_segm': 0.512977
+#%%
+
+import torch
+import os
+import sys
+
+path = os.path.dirname(os.path.abspath(__file__))
+path = "\\".join(path.split(os.sep)[:-1])
+os.chdir(path)
+# ensure we are in the correct directory
+root_dir_name = 'Blender'
+current_directory = os.getcwd().split(os.sep)
+assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
+if current_directory[-1] != root_dir_name:
+    # go down in the directory tree until the root directory is found
+    while current_directory[-1] != root_dir_name:
+        os.chdir("..")
+        current_directory = os.getcwd().split(os.sep)
+        
+sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
+sys.path.append(os.getcwd())
+import torch
+from PIL import Image
+from torchvision.io import read_image
+from torchvision.ops.boxes import masks_to_boxes
+from torchvision import tv_tensors
+from torchvision.transforms.v2 import functional as F
+
 import numpy as np
 
 import torchvision
@@ -65,8 +63,8 @@ if __name__ == '__main__':
     
     """NOTE strangely,sometimes, this function doesn't work for some reason until you run it in the debugger one time  ¯\_(ツ)_/¯"""
     
-    # data_root = r'real_world_data\Real_world_data_V2'
-    data_root = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
+    data_to_test_on = r'real_world_data\Real_world_data_V2'
+    # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
     num_classes = len(category_information)
     
     
@@ -76,14 +74,18 @@ if __name__ == '__main__':
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # device = torch.device('cpu')
-    dataset_test = LoadDataset(data_root, get_transform(train=False))
+    dataset_test = LoadDataset(data_to_test_on, get_transform(train=False))
 
     
-    percentage_of_dataset_to_use = 0.1
+    percentage_of_dataset_to_use = 1
     dataset_test = torch.utils.data.Subset(dataset_test, range(int(len(dataset_test) * percentage_of_dataset_to_use)))
     
     precision_recall_dict = {}
     
+    
+    # num_samples = int(len(dataset_test) * percentage_of_dataset_to_use)
+    # indices = torch.randperm(len(dataset_test))[:num_samples]
+    # dataset_test = torch.utils.data.Subset(dataset_test, indices)
 
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test,
@@ -105,6 +107,9 @@ if __name__ == '__main__':
     eval_output.eval_imgs
     bbox_IoU_array = eval_output.coco_eval['bbox'].stats 
     segm_IoU_array = eval_output.coco_eval['segm'].stats
+
+    bbox_IoU_array[bbox_IoU_array == -1] = np.nan
+    segm_IoU_array[segm_IoU_array == -1] = np.nan
     
     mean_avg_precision_box = round(np.nanmean(bbox_IoU_array[:6]), 6)
     mean_avg_recall_box = round(np.nanmean(bbox_IoU_array[6:]), 6)
@@ -135,7 +140,7 @@ if __name__ == '__main__':
     for iou_type in eval_output.coco_eval.keys():
         print(f"\n iou type: {iou_type}\n" )
         
-        cat_Ids = [1, 4, 7, 8, 9, 10, 11, 13, 14, 15]
+        cat_Ids = [1, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
         for id in cat_Ids:
             # flip value and key
@@ -174,5 +179,37 @@ if __name__ == '__main__':
             print(f"mean average recall    (segm)  {mean_avg_recall_segm}")
     
             
+
+# %%
+if __name__ == '__main__': 
+    plt.figure(figsize=(10, 10))
+
+    # Subplot 1: mean average precision (box)
+    plt.subplot(2, 2, 1)
+    plt.bar(range(len(precision_recall_dict)), [v['mean_avg_precision_box'] for v in precision_recall_dict.values()])
+    plt.title('Mean Average Precision (Box)')
+    plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+
+    # Subplot 2: mean average recall (box)
+    plt.subplot(2, 2, 2)
+    plt.bar(range(len(precision_recall_dict)), [v['mean_avg_recall_box'] for v in precision_recall_dict.values()])
+    plt.title('Mean Average Recall (Box)')
+    plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+
+    # Subplot 3: mean average precision (segm)
+    plt.subplot(2, 2, 3)
+    plt.bar(range(len(precision_recall_dict)), [v['mean_avg_precision_segm'] for v in precision_recall_dict.values()])
+    plt.title('Mean Average Precision (Segm)')
+    plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+
+    # Subplot 4: mean average recall (segm)
+    plt.subplot(2, 2, 4)
+    plt.bar(range(len(precision_recall_dict)), [v['mean_avg_recall_segm'] for v in precision_recall_dict.values()])
+    plt.title('Mean Average Recall (Segm)')
+    plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+    plt.show()
 
 # %%

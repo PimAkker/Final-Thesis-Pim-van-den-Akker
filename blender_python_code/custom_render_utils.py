@@ -118,15 +118,17 @@ class custom_render_utils:
         # everywhere where pointcloud image opacity is not 0 set it to red 
         # pointcloud_image[pointcloud_image[:,:,3] != 0] = [0,0,255,255]
                            
-        #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
+       
         combined_image = map_image.copy()
-        combined_image[pointcloud_image[:,:,3] == 255] = pointcloud_image[pointcloud_image[:,:,3] == 255]
 
         self.input_file_path = os.path.join(path, f"input-{file_nr}-{self.output_file_type}")
         if self.minimum_visible_overlap_percentage != 0:
-            self.render_only_visible(combined_image)
-        else:
-            cv2.imwrite(self.input_file_path, combined_image)
+            combined_image = self.render_only_visible(combined_image)
+        
+         #  Add pointcloud image to map image where the pointcloud image does not have 0 opacity 
+        combined_image[pointcloud_image[:,:,3] == 255] = pointcloud_image[pointcloud_image[:,:,3] == 255]
+        
+        cv2.imwrite(self.input_file_path, combined_image,[int(cv2.IMWRITE_JPEG_QUALITY), 100])
             
         if self.remove_originals:
             # delete the pointcloud and map images that are used to create the combined image
@@ -179,7 +181,8 @@ class custom_render_utils:
         input_file_only_visible[masks_containing_overlap] = combined_image[masks_containing_overlap]
         
         np.save(self.masks_path_dict['mask'], output_mask)
-        cv2.imwrite(self.input_file_path, input_file_only_visible,[int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        return input_file_only_visible
+
         
     def update_dataframe_with_metadata(self,df):
         """

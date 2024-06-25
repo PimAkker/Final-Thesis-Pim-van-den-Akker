@@ -92,7 +92,7 @@ def generate_dataset(nr_of_images=1,
         start_time = time.time()
         
         cru_class = custom_render_utils.custom_render_utils(image_id=str(i),
-                                                            remove_intermediary_images=True,
+                                                            remove_intermediary_images=False,
                                                             minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, 
                                                             exclude_from_render=pc.original_objects,
                                                             force_map_visibility=force_object_visibility,

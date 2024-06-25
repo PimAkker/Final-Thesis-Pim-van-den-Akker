@@ -17,7 +17,7 @@ if current_directory[-1] != root_dir_name:
 
 #%%
 
-metadata_df = pd.read_csv(r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\[]\Metadata\object_count_metadata.csv")
+metadata_df = pd.read_csv(r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\Metadata\object_count_metadata.csv")
 
 metadata_sum = metadata_df.sum()
 

@@ -32,19 +32,19 @@ from numpy import random
 
 #%%
 
-image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
-mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
+# image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
+# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
 
-# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
-# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
+image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
+mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
 
 show_input_image = False
 show_image = True
 show_mask = True
-show_ground_truth = False
+show_ground_truth = True
 draw_bounding = True
 render_num_images = 5
-randomize_images = True
+randomize_images = False
  
 model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_heights_no_background\weights.pth'
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if randomize_images:
         random_indices = random.choice(image_indices, render_num_images, replace=False)
     else:
-        random_indices = image_indices
+        random_indices = image_indices[:render_num_images]
     for i, file_nr in enumerate(random_indices):
         print(f"Showing image {i + 1} of {render_num_images} with name {os.path.split(image_path_list[file_nr])[-1]}")
         
@@ -88,7 +88,7 @@ if __name__ == '__main__':
             plt.imshow(image_orig.permute(1, 2, 0))
             plt.axis('off')
             plt.show()
-        plt.figure()
+        plt.figure(figsize=(10,10))
         if show_ground_truth:
             mask_path_temp = mask_path_list[file_nr]
             mask_true = np.load(mask_path_temp)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
             if show_mask:
                 output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
 
-            plt.figure()
+            plt.figure(figsize=(10,10))
             plt.title(" ground truth")
 
 

@@ -33,7 +33,7 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 4000
+nr_of_images = 10
 overwrite_data = False
 empty_folders = True
 minimum_overlap_percentage_for_visible = 0.1
@@ -42,7 +42,7 @@ objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 max_shift_distance =.5
-output_parent_folder = r"data/test/same_height"
+output_parent_folder = r"data/test2/whyishtelidarbroken"
 output_map_resolution = [280,280] # the pixels of the map
 
 
