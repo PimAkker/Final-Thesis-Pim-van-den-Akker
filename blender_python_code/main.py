@@ -42,7 +42,7 @@ objects_to_remove_percentage = 0.333
 object_to_move_percentage = 0.5 # true object to move percentage = object_to_move_percentage * objects_to_add_percentage
 force_object_visibility = ['walls'] # categorie(s) that should always be visible in the map
 max_shift_distance =.5
-output_parent_folder = r"data\test1\memoryleaksetc"
+output_parent_folder = r"data\test1\memoryleaksetcy"
 output_map_resolution = [280,280] # the pixels of the map
 
 
@@ -83,7 +83,7 @@ walls_doors_modifiers = {
 chair_size = (0.8, 1.2)
 chairs_modifiers = {
     "chair width": chair_size,
-    "chair length": chair_size,
+    "chair length": "chair width",
     "leg height": chair_size,
     "back rest offset": (0.3,0.8),
     "back rest height": (0.3,0.8),

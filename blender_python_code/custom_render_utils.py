@@ -4,7 +4,6 @@ import bpycv
 import os
 import sys
 import numpy as np
-from memory_profiler import profile 
 from category_information import category_information
 import time
 # from category_information import category_information

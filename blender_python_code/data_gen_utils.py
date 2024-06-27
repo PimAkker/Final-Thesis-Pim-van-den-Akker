@@ -69,7 +69,12 @@ class blender_object_placement:
         bpy.context.preferences.edit.undo_steps = 0
         bpy.context.preferences.edit.undo_memory_limit = 0
 
-        
+    def get_modifier_identifier(self, modifier_name_list, modifier_identifier_list, modifier_name):
+
+        modifier_index = modifier_name_list.index(modifier_name)
+        # get the identifier of the modifier
+        modifier_identifier = modifier_identifier_list[modifier_index]
+        return modifier_index, modifier_identifier
         
     
     def set_modifier(self, object_name, modifier_name, value):
@@ -82,6 +87,9 @@ class blender_object_placement:
             value (int, float, bool, tuple): Value to set the modifier to.
                 - If the modifier is of type int or float, the value can be a single value or a tuple representing a range.
                 - If the modifier is of type bool, the value should be a boolean.
+                - If the modifier is a string with the name of another modifier. This will set the value of the 
+                    modifier to the value of the other modifier. This is useful when you want to modifiers to have the same value.
+                    Only works for modifiers from a specific object. 
                 - If the modifier is of any other type, a ValueError will be raised.
 
         Returns:
@@ -105,17 +113,30 @@ class blender_object_placement:
         
         geometry_nodes = bpy.data.objects[object_name].modifiers['GeometryNodes']
         
+        # create a dictionary of the modifier names and the identifier of the modifier, so that we don't recompute every time
         if self.modifier_identifier_dict.get(object_name) is None:
             self.modifier_identifier_dict[object_name] = [input.identifier for input in geometry_nodes.node_group.inputs][1:]
             self.modifier_name_dict[object_name] = [input.name for input in geometry_nodes.node_group.inputs][1:]
             self.modifier_name_dict[object_name] = [name.lower() for name in self.modifier_name_dict[object_name]]
         
+        
+        
         modifier_identifier_list = self.modifier_identifier_dict[object_name]
         modifier_name_list = self.modifier_name_dict[object_name]
 
-
+        # If the value is the name of another modifier then set the value to this modifiers value
+        if type(value) == str:
+            assert value in modifier_name_list, f"modifier_name: {value} is not in the list of supported modifiers \
+            choose from {modifier_name_list}"
+            _, modifier_identifier_object = self.get_modifier_identifier(modifier_name_list, modifier_identifier_list, value)
+            value = bpy.context.object.modifiers["GeometryNodes"][modifier_identifier_object]
+        
+        modifier_index, modifier_identifier = self.get_modifier_identifier(modifier_name_list, modifier_identifier_list, modifier_name)
+        
         assert modifier_name in modifier_name_list, f"modifier_name: {modifier_name} is not in the list of supported modifiers \
         choose from {modifier_name_list}"
+        
+        
         
         if isinstance(value, tuple):
             assert not any(isinstance(v, bool) for v in value), f"Boolean value is not supported for random choice for {object_name}:{modifier_name}, select either True or False"
@@ -124,12 +145,7 @@ class blender_object_placement:
             self.modifier_data_type_dict[object_name] = [input.type for input in geometry_nodes.node_group.inputs][1:]
            
         modifier_data_type_list = self.modifier_data_type_dict[object_name]
-
-        modifier_index = modifier_name_list.index(modifier_name)
-
-        # get the identifier of the modifier
-        modifier_identifier = modifier_identifier_list[modifier_index]
-        modifier_number = int(modifier_identifier.split("_")[1])
+ 
 
         # retreive the maximum and minimum values of the modfier as defined in the geometry nodes modifier.
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
@@ -592,10 +608,7 @@ class blender_object_placement:
         
         Returns:
             None
-        """
-        
-        tick = time.time()
-        
+        """  
         if self.delete_duplicates:
             self.delete_duplicates_func()    
         
@@ -616,12 +629,7 @@ class blender_object_placement:
 
         # Purge all orphaned data blocks otherwise this will create a memory leak
         bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
-
-
-        print(f"Finalize compmlete took {time.time()-tick}.")
-        
-
-        
+           
 def delete_folder_contents(folders, empty_folders=False):
     """ 
     Deletes all files in the given folders.
