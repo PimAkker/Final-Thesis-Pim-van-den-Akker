@@ -4,12 +4,15 @@ import bpycv
 import os
 import sys
 import numpy as np
-
+from memory_profiler import profile 
 from category_information import category_information
 import time
 # from category_information import category_information
 
+
+
 class custom_render_utils:
+    
     def __init__(self, image_id = "0",remove_intermediary_images = True, minimum_render_overlap_percentage=False,exclude_from_render= None, force_map_visibility = [], output_resolution = [270,270]):
         """
         inputs: image_id (str): the id of the image will be used for naming all the files in this class
@@ -40,7 +43,7 @@ class custom_render_utils:
         bpy.context.scene.render.resolution_x = output_resolution[0]
         bpy.context.scene.render.resolution_y = output_resolution[1]
         
-        
+    
     def render_data_semantic_map(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
         tic = time.time()
@@ -85,7 +88,7 @@ class custom_render_utils:
         print(f'time for rendering semantic map {path_affix}: {time.time()-tic}')
         
             
-
+    
     def simple_render(self, folder = r"data", file_prefix = "", file_affix=""):
         
         # to speed up the rendering process, we can exclude some objects from the render
@@ -102,7 +105,8 @@ class custom_render_utils:
         bpy.context.scene.render.filepath= path
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
         print(f'time for rendering {file_prefix}: {time.time()-tic}')
-        
+    
+    
     def combine_simple_renders(self, path= "data", file_nr="", make_black_and_white=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
@@ -181,6 +185,7 @@ class custom_render_utils:
         input_file_only_visible[masks_containing_overlap] = combined_image[masks_containing_overlap]
         
         np.save(self.masks_path_dict['mask'], output_mask)
+        print(f"render image path dictionary {self.simple_render_image_path_dict}")
         return input_file_only_visible
 
         

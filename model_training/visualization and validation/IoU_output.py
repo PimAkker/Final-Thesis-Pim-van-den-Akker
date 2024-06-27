@@ -21,60 +21,41 @@ sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
 sys.path.append(os.getcwd())
 import torch
 from PIL import Image
-from torchvision.io import read_image
-from torchvision.ops.boxes import masks_to_boxes
-from torchvision import tv_tensors
-from torchvision.transforms.v2 import functional as F
-
 import numpy as np
 
-import torchvision
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from  model_training.utilities.coco_eval import *
 from  model_training.utilities.engine import *
 from  model_training.utilities.utils import *
 from  model_training.utilities.transforms import *
-from  model_training.utilities.dataloader import *
+from  model_training.utilities.dataloader import get_transform, LoadDataset, get_model_instance_segmentation
 import matplotlib.pyplot as plt
-from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 import sys
 
 import os
-from model_training.utilities.engine import train_one_epoch, evaluate
+from model_training.utilities.engine import  evaluate
 import model_training.utilities.utils
-from category_information import category_information, class_factor
-
+from category_information import category_information
 # force reload the module
 import importlib
 importlib.reload(model_training.utilities.utils)
-import time
-from model_training.utilities.utils import calculate_IoU
-
-# Ensure that the results correspond to the current coco set
-from pycocotools.coco import COCO
-import json
-
-def copy_class(cls):
-    return type(cls.__name__, cls.__bases__, dict(cls.__dict__))
 
 #%%
 if __name__ == '__main__':
     
     """NOTE strangely,sometimes, this function doesn't work for some reason until you run it in the debugger one time  ¯\_(ツ)_/¯"""
     
-    data_to_test_on = r'real_world_data\Real_world_data_V2'
+    data_to_test_on = r'real_world_data\Real_world_data_V3'
     # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
     num_classes = len(category_information)
     
     
 
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_heights_no_background\weights.pth"
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_model\weights.pth"
     
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # device = torch.device('cpu')
-    dataset_test = LoadDataset(data_to_test_on, get_transform(train=False))
+    dataset_test = LoadDataset(data_to_test_on, get_transform(train=False), ignore_indexes=2)
 
     
     percentage_of_dataset_to_use = 1
@@ -141,6 +122,7 @@ if __name__ == '__main__':
         print(f"\n iou type: {iou_type}\n" )
         
         cat_Ids = [1, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        # cat_Ids = [9]
 
         for id in cat_Ids:
             # flip value and key
@@ -148,7 +130,13 @@ if __name__ == '__main__':
             
             name = cat_inv[id]
             print("-----------------------------------")
-            print(f"Eval for {name}")
+            IoU_list_bold = []
+            for id_temp in cat_Ids:
+                if id_temp == id:
+                    IoU_list_bold.append(f"\033[1m\033[91m{id_temp}\033[0m")
+                else:
+                    IoU_list_bold.append(f"{id_temp}")
+            print(f"Eval for {name}, id: {', '.join(IoU_list_bold)} for iou_type {iou_type} out of {', '.join(eval_output.coco_eval.keys())}")
             print("-----------------------------------")
             
             eval_output  = evaluate(model, data_loader_test, device=device, catIDs=[id])

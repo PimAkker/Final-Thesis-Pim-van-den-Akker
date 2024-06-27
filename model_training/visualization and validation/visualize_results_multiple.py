@@ -38,6 +38,9 @@ from numpy import random
 image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
 mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
 
+# image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Images"
+# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Masks"
+
 show_input_image = False
 show_image = True
 show_mask = True
@@ -46,12 +49,12 @@ draw_bounding = True
 render_num_images = 5
 randomize_images = False
  
-model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_heights_no_background\weights.pth'
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v2\weights.pth'
 
 mask_confidence_threshold = 0.9
 
 number_of_pred_mask_to_show = 20
-label_confidence_threshold = 0.6
+label_confidence_threshold = 0.5
 
 
 image_path_list = [os.path.join(image_path, file) for file in os.listdir(image_path) if file.endswith(".png")]

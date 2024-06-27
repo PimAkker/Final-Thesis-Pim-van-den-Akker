@@ -6,7 +6,7 @@ import numpy as np
 import os
 import time
 from category_information import category_information, class_factor
-from warnings import warn
+from gc import collect as collect_garbage
 import numbers
 
 class blender_object_placement:
@@ -58,8 +58,20 @@ class blender_object_placement:
         self.highest_instance_id_dict = {}
         
         # make sure we are in object mode 
-        4
+        assert bpy.context.mode == "OBJECT", "You are in the wrong mode, please switch to object mode in blender"
         
+        # save the original undo stepps and memory limit
+        self.original_undo_steps       = bpy.context.preferences.edit.undo_steps
+        self.original_undo_memory_limit = bpy.context.preferences.edit.undo_memory_limit
+        
+        
+        # set the number of undo to 0 to save memory
+        bpy.context.preferences.edit.undo_steps = 0
+        bpy.context.preferences.edit.undo_memory_limit = 0
+
+        
+        
+    
     def set_modifier(self, object_name, modifier_name, value):
         """ 
         Sets the value of a modifier in the geometry nodes modifier of an object.
@@ -581,6 +593,9 @@ class blender_object_placement:
         Returns:
             None
         """
+        
+        tick = time.time()
+        
         if self.delete_duplicates:
             self.delete_duplicates_func()    
         
@@ -592,6 +607,18 @@ class blender_object_placement:
         self.unisolate()
         self.blend_deselect_all()
         self.subset_selection = []
+        
+        collect_garbage()
+        
+        # reset the undo steps to original settings
+        bpy.context.preferences.edit.undo_steps = self.original_undo_steps
+        bpy.context.preferences.edit.undo_memory_limit = self.original_undo_memory_limit
+
+        # Purge all orphaned data blocks otherwise this will create a memory leak
+        bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+
+
+        print(f"Finalize compmlete took {time.time()-tick}.")
         
 
         
@@ -697,7 +724,12 @@ def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_t
             for modifier_key in modifier_keys:
                 
                 f.write(f"{modifier_key}: {modifier[modifier_key]}\n")
-                
+    
+
+    
+
+
+    
 
 
     # Print a message to indicate that the metadata file has been created

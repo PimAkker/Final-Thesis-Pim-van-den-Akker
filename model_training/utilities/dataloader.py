@@ -10,10 +10,10 @@ import torchvision
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-
+from category_information import class_factor
 
 class LoadDataset(torch.utils.data.Dataset):
-    def __init__(self, root, transforms):
+    def __init__(self, root, transforms, ignore_indexes =2):
         self.root = root
         self.transforms = transforms
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -21,6 +21,8 @@ class LoadDataset(torch.utils.data.Dataset):
         # ensure that they are aligned
         self.imgs = list(sorted(os.listdir(os.path.join(root, "Images"))))
         self.masks = list(sorted(os.listdir(os.path.join(root, "Masks"))))
+        self.ignore_indexes = ignore_indexes # number of the first indexes to ignore, first index is background second is usually walls
+        
 
     def __getitem__(self, idx):
         # load images and masks
@@ -31,8 +33,8 @@ class LoadDataset(torch.utils.data.Dataset):
         
         # instances are encoded as different colors
         obj_ids = torch.unique(mask)
-        # first id is the background, so remove it
-        obj_ids = obj_ids[2:]
+        # first id is the background second is walls so remove , so remove it
+        obj_ids = obj_ids[self.ignore_indexes:]
         num_objs = len(obj_ids)
     
         img = read_image(img_path)
@@ -51,7 +53,7 @@ class LoadDataset(torch.utils.data.Dataset):
         boxes[:, 3] += boxes[:, 1] == boxes[:, 3]
     
         # if the objs_id have 6 digits the first digit is the label
-        labels = obj_ids // 1000
+        labels = obj_ids // class_factor
         labels = labels.long()
         
         image_id = idx

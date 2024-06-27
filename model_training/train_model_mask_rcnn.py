@@ -215,11 +215,11 @@ class ModelTrainer:
 
 if __name__ == '__main__':
     
-    trainer = ModelTrainer(data_root= r"data/test/varying_heights/[]",
+    trainer = ModelTrainer(data_root= r"data/test/same_height_no_walls_v2/[]",
                             num_classes=len(category_information),
                             continue_from_checkpoint=False,
                             save_model=True,
-                            num_epochs=4,
+                            num_epochs=3,
                             train_percentage=0.8,
                             test_percentage=0.2,
                             percentage_of_data_to_use=1,
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                             weights_save_path="",
                             weights_load_path="",
                             device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
-                            outputs_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_heights_no_background",
+                            outputs_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v2",
                             plot_metrics_bool=True
                             
     )

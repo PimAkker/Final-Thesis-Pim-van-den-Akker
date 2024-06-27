@@ -1,5 +1,6 @@
 # #!/usr/bin/env python3
 # # -*- coding: utf-8 -*-
+#%%
 # import os
 # import sys
 
@@ -32,62 +33,26 @@
 # from category_information import category_information
 # total_start_time = time.time()
 
-# masks_folder = r"data\Masks"
-# images_folder = r"data\Images"
-# nr_of_images = 1
-# overwrite_data = False
-# empty_folders = True
-# obj_ids = category_information
 
-# place_class = data_gen_utils.blender_object_placement(delete_duplicates=False)
-   
-# bbox_raytrace, _, _, _ = place_class.get_object_dims("raytrace.001")
-
-# objects_to_move = place_class.select_subset_of_objects(object_type_name="chairs display", selection_percentage=1, bbox=bbox_raytrace)
-# place_class.move_objects_relative(objects_to_move, [0,0,-10])
-
-# obj = bpy.data.objects["walls.001"]
-
-# obj.to_mesh()
-
-def map_range(x, a, b, c, d):
-    """
-    Remaps the input value x from the range [a, b] to the range [c, d].
-
-    Parameters:
-    x (float): The input value within the range [a, b].
-    a (float): The lower bound of the input range.
-    b (float): The upper bound of the input range.
-    c (float): The lower bound of the output range.
-    d (float): The upper bound of the output range.
-
-    Returns:
-    float: The remapped value in the range [c, d].
-    """
-    y = c + ((x - a) / (b - a)) * (d - c)
-    return y
-
-# Example usage:
-x = 0  # Example input value within the range [0, 1]
-a = 0    # Lower bound of input range
-b = 1    # Upper bound of input range
-c = -1   # Lower bound of output range
-d = 1    # Upper bound of output range
-
-remapped_value = map_range(x, a, b, c, d)
-print(f"The remapped value is: {remapped_value}")
-
-
-
-# path  = os.getcwd()
-# bpy.context.scene.render.filepath= path
-# path = os.path.join(path, "test-1.png")
-# bpy.context.scene.render.filepath= path
-# bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
-
-# print(f"Total time: {time.time()-total_start_time}")
-
-
+from PIL import Image
 
 
 #%%
+image_real = Image.open(r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images\room1_7_1.png")
+image_syn = Image.open(r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_v2\[]\Images\input-2-.png")
+#%%
+# show the two images side by side
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(1, 2)
+
+axes[0].imshow(image_real)
+axes[0].set_title('Real Image')
+
+axes[1].imshow(image_syn)
+axes[1].set_title('Synthetic Image')
+
+plt.show()
+
+
+# %%

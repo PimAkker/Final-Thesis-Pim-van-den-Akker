@@ -13,7 +13,8 @@ from category_information import category_information
 total_start_time = time.time()
 
 import pandas as pd
-  
+import tracemalloc
+
 
 def modify_values_for_ablation(modifier_list, fix_values_dicts):
     """
@@ -40,6 +41,7 @@ def modify_values_for_ablation(modifier_list, fix_values_dicts):
     return modifier_list
 
 
+
 def generate_dataset(nr_of_images=1,
                      folder_name="",  
                      overwrite_data=False, 
@@ -62,6 +64,7 @@ def generate_dataset(nr_of_images=1,
     """
     Function to generate a dataset of images with corresponding masks and metadata
     """
+    tracemalloc.start()
     total_start_time = time.time()
     
     masks_folder = os.path.join(folder_name, r"Masks")
@@ -92,7 +95,7 @@ def generate_dataset(nr_of_images=1,
         start_time = time.time()
         
         cru_class = custom_render_utils.custom_render_utils(image_id=str(i),
-                                                            remove_intermediary_images=False,
+                                                            remove_intermediary_images=True,
                                                             minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, 
                                                             exclude_from_render=pc.original_objects,
                                                             force_map_visibility=force_object_visibility,
@@ -201,7 +204,17 @@ def generate_dataset(nr_of_images=1,
 
     print(f"Finished dataset, Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
 
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+        
+    # Get the current working file name
+    current_file = os.path.basename(__file__)
 
+    # Filter statistics to include only the current working file
+    filtered_stats = [stat for stat in top_stats if current_file in stat.traceback[0].filename]
+    print("Top 10 memory usage lines in current file:")
+    for stat in filtered_stats[:10]:
+        print(stat)
     instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
     data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter, map_resolution=map_resolution, LiDAR_height=LiDAR_height)
     print("Done!")
