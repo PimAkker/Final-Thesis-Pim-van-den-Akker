@@ -22,6 +22,9 @@ import torch
 from  model_training.utilities.dataloader import get_transform, LoadDataset, get_model_instance_segmentation
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import numpy as np
+import cv2
+import scipy.cluster.hierarchy as fclusterdata
 
 def load_data(data_path, percentage=1):
     
@@ -51,11 +54,11 @@ def run_model(model, data, image_number, device, mask_threshold, box_threshold):
         pass_threshold_indices_labels = torch.where(prediction[0]['scores'] > box_threshold)
         boxes_thresholded = prediction[0]['boxes'][pass_threshold_indices_labels]
         labels_thresholded = prediction[0]['labels'][pass_threshold_indices_labels]
-        
+        masks_thresholded = prediction[0]['masks'][pass_threshold_indices_labels]
         
         boxes.append(boxes_thresholded)
         labels.append(labels_thresholded)
-        masks.append(prediction[0]['masks'])
+        masks.append(masks_thresholded)
         scores.append(prediction[0]['scores'])
         
     return prediction, boxes, labels, masks, img, scores
@@ -79,32 +82,104 @@ def show_masks(img, masks):
         # show some info 
         plt.title(f"mask shape: {mask.shape}")
     plt.show()
+    
+def fill_bounding_boxes(boxes, masks):
+    
+    filled_bb = np.zeros_like(masks[0].sum(1).cpu().numpy())
+    for i, box in enumerate(boxes[0]):
+        x_min, y_min, x_max, y_max = box.cpu().numpy()
+        filled_bb[i][int(y_min):int(y_max), int(x_min):int(x_max)] = 1
+    return filled_bb
+    
+def plot_overlap(img, boxes, masks, threshold=0.0):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+    masks_copy = masks[0].clone()
+    masks_copy[masks_copy > threshold] = 1
+    masks_copy[masks_copy < threshold] = 0
+    mask = masks_copy.sum((0, 1))
+
+    ax1.set_title("mask uncertainty regions")
+    ax1.imshow(mask.cpu().numpy(), alpha=0.5)
+
+    filled_bb = fill_bounding_boxes(boxes, masks)
+    
+    ax2.imshow(np.sum(filled_bb, axis=0), alpha=0.5)
+
+
+    # Add colorbar
+    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+    cbar = fig.colorbar(ax1.images[0], cax=cbar_ax)
+    cbar.set_label('Heatmap Intensity')
+
+    plt.show()
+    
+def find_area_of_uncertainty(boxes,masks,threshold, show_overlap=True):
+    """ 
+    Using scipy clustering, clusters all boxes that overlap
+    """
+    # use hcluster
+    # prepare the data
+    filled_bb = fill_bounding_boxes(boxes, masks)
+    filled_bb_summed = filled_bb.sum(0)
+    filled_bb_single_val = filled_bb.sum(0)
+    filled_bb_single_val[filled_bb_single_val != 0] = 1 
+    filled_bb_single_val= filled_bb_single_val.astype('uint8')
+
+    # calculate which pixels are connected
+    num_clusters, cluster_id = cv2.connectedComponents(filled_bb_single_val)
+    uncertain_area = np.zeros_like(filled_bb_summed)
+    for i in range(1,num_clusters-1):
+        cluster_mask = cluster_id == i
+        cluster_max = np.max(filled_bb_summed[cluster_mask])
+        if cluster_max > threshold:
+            uncertain_area[cluster_mask] = 1
+            
+    if show_overlap:
+        fig, ax = plt.subplots(1)
+        ax.imshow(uncertain_area, alpha=0.5)
+        plt.show()        
+    
+    return uncertain_area
+        
+    
+    
+    
+    
 #%%
 
 if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_to_test_on = r'real_world_data\Real_world_data_V2'
     # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
+    num_classes = len(category_information)  
+    
     
     box_threshold = 0.5
     mask_threshold = 0.5
-    
-    image_nr = 7
-    
-    num_classes = len(category_information)  
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_v3\weights.pth"
-    model = load_model(weights_load_path, num_classes, device)
-    data = load_data(data_to_test_on)
-    
-    prediction_dict, boxes,labels,masks,img, scores  = run_model(model, data, image_nr, device, mask_threshold, box_threshold)
-    print(f"number of boxes: {len(boxes)}")
-    print(f"number of labels: {len(labels)}")
-    print(f"number of masks: {len(masks)}")
+    nr_images_to_show = 5
+    image_start_number = 1
+    overlap_bb_threshold = 2
     
     
-    show_boxes(img, boxes)
-    show_masks(img, masks)
-
+    for i in range(nr_images_to_show):
+        
+        image_nr = i + image_start_number
+        
+        weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_v3\weights.pth"
+        model = load_model(weights_load_path, num_classes, device)
+        data = load_data(data_to_test_on)
+        
+        prediction_dict, boxes,labels,masks,img, scores  = run_model(model, data, image_nr, device, mask_threshold, box_threshold)
+        # print(f"number of boxes: {len(boxes)}")
+        # print(f"number of labels: {len(labels)}")
+        # print(f"number of masks: {len(masks)}")
+        
+        
+        show_boxes(img, boxes)
+        # show_masks(img, masks)
+        plot_overlap(img, boxes, masks,0.1)
     
+        find_area_of_uncertainty(boxes,masks,overlap_bb_threshold, show_overlap=True)
     
 # %%
