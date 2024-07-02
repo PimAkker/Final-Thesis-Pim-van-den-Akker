@@ -27,7 +27,7 @@ from  model_training.utilities.coco_eval import *
 from  model_training.utilities.engine import *
 from  model_training.utilities.utils import *
 from  model_training.utilities.transforms import *
-from  model_training.utilities.dataloader import get_transform, LoadDataset, get_model_instance_segmentation
+
 import matplotlib.pyplot as plt
 import sys
 
@@ -44,13 +44,13 @@ if __name__ == '__main__':
     
     """NOTE strangely,sometimes, this function doesn't work for some reason until you run it in the debugger one time  ¯\_(ツ)_/¯"""
     
-    data_to_test_on = r'real_world_data\Real_world_data_V3'
+    data_to_test_on = r'real_world_data\Real_world_data_V2'
     # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
     num_classes = len(category_information)
     
     
 
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_model\weights.pth"
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_v3\weights.pth"
     
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -177,24 +177,28 @@ if __name__ == '__main__':
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_precision_box'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Precision (Box)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Subplot 2: mean average recall (box)
     plt.subplot(2, 2, 2)
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_recall_box'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Recall (Box)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Subplot 3: mean average precision (segm)
     plt.subplot(2, 2, 3)
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_precision_segm'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Precision (Segm)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Subplot 4: mean average recall (segm)
     plt.subplot(2, 2, 4)
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_recall_segm'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Recall (Segm)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Adjust layout to prevent overlap
     plt.tight_layout()

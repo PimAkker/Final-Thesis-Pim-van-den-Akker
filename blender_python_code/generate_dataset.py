@@ -13,7 +13,6 @@ from category_information import category_information
 total_start_time = time.time()
 
 import pandas as pd
-import tracemalloc
 
 
 def modify_values_for_ablation(modifier_list, fix_values_dicts):
@@ -64,7 +63,7 @@ def generate_dataset(nr_of_images=1,
     """
     Function to generate a dataset of images with corresponding masks and metadata
     """
-    tracemalloc.start()
+
     total_start_time = time.time()
     
     masks_folder = os.path.join(folder_name, r"Masks")
@@ -88,8 +87,7 @@ def generate_dataset(nr_of_images=1,
         pc.set_object_color(object_name, color)
 
     for i in np.arange(file_number, nr_of_images + file_number):
-        print(f"Creating image {i}/{nr_of_images + file_number}")
-        
+     
         pc.delete_duplicates_func() #delete duplicates at the start to refresh the scene
         
         start_time = time.time()
@@ -101,7 +99,7 @@ def generate_dataset(nr_of_images=1,
                                                             force_map_visibility=force_object_visibility,
                                                             output_resolution=map_resolution)
                                                             
-        
+      
         for modifier in list(walls_modifiers.keys()):
             pc.set_modifier("walls", modifier, walls_modifiers[modifier])
         for modifier in list(chairs_modifiers.keys()):
@@ -111,7 +109,7 @@ def generate_dataset(nr_of_images=1,
  
         for modifier in list(raytrace_modifiers.keys()):   
             pc.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
-            
+
 
         _, height, width, depth = pc.get_object_dims(object_name="walls")
         pc.place_objects(object_name="walls", inst_id=category_information["walls"], seperate_loose=False)
@@ -119,11 +117,12 @@ def generate_dataset(nr_of_images=1,
         pc.place_objects(object_name="chairs display", inst_id=category_information["chairs"])
         pc.place_objects(object_name="tables display", inst_id=category_information["tables"])
         pc.place_objects(object_name="pillars display", inst_id=category_information["pillars"])
+ 
         
-    
         rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), np.random.uniform(LiDAR_height[0],LiDAR_height[1])-height/2]
         pc.place_LiDAR(position=rand_pos_in_room)
-    
+
+        
         # move a percentage of objects down, this will move them out of the raytrace image
         # and will therefore not be seen in the pointcloud but will be seen in the mask and map
         # simulating that they are removed in real life but present on the map
@@ -139,7 +138,7 @@ def generate_dataset(nr_of_images=1,
         pc.move_objects_relative(tables_to_remove,  [0, 0, -height])
         pc.move_objects_relative(pillars_to_remove, [0, 0, -height])
         
-        
+
 
         pc.hide_objects(chairs_to_remove+tables_to_remove+pillars_to_remove)
         
@@ -153,6 +152,8 @@ def generate_dataset(nr_of_images=1,
         
         pc.unisolate()
 
+
+        
         pc.delete_single_object("raytrace.001")
         
         # Here we remove a percentage of the objects and add a percentage of the objects from the map, they will still be 
@@ -180,8 +181,7 @@ def generate_dataset(nr_of_images=1,
         pc.set_object_id(category_information["chairs removed"], selection=moved_chairs)
         pc.set_object_id(category_information["tables removed"], selection=moved_tables)
         pc.set_object_id(category_information["pillars removed"], selection=moved_pillars)
-        
-
+                
         # render the instance segmentation mask1
         pc.unhide_objects(chairs_to_move+tables_to_move+pillars_to_move)
         
@@ -197,6 +197,7 @@ def generate_dataset(nr_of_images=1,
         cru_class.combine_simple_renders(path=images_folder, file_nr=f"{i}", make_black_and_white=False)
         
         instance_nr_df = cru_class.update_dataframe_with_metadata(instance_nr_df)
+
         
         pc.finalize()
         
@@ -204,17 +205,6 @@ def generate_dataset(nr_of_images=1,
 
     print(f"Finished dataset, Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
 
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
-        
-    # Get the current working file name
-    current_file = os.path.basename(__file__)
-
-    # Filter statistics to include only the current working file
-    filtered_stats = [stat for stat in top_stats if current_file in stat.traceback[0].filename]
-    print("Top 10 memory usage lines in current file:")
-    for stat in filtered_stats[:10]:
-        print(stat)
     instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
     data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter, map_resolution=map_resolution, LiDAR_height=LiDAR_height)
     print("Done!")

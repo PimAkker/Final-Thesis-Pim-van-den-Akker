@@ -49,9 +49,9 @@ draw_bounding = True
 render_num_images = 5
 randomize_images = False
  
-model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v2\weights.pth'
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v3\weights.pth'
 
-mask_confidence_threshold = 0.9
+mask_confidence_threshold = 0.5
 
 number_of_pred_mask_to_show = 20
 label_confidence_threshold = 0.5

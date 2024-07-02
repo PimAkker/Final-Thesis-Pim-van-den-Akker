@@ -33,7 +33,7 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 10
+nr_of_images = 1
 overwrite_data = False
 empty_folders = True
 minimum_overlap_percentage_for_visible = 0.1
@@ -89,8 +89,8 @@ chairs_modifiers = {
     "back rest height": (0.3,0.8),
     "leg width": (0.05, 0.1),
     "circular legs": np.random.choice([True, False]),
-    "leg type": (0,1)
-    
+    "leg type": (0,1),
+    "leg center offset percentage":(0.8,1)
 }
 
 table_size = (1, 1.4)
@@ -113,7 +113,7 @@ LiDAR_height = (0.2, 1.5) # height from the bottom of the walls
 raytrace_modifiers = {"high freq noise variance": (0, 0.1), 
                       "low freq noise variance": (0, 0.44),
                       "lidar block size":(0.05,0.2),
-                      "nr lidar points": (216,512)
+                      "nr lidar points": (400,512)
                       }
 
 # these colors are used for the map not for the annotations

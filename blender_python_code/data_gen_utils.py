@@ -65,9 +65,9 @@ class blender_object_placement:
         self.original_undo_memory_limit = bpy.context.preferences.edit.undo_memory_limit
         
         
-        # set the number of undo to 0 to save memory
-        bpy.context.preferences.edit.undo_steps = 0
-        bpy.context.preferences.edit.undo_memory_limit = 0
+        # set the number of undo to 1 to save memory
+        bpy.context.preferences.edit.undo_steps = 1
+        bpy.context.preferences.edit.undo_memory_limit = 1
 
     def get_modifier_identifier(self, modifier_name_list, modifier_identifier_list, modifier_name):
 
@@ -340,25 +340,35 @@ class blender_object_placement:
         Returns:
             None
         """
+
+
         self.blend_deselect_all()
         bpy.data.objects[object_name].select_set(True)
         # set object as active
         bpy.context.view_layer.objects.active = bpy.data.objects[object_name]
         obj = bpy.context.active_object
 
+
+
+        
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(45.2641, 3.86619, -3.15708), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_elements":{'FACE_NEAREST'}, "use_snap_project":True, "snap_target":'CLOSEST', "use_snap_self":True, "use_snap_edit":True, "use_snap_nonedit":True, "use_snap_selectable":False, "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "view2d_edge_pan":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+
         bpy.ops.object.convert(target='MESH')
         bpy.context.view_layer.objects.active = bpy.data.objects[f'{object_name}.001']
         obj = bpy.context.active_object
         obj.location = self.default_location
         self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
 
+        
         # Split mesh into individual objects
         if seperate_loose:
             bpy.ops.mesh.separate(type='LOOSE')
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+
         self.set_object_id(object_name=object_name, class_label=inst_id)
         
+        
+
     def place_LiDAR(self, position=(0,0,0)):
         """ 
         This function places a raytrace in the scene. 
@@ -609,6 +619,7 @@ class blender_object_placement:
         Returns:
             None
         """  
+
         if self.delete_duplicates:
             self.delete_duplicates_func()    
         
@@ -629,6 +640,7 @@ class blender_object_placement:
 
         # Purge all orphaned data blocks otherwise this will create a memory leak
         bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+
            
 def delete_folder_contents(folders, empty_folders=False):
     """ 

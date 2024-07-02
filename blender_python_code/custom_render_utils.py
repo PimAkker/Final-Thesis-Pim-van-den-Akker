@@ -43,14 +43,40 @@ class custom_render_utils:
         bpy.context.scene.render.resolution_y = output_resolution[1]
         
     
+    def exclude_from_render_func(self):
+        """
+        This function will exclude the objects in the exclude_from_render list from the render,
+        it will disable the for the object as well as a geometry modifier if that is present.
+        """
+        for obj in self.exclude_from_render:
+            # hide in viewport
+            obj.hide_render = True     
+            # hide render for geometry node, increases speed of rendering for some reason this is not done by hide_render
+            for modifier in obj.modifiers:
+                modifier.show_render = False
+    def include_in_render_func(self):
+        """
+        This function will include the objects in the exclude_from_render list from the render,
+        it will enable the for the object as well as a geometry modifier if that is present.
+        """
+        for obj in self.exclude_from_render:
+            # hide in viewport
+            obj.hide_render = False     
+            # hide render for geometry node, increases speed of rendering for some reason this is not done by hide_render
+            for modifier in obj.modifiers:
+                modifier.show_render = True
+        
+        
+
+    
+    
     def render_data_semantic_map(self,folder = r"data", path_affix="", save_rgb=True, save_inst=True, save_combined=True):
         
+
         tic = time.time()
         # to speed up the rendering process, we can exclude some objects from the render
         if self.exclude_from_render is not None:
-            for obj in self.exclude_from_render:
-                obj.hide_render = True
-        
+            self.exclude_from_render_func()
         # render image, instance annoatation and depth
         result = bpycv.render_data(render_image=False)
 
@@ -84,6 +110,10 @@ class custom_render_utils:
         if save_combined:
             cv2.imwrite(combined_pathname, result.vis()[..., ::-1])
         
+        if self.exclude_from_render is not None:
+            self.include_in_render_func()
+        
+        
         print(f'time for rendering semantic map {path_affix}: {time.time()-tic}')
         
             
@@ -92,9 +122,9 @@ class custom_render_utils:
         
         # to speed up the rendering process, we can exclude some objects from the render
         if self.exclude_from_render is not None:
-            for obj in self.exclude_from_render:
-                obj.hide_render = True
-
+            self.exclude_from_render_func()
+                
+                
         sys.path.append(os.path.dirname(os.path.realpath(__file__)))
         
         path= os.path.join(os.getcwd(), folder)
@@ -105,7 +135,10 @@ class custom_render_utils:
         bpy.ops.render.render(animation=False, write_still=True, use_viewport=False, layer='', scene='')
         print(f'time for rendering {file_prefix}: {time.time()-tic}')
     
-    
+        
+        if self.exclude_from_render is not None:
+            self.include_in_render_func()
+            
     def combine_simple_renders(self, path= "data", file_nr="", make_black_and_white=False):
         """ combine the simple renders into a single image. The first image is the pointcloud image and the second image is the map image."""
 
@@ -184,7 +217,6 @@ class custom_render_utils:
         input_file_only_visible[masks_containing_overlap] = combined_image[masks_containing_overlap]
         
         np.save(self.masks_path_dict['mask'], output_mask)
-        print(f"render image path dictionary {self.simple_render_image_path_dict}")
         return input_file_only_visible
 
         
@@ -192,7 +224,7 @@ class custom_render_utils:
         """
         This function will update the dataframe with the metadata of the number of each class per image.
         """
-        start_time = time.time()
+
         
         class_names = list(category_information.keys())
 
@@ -200,7 +232,7 @@ class custom_render_utils:
         
         for i,class_name in enumerate(self.unique_classes):
             df.at[int(self.image_id), class_name] = self.nr_of_instances_per_class[i]
-        print(f"Time for updating dataframe with metadata: {time.time()-start_time}")
+
         return df
         
     
