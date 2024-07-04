@@ -24,7 +24,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import cv2
-import scipy.cluster.hierarchy as fclusterdata
+import matplotlib.patheffects as path_effects
+
+category_information_flipped = {v: k for k, v in category_information.items()}
 
 def load_data(data_path, percentage=1):
     
@@ -63,10 +65,20 @@ def run_model(model, data, image_number, device, mask_threshold, box_threshold):
         
     return prediction, boxes, labels, masks, img, scores
 
-def show_boxes(img, boxes):
-    fig, ax = plt.subplots(1)
+def show_bounding_boxes(img, boxes,scores,labels,show_confidence_values=True,show_labels=True):
+    fig, ax = plt.subplots(1, figsize=(12, 6))
     ax.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
-    for box in boxes[0]:
+    for i, box in enumerate(boxes[0]):
+        if show_confidence_values:
+            # show the confidence value inside the box
+            score = np.round(scores[0][i].cpu().numpy(),2)
+            score_txt = plt.text(box[0], box[1],score, color='red', fontsize=12, alpha=0.8)
+            score_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()]) 
+        if show_labels:
+            label = labels[0][i].cpu().numpy()
+            label_txt = plt.text(box[0], box[3], category_information_flipped[int(label)], color='red', fontsize=12, alpha=0.8, ha='left', va='bottom')
+            label_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()])
+
         box = box.cpu().numpy()
         rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
@@ -87,6 +99,7 @@ def fill_bounding_boxes(boxes, masks):
     
     filled_bb = np.zeros_like(masks[0].sum(1).cpu().numpy())
     for i, box in enumerate(boxes[0]):
+        
         x_min, y_min, x_max, y_max = box.cpu().numpy()
         filled_bb[i][int(y_min):int(y_max), int(x_min):int(x_max)] = 1
     return filled_bb
@@ -114,11 +127,9 @@ def plot_overlap(img, boxes, masks, threshold=0.0):
 
     plt.show()
     
-def find_area_of_uncertainty(boxes,masks,threshold, show_overlap=True):
-    """ 
-    Using scipy clustering, clusters all boxes that overlap
-    """
-    # use hcluster
+def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=True):
+
+
     # prepare the data
     filled_bb = fill_bounding_boxes(boxes, masks)
     filled_bb_summed = filled_bb.sum(0)
@@ -127,38 +138,76 @@ def find_area_of_uncertainty(boxes,masks,threshold, show_overlap=True):
     filled_bb_single_val= filled_bb_single_val.astype('uint8')
 
     # calculate which pixels are connected
-    num_clusters, cluster_id = cv2.connectedComponents(filled_bb_single_val)
-    uncertain_area = np.zeros_like(filled_bb_summed)
+    num_clusters, clustered_image = cv2.connectedComponents(filled_bb_single_val)
+    uncertain_area_boxes = np.zeros_like(filled_bb_summed)
+
+    labels_list = labels_list[0].cpu().numpy()
+    boxes = boxes[0].cpu().numpy()
+    
+    labels_in_cluster = {}      
+    labels_in_cluster_pos = {}
+    
     for i in range(1,num_clusters-1):
-        cluster_mask = cluster_id == i
-        cluster_max = np.max(filled_bb_summed[cluster_mask])
-        if cluster_max > threshold:
-            uncertain_area[cluster_mask] = 1
+        cluster_mask = clustered_image == i
+        cluster_max = np.max(filled_bb_summed[cluster_mask]) #nr of overlapping boxes
+                
+        if cluster_max >= threshold:
+            uncertain_area_boxes[cluster_mask] = 1
+            # find which labels are in the cluster   
+            temp_labels_in_cluster = []
+            temp_labels_in_cluster_pos = []
+            for j, box in enumerate(filled_bb):
+                
+                x_min, y_min, _, _ = boxes[j]
+                if np.any(box.astype(bool) & cluster_mask):
+                    temp_labels_in_cluster_pos.append((int(x_min), int(y_min)) )
+                    temp_labels_in_cluster.append((category_information_flipped[int(labels_list[j])]))    
+               
+            labels_in_cluster_pos[str(i)]  = temp_labels_in_cluster_pos
+            labels_in_cluster[str(i)] = temp_labels_in_cluster
+                
+   
+    masks_merged = masks[0].cpu().numpy().sum(0).squeeze()    
+    uncertain_area_masks = np.zeros_like(masks_merged)
+    uncertain_area_masks[masks_merged >= threshold] = 1
             
     if show_overlap:
-        fig, ax = plt.subplots(1)
-        ax.imshow(uncertain_area, alpha=0.5)
-        plt.show()        
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+        ax1.set_title("Uncertain area masks")
+        ax1.imshow(uncertain_area_masks, alpha=0.5)
+        ax2.set_title("Uncertain area boxes")
+        ax2.imshow(uncertain_area_boxes, alpha=0.5)
+        # plot the labels in the cluster
+        labels_list = ""
+        for i, (cluster, cluster_name) in enumerate(labels_in_cluster.items()):
+            for label in cluster_name:
+                    labels_list = f"{labels_list} \n {label}"  
+               
+            ax2.text(labels_in_cluster_pos[cluster][0][0],labels_in_cluster_pos[cluster][0][1], labels_list, color='red', fontsize=12, alpha=0.8)
+            
+            
+        plt.show()
+        
     
-    return uncertain_area
+    return uncertain_area_boxes
         
     
     
     
     
-#%%
+ #%%
 
 if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_to_test_on = r'real_world_data\Real_world_data_V2'
-    # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
+    # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_heights_v3\[]"
     num_classes = len(category_information)  
     
     
     box_threshold = 0.5
     mask_threshold = 0.5
-    nr_images_to_show = 5
     image_start_number = 1
+    nr_images_to_show = 5
     overlap_bb_threshold = 2
     
     
@@ -176,10 +225,10 @@ if __name__ == "__main__":
         # print(f"number of masks: {len(masks)}")
         
         
-        show_boxes(img, boxes)
+        show_bounding_boxes(img, boxes, scores,labels)
         # show_masks(img, masks)
-        plot_overlap(img, boxes, masks,0.1)
+        # plot_overlap(img, boxes, masks,0.1)
     
-        find_area_of_uncertainty(boxes,masks,overlap_bb_threshold, show_overlap=True)
+        # find_area_of_uncertainty(boxes,masks,labels, overlap_bb_threshold, show_overlap=True)
     
 # %%

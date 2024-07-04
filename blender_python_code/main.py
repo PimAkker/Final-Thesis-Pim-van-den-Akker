@@ -90,7 +90,7 @@ chairs_modifiers = {
     "leg width": (0.05, 0.1),
     "circular legs": np.random.choice([True, False]),
     "leg type": (0,1),
-    "leg center offset percentage":(0.8,1)
+    "leg center offset percentage":(0.7,1)
 }
 
 table_size = (1, 1.4)
@@ -107,7 +107,7 @@ pillar_modifiers = {
     "width": (0.5, 1.3),
     "round/square": np.random.choice([True, False]),
 }
-LiDAR_height = (0.2, 1.5) # height from the bottom of the walls
+LiDAR_height = (0.2, 0.21) # height from the bottom of the walls
 # LiDAR_height = (0.2)
 
 raytrace_modifiers = {"high freq noise variance": (0, 0.1), 

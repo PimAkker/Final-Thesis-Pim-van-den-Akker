@@ -32,11 +32,11 @@ from numpy import random
 
 #%%
 
-# image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
-# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
+image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_heights_v3\[]\Images"
+mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_heights_v3\[]\Masks"
 
-image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
-mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
+# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
 
 # image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Images"
 # mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Masks"
@@ -179,7 +179,7 @@ if __name__ == '__main__':
                 output_image = image_orig
             
             if show_mask:
-                output_image = draw_segmentation_masks(output_image, masks, alpha=0.5, colors="purple")
+                output_image = draw_segmentation_masks(output_image, masks, alpha=0.5)
 
             plt.figure(figsize=(10,10))
             plt.title(" ground truth")
