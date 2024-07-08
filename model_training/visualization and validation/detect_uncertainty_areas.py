@@ -126,20 +126,55 @@ def plot_overlap(img, boxes, masks, threshold=0.0):
     cbar.set_label('Heatmap Intensity')
 
     plt.show()
+
+def quantify_area_of_overlap(clustered_boxes,filled_bb, masks, threshold=0.0):
+    
+    """quantify the area of overlap between the boxes in the cluster, this is essentially 
+    the intersection over union metric but extended to multiple boxes in a cluster instead of 2"""
+    import time
+    tic = time.time()
+    
+    clusters = np.unique(clustered_boxes)[1:]
+
+    assigned_clusters = {}
+    # assign fillex_bb to clusters
+    for cluster in clusters:
+
+        temp_cluster_list = []
+        for i, filled_box in enumerate(filled_bb):
+            
+            if np.any(filled_box.astype(bool) & clustered_boxes==cluster):
+                temp_cluster_list.append(i)        
+        
+        assigned_clusters[cluster] = temp_cluster_list
+
+    intersection = {}
+    union = {}
+    boxes_overlap_scores = {}
+    for cluster, assigned_boxes in assigned_clusters.items():
+        if len(assigned_boxes) > 1:
+            overlap_interaction_array = np.vstack((clusters,np.roll(clusters,-1))).T  
+            intersection[cluster] = 0  
+            union[cluster] = 0  
+            for i,j in overlap_interaction_array:
+                intersection[cluster] += np.sum(filled_bb[i].astype(bool) & filled_bb[j].astype(bool))
+                union[cluster] += np.sum(filled_bb[i].astype(bool) | filled_bb[j].astype(bool))
+            boxes_overlap_scores[cluster] = intersection[cluster] / union[cluster]    
+    print(f"Time taken: {time.time() - tic}")
+
+    # return boxes_overlap_scores
+    
     
 def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=True):
-
-
     # prepare the data
     filled_bb = fill_bounding_boxes(boxes, masks)
-    filled_bb_summed = filled_bb.sum(0)
     filled_bb_single_val = filled_bb.sum(0)
     filled_bb_single_val[filled_bb_single_val != 0] = 1 
     filled_bb_single_val= filled_bb_single_val.astype('uint8')
 
     # calculate which pixels are connected
-    num_clusters, clustered_image = cv2.connectedComponents(filled_bb_single_val)
-    uncertain_area_boxes = np.zeros_like(filled_bb_summed)
+    num_clusters_boxes, clustered_image_boxes = cv2.connectedComponents(filled_bb_single_val)
+    uncertain_area_boxes = np.zeros_like(filled_bb_single_val)
 
     labels_list = labels_list[0].cpu().numpy()
     boxes = boxes[0].cpu().numpy()
@@ -147,10 +182,11 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
     labels_in_cluster = {}      
     labels_in_cluster_pos = {}
     
-    for i in range(1,num_clusters-1):
-        cluster_mask = clustered_image == i
-        cluster_max = np.max(filled_bb_summed[cluster_mask]) #nr of overlapping boxes
+    for i in range(1,num_clusters_boxes-1):
+        cluster_mask = clustered_image_boxes == i
+        boxes_overlap_score = quantify_area_of_overlap(clustered_image_boxes,filled_bb, masks, threshold=0.5)
                 
+        # cluster_max = 
         if cluster_max >= threshold:
             uncertain_area_boxes[cluster_mask] = 1
             # find which labels are in the cluster   
@@ -162,10 +198,10 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
                 if np.any(box.astype(bool) & cluster_mask):
                     temp_labels_in_cluster_pos.append((int(x_min), int(y_min)) )
                     temp_labels_in_cluster.append((category_information_flipped[int(labels_list[j])]))    
-               
+                
             labels_in_cluster_pos[str(i)]  = temp_labels_in_cluster_pos
             labels_in_cluster[str(i)] = temp_labels_in_cluster
-                
+                    
    
     masks_merged = masks[0].cpu().numpy().sum(0).squeeze()    
     uncertain_area_masks = np.zeros_like(masks_merged)
@@ -226,9 +262,9 @@ if __name__ == "__main__":
         
         
         show_bounding_boxes(img, boxes, scores,labels)
-        # show_masks(img, masks)
-        # plot_overlap(img, boxes, masks,0.1)
+        show_masks(img, masks)
+        plot_overlap(img, boxes, masks,0.1)
     
-        # find_area_of_uncertainty(boxes,masks,labels, overlap_bb_threshold, show_overlap=True)
+        find_area_of_uncertainty(boxes,masks,labels, overlap_bb_threshold, show_overlap=True)
     
 # %%
