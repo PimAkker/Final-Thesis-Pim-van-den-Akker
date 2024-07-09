@@ -118,7 +118,7 @@ def generate_dataset(nr_of_images=1,
         pc.place_objects(object_name="tables display", inst_id=category_information["tables"])
         pc.place_objects(object_name="pillars display", inst_id=category_information["pillars"])
  
-        print("\033[91m" + f"Time for placing objects: {time.time() - start_time}" + "\033[0m")
+        
         rand_pos_in_room = [random.gauss(0, width/6), random.gauss(0, depth/6), np.random.uniform(LiDAR_height[0],LiDAR_height[1])-height/2]
         pc.place_LiDAR(position=rand_pos_in_room)
 
@@ -201,7 +201,7 @@ def generate_dataset(nr_of_images=1,
         
         pc.finalize()
         
-        print("\033[94m" + f"Time for this image: {time.time() - start_time}" + "\033[0m")
+        print(f"Time for this image: {time.time() - start_time}")
 
     print(f"Finished dataset, Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
 

@@ -355,6 +355,7 @@ class blender_object_placement:
         obj = bpy.context.active_object
         obj.location = self.default_location
         self.move_from_to_collection(obj, self.original_obj_collection_name, self.temp_obj_collection_name)
+
         
         # Split mesh into individual objects
         if seperate_loose:

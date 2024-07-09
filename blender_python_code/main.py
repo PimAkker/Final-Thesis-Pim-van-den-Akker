@@ -33,7 +33,7 @@ reload(generate_dataset)
 
 
 # these are the per ablation run parameters
-nr_of_images = 10
+nr_of_images = 50
 overwrite_data = False
 empty_folders = True
 minimum_overlap_percentage_for_visible = 0.1
