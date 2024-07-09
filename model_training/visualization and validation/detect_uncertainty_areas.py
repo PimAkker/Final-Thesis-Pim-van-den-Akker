@@ -25,6 +25,8 @@ import matplotlib.patches as patches
 import numpy as np
 import cv2
 import matplotlib.patheffects as path_effects
+from itertools import combinations
+
 
 category_information_flipped = {v: k for k, v in category_information.items()}
 
@@ -130,39 +132,46 @@ def plot_overlap(img, boxes, masks, threshold=0.0):
 def quantify_area_of_overlap(clustered_boxes,filled_bb, masks, threshold=0.0):
     
     """quantify the area of overlap between the boxes in the cluster, this is essentially 
-    the intersection over union metric but extended to multiple boxes in a cluster instead of 2"""
-    import time
-    tic = time.time()
+    the intersection over union metric but extended to multiple boxes in a cluster instead of 2.
+    NOTE: this is quite slow, maybe remove some loops and go for a more numpy approach.
+    
+    """
+
     
     clusters = np.unique(clustered_boxes)[1:]
 
     assigned_clusters = {}
-    # assign fillex_bb to clusters
+    # Assign the boxes to the clusters
     for cluster in clusters:
-
         temp_cluster_list = []
         for i, filled_box in enumerate(filled_bb):
-            
-            if np.any(filled_box.astype(bool) & clustered_boxes==cluster):
+            if np.any(filled_box.astype(bool) & (clustered_boxes==cluster)):
                 temp_cluster_list.append(i)        
-        
         assigned_clusters[cluster] = temp_cluster_list
 
     intersection = {}
     union = {}
-    boxes_overlap_scores = {}
+    boxes_overlap_scores = {i+1: 0 for i in range(len(clusters))}
+    
+    # calculate the "intersection OVER union" for each cluster
     for cluster, assigned_boxes in assigned_clusters.items():
         if len(assigned_boxes) > 1:
-            overlap_interaction_array = np.vstack((clusters,np.roll(clusters,-1))).T  
+            # create a list of possible combinations of boxes in the cluster
+            overlap_interaction_array =  combinations(assigned_boxes, 2)
+            
             intersection[cluster] = 0  
-            union[cluster] = 0  
+            union[cluster] = 0 
+            
+            # calculate the intersection and union for each combination of boxes in the cluster,
+            # this is not very efficient, but there aren't that many boxes generally so it should be fine.
+             
             for i,j in overlap_interaction_array:
                 intersection[cluster] += np.sum(filled_bb[i].astype(bool) & filled_bb[j].astype(bool))
                 union[cluster] += np.sum(filled_bb[i].astype(bool) | filled_bb[j].astype(bool))
             boxes_overlap_scores[cluster] = intersection[cluster] / union[cluster]    
-    print(f"Time taken: {time.time() - tic}")
 
-    # return boxes_overlap_scores
+
+    return boxes_overlap_scores
     
     
 def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=True):
@@ -182,18 +191,22 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
     labels_in_cluster = {}      
     labels_in_cluster_pos = {}
     
-    for i in range(1,num_clusters_boxes-1):
+    boxes_overlap_score = quantify_area_of_overlap(clustered_image_boxes,filled_bb, masks)
+    
+    for i in range(1,num_clusters_boxes):
         cluster_mask = clustered_image_boxes == i
-        boxes_overlap_score = quantify_area_of_overlap(clustered_image_boxes,filled_bb, masks, threshold=0.5)
+        
                 
         # cluster_max = 
-        if cluster_max >= threshold:
+        if boxes_overlap_score[i] >= threshold:
             uncertain_area_boxes[cluster_mask] = 1
-            # find which labels are in the cluster   
+            
+            # find which labels are in the cluster   for display purposes
             temp_labels_in_cluster = []
             temp_labels_in_cluster_pos = []
             for j, box in enumerate(filled_bb):
                 
+                # find the locations of the boxes in the cluster for display purposes
                 x_min, y_min, _, _ = boxes[j]
                 if np.any(box.astype(bool) & cluster_mask):
                     temp_labels_in_cluster_pos.append((int(x_min), int(y_min)) )
@@ -202,35 +215,32 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
             labels_in_cluster_pos[str(i)]  = temp_labels_in_cluster_pos
             labels_in_cluster[str(i)] = temp_labels_in_cluster
                     
-   
-    masks_merged = masks[0].cpu().numpy().sum(0).squeeze()    
-    uncertain_area_masks = np.zeros_like(masks_merged)
-    uncertain_area_masks[masks_merged >= threshold] = 1
+    uncertain_area_indexes =  np.array(list(labels_in_cluster.keys())).astype(int)
+    masks_merged = masks[0].cpu().numpy()[uncertain_area_indexes-1].squeeze(1).sum(0) 
+    masks_merged[masks_merged > 0.05] = 1
+
+    
             
     if show_overlap:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
         ax1.set_title("Uncertain area masks")
-        ax1.imshow(uncertain_area_masks, alpha=0.5)
-        ax2.set_title("Uncertain area boxes")
+        ax1.imshow(masks_merged, alpha=0.5)
+        ax2.set_title(f"Uncertain area boxes")
         ax2.imshow(uncertain_area_boxes, alpha=0.5)
         # plot the labels in the cluster
-        labels_list = ""
+        
         for i, (cluster, cluster_name) in enumerate(labels_in_cluster.items()):
+            labels_list = f"Score:{round(boxes_overlap_score[int(cluster)],2)}"
             for label in cluster_name:
                     labels_list = f"{labels_list} \n {label}"  
                
             ax2.text(labels_in_cluster_pos[cluster][0][0],labels_in_cluster_pos[cluster][0][1], labels_list, color='red', fontsize=12, alpha=0.8)
             
-            
         plt.show()
         
-    
     return uncertain_area_boxes
         
-    
-    
-    
-    
+
  #%%
 
 if __name__ == "__main__":
@@ -242,9 +252,9 @@ if __name__ == "__main__":
     
     box_threshold = 0.5
     mask_threshold = 0.5
-    image_start_number = 1
-    nr_images_to_show = 5
-    overlap_bb_threshold = 2
+    image_start_number = 3
+    nr_images_to_show =7
+    overlap_bb_threshold = .1
     
     
     for i in range(nr_images_to_show):
@@ -263,7 +273,7 @@ if __name__ == "__main__":
         
         show_bounding_boxes(img, boxes, scores,labels)
         show_masks(img, masks)
-        plot_overlap(img, boxes, masks,0.1)
+        # plot_overlap(img, boxes, masks,0.2)
     
         find_area_of_uncertainty(boxes,masks,labels, overlap_bb_threshold, show_overlap=True)
     
