@@ -45,7 +45,8 @@ class ModelTrainer:
                  weights_load_path="",
                  device=torch.device('cpu'),
                  outputs_folder=None,
-                 plot_metrics_bool=True
+                 plot_metrics_bool=True,
+                 seed = None
                  ):
 
         self.data_root = data_root
@@ -70,12 +71,22 @@ class ModelTrainer:
         self.optimizer = None
         self.lr_scheduler = None
         
-        self.metrics = []
+        self.train_loss_metric = []
+        self.val_loss_metric = []
         self.IoU_info = []
+        
         self.start_time = None
         self.end_time = None
+        
+        self.seed = seed
 
     def setup(self):
+        # set the seed
+        if self.seed is not None:
+            torch.manual_seed(self.seed)
+            np.random.seed(self.seed)
+        
+        
         path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(os.path.dirname(path))
         os.chdir(path)
@@ -90,9 +101,14 @@ class ModelTrainer:
             self.model.load_state_dict(torch.load(self.weights_load_path))
         self.model.to(self.device)
 
+        # params = [p for p in self.model.parameters() if p.requires_grad]
+        # self.optimizer = torch.optim.SGD(params, lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
+        # self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1)
+        
         params = [p for p in self.model.parameters() if p.requires_grad]
-        self.optimizer = torch.optim.SGD(params, lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
+        self.optimizer = torch.optim.Adam(params, lr=self.learning_rate, weight_decay=self.weight_decay)
         self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1)
+        
 
     def train(self):
         self.dataset = LoadDataset(self.data_root, get_transform(train=True))
@@ -110,9 +126,10 @@ class ModelTrainer:
         data_loader_test = torch.utils.data.DataLoader(self.dataset_test, batch_size=self.batch_size, shuffle=True, num_workers=6, collate_fn=utils.collate_fn)
 
         for epoch in range(self.num_epochs):
-            self.metrics.append(train_one_epoch(self.model, self.optimizer, data_loader, self.device, epoch, print_freq=10))
+            self.train_loss_metric.append(run_one_epoch(self.model, self.optimizer, data_loader, self.device, epoch, print_freq=10, train=True))
+            self.val_loss_metric.append(run_one_epoch(self.model, self.optimizer, data_loader, self.device, epoch, print_freq=10, train=False))
             self.lr_scheduler.step()
-            self.IoU_info.append(evaluate(self.model, data_loader_test, device=self.device))
+        self.IoU_info.append(evaluate(self.model, data_loader_test, device=self.device))
 
     def save_model_info(self):
         
@@ -124,6 +141,11 @@ class ModelTrainer:
         print(f'saving model info to {save_folder}...')
         
         if self.save_model:
+            
+            with open(os.path.join(save_folder, f"metrics.txt"), 'w') as f:
+                for metric in self.train_loss_metric:
+                    f.write(f"{metric}\n")
+            
             model_info_path = os.path.join(save_folder, "model_info.txt")
             num_images_trained = len(self.dataset)
             test_set_size = len(self.dataset_test)
@@ -180,8 +202,10 @@ class ModelTrainer:
         loss_objectness = []
         loss_rpn_box_reg = []
         loss_classifier = []
+        
+        loss_val = []
 
-        for i, metric in enumerate(self.metrics):
+        for i, metric in enumerate(self.train_loss_metric):
             lr.append(metric.meters['lr'].median)
             loss.append(metric.meters['loss'].median)
             loss_box_reg.append(metric.meters['loss_box_reg'].median)
@@ -189,6 +213,10 @@ class ModelTrainer:
             loss_objectness.append(metric.meters['loss_objectness'].median)
             loss_rpn_box_reg.append(metric.meters['loss_rpn_box_reg'].median)
             loss_classifier.append(metric.meters['loss_classifier'].median)
+        for i, metric in enumerate(self.val_loss_metric):
+            loss_val.append(metric.meters['loss'].median)
+
+        
 
         plt.plot(lr, label='learning rate')
         plt.plot(loss, label='loss')
@@ -197,6 +225,7 @@ class ModelTrainer:
         plt.plot(loss_objectness, label='loss_objectness')
         plt.plot(loss_rpn_box_reg, label='loss_rpn_box_reg')
         plt.plot(loss_classifier, label='loss_classifier')
+        plt.plot(loss_val, label='val_loss', linestyle='--')
         plt.xlabel('Epoch')
         plt.ylabel('Value')
         plt.legend()
@@ -215,23 +244,24 @@ class ModelTrainer:
 
 if __name__ == '__main__':
     
-    trainer = ModelTrainer(data_root= r"data/test/same_heights_v3/[]",
+    trainer = ModelTrainer(data_root= r"data/test/same_height_no_walls_v4/[]",
                             num_classes=len(category_information),
                             continue_from_checkpoint=False,
                             save_model=True,
-                            num_epochs=5,
+                            num_epochs=2,
                             train_percentage=0.8,
                             test_percentage=0.2,
-                            percentage_of_data_to_use=1,
-                            batch_size=4,
-                            learning_rate=0.0005,
+                            percentage_of_data_to_use=.01,
+                            batch_size=3,
+                            learning_rate=0.0001,
                             momentum=0.9,
                             weight_decay=0.0005,
                             weights_save_path="",
                             weights_load_path="",
                             device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
-                            outputs_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_v3",
-                            plot_metrics_bool=True
+                            outputs_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v4_adam",
+                            plot_metrics_bool=True,
+                            seed = 42	
                             
     )
     

@@ -10,11 +10,17 @@ from  model_training.utilities.coco_utils import get_coco_api_from_dataset
 import os
 
 
-def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, scaler=None):
-    model.train()
+def run_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, scaler=None, train=True):
+    if train:
+        model.train()
+        header = f"Train epoch: [{epoch}]"
+    else:
+        model.zero_grad()
+        header = f"Val epoch: [{epoch}]"
+    
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value:.6f}"))
-    header = f"Epoch: [{epoch}]"
+    
 
     lr_scheduler = None
     if epoch == 0:

@@ -63,6 +63,8 @@ def generate_dataset(nr_of_images=1,
     """
     Function to generate a dataset of images with corresponding masks and metadata
     """
+    
+  
 
     total_start_time = time.time()
     
@@ -92,6 +94,7 @@ def generate_dataset(nr_of_images=1,
         
         start_time = time.time()
         
+        print(f"\033[31mCreating image {i}/{nr_of_images} \033[0m")
         cru_class = custom_render_utils.custom_render_utils(image_id=str(i),
                                                             remove_intermediary_images=True,
                                                             minimum_render_overlap_percentage=minimum_overlap_percentage_for_visible, 
@@ -201,7 +204,7 @@ def generate_dataset(nr_of_images=1,
         
         pc.finalize()
         
-        print(f"Time for this image: {time.time() - start_time}")
+        print(f"\033[34mTime for this image: {time.time() - start_time}\033[0m")
 
     print(f"Finished dataset, Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
 

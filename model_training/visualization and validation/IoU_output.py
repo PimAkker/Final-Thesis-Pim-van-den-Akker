@@ -22,7 +22,7 @@ sys.path.append(os.getcwd())
 import torch
 from PIL import Image
 import numpy as np
-
+from  model_training.utilities.dataloader import get_transform, LoadDataset, get_model_instance_segmentation
 from  model_training.utilities.coco_eval import *
 from  model_training.utilities.engine import *
 from  model_training.utilities.utils import *
@@ -44,14 +44,17 @@ if __name__ == '__main__':
     
     """NOTE strangely,sometimes, this function doesn't work for some reason until you run it in the debugger one time  ¯\_(ツ)_/¯"""
     
-    data_to_test_on = r'real_world_data\Real_world_data_V2'
-    # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
-    num_classes = len(category_information)
     
+    
+    #-------------------    
+    data_to_test_on = r'real_world_data\Real_world_data_V2'
+    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v4\weights.pth"
+    #-------------------
     
 
-    weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_v3\weights.pth"
+    # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
     
+    num_classes = len(category_information)
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # device = torch.device('cpu')
@@ -141,6 +144,7 @@ if __name__ == '__main__':
             
             eval_output  = evaluate(model, data_loader_test, device=device, catIDs=[id])
         
+                
             # eval_output.coco_eval[iou_type].summarize()
             bbox_IoU_array = eval_output.coco_eval['bbox'].stats 
             segm_IoU_array = eval_output.coco_eval['segm'].stats
@@ -167,16 +171,17 @@ if __name__ == '__main__':
             print(f"mean average recall    (segm)  {mean_avg_recall_segm}")
     
             
+    
 
 # %%
 if __name__ == '__main__': 
     plt.figure(figsize=(10, 10))
-
     # Subplot 1: mean average precision (box)
     plt.subplot(2, 2, 1)
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_precision_box'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Precision (Box)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.yticks(np.arange(0, 1.1, 0.1))  # Set y-axis labels from 0 to 1 with a step of 0.1
     plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Subplot 2: mean average recall (box)
@@ -184,6 +189,7 @@ if __name__ == '__main__':
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_recall_box'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Recall (Box)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.yticks(np.arange(0, 1.1, 0.1))  # Set y-axis labels from 0 to 1 with a step of 0.1
     plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Subplot 3: mean average precision (segm)
@@ -191,6 +197,7 @@ if __name__ == '__main__':
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_precision_segm'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Precision (Segm)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.yticks(np.arange(0, 1.1, 0.1))  # Set y-axis labels from 0 to 1 with a step of 0.1
     plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Subplot 4: mean average recall (segm)
@@ -198,10 +205,14 @@ if __name__ == '__main__':
     plt.bar(range(len(precision_recall_dict)), [v['mean_avg_recall_segm'] for v in precision_recall_dict.values()])
     plt.title('Mean Average Recall (Segm)')
     plt.xticks(range(len(precision_recall_dict)), precision_recall_dict.keys(), rotation=45, ha='right')
+    plt.yticks(np.arange(0, 1.1, 0.1))  # Set y-axis labels from 0 to 1 with a step of 0.1
     plt.grid(color='gray', linestyle='--', linewidth=0.5)
 
     # Adjust layout to prevent overlap
     plt.tight_layout()
     plt.show()
+    
+    
+    
 
 # %%

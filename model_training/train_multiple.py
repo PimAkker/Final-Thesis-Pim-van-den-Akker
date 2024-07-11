@@ -14,7 +14,7 @@ if __name__=="__main__":
                                 num_classes=len(category_information),
                                 continue_from_checkpoint=False,
                                 save_model=True,
-                                num_epochs=1,
+                                num_epochs=4,
                                 train_percentage=0.8,
                                 test_percentage=0.2,
                                 percentage_of_data_to_use=1,
