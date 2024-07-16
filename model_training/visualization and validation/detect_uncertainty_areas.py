@@ -67,10 +67,21 @@ def run_model(model, data, image_number, device, mask_threshold, box_threshold):
         
     return prediction, boxes, labels, masks, img, scores
 
-def show_boxes(img, boxes):
-    fig, ax = plt.subplots(1)
+
+def show_bounding_boxes(img, boxes,scores,labels,show_confidence_values=True,show_labels=True):
+    fig, ax = plt.subplots(1, figsize=(12, 6))
     ax.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
-    for box in boxes[0]:
+    for i, box in enumerate(boxes[0]):
+        if show_confidence_values:
+            # show the confidence value inside the box
+            score = np.round(scores[0][i].cpu().numpy(),2)
+            score_txt = plt.text(box[0], box[1],score, color='red', fontsize=12, alpha=0.8)
+            score_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()]) 
+        if show_labels:
+            label = labels[0][i].cpu().numpy()
+            label_txt = plt.text(box[0], box[3], category_information_flipped[int(label)], color='red', fontsize=12, alpha=0.8, ha='left', va='bottom')
+            label_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()])
+
         box = box.cpu().numpy()
         rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
@@ -262,7 +273,7 @@ if __name__ == "__main__":
         
         show_bounding_boxes(img, boxes, scores,labels)
         show_masks(img, masks)
-        # plot_overlap(img, boxes, masks,0.2)
+        plot_overlap(img, boxes, masks,0.2)
     
         find_area_of_uncertainty(boxes,masks,labels, overlap_bb_threshold, show_overlap=True)
     

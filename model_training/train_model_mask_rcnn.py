@@ -127,7 +127,7 @@ class ModelTrainer:
 
         for epoch in range(self.num_epochs):
             self.train_loss_metric.append(run_one_epoch(self.model, self.optimizer, data_loader, self.device, epoch, print_freq=10, train=True))
-            self.val_loss_metric.append(run_one_epoch(self.model, self.optimizer, data_loader, self.device, epoch, print_freq=10, train=False))
+            self.val_loss_metric.append(run_one_epoch(self.model, self.optimizer, data_loader_test, self.device, epoch, print_freq=10, train=False))
             self.lr_scheduler.step()
         self.IoU_info.append(evaluate(self.model, data_loader_test, device=self.device))
 
@@ -144,6 +144,9 @@ class ModelTrainer:
             
             with open(os.path.join(save_folder, f"metrics.txt"), 'w') as f:
                 for metric in self.train_loss_metric:
+                    f.write(f"{metric}\n")
+                    
+                for metric in self.val_loss_metric:
                     f.write(f"{metric}\n")
             
             model_info_path = os.path.join(save_folder, "model_info.txt")
