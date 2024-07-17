@@ -147,7 +147,7 @@ class ModelTrainer:
                     f.write(f"{metric}\n")
                     
                 for metric in self.val_loss_metric:
-                    f.write(f"{metric}\n")
+                    f.write(f"Val {metric}\n")
             
             model_info_path = os.path.join(save_folder, "model_info.txt")
             num_images_trained = len(self.dataset)
@@ -176,6 +176,8 @@ class ModelTrainer:
             model_path = os.path.join(save_folder, f"weights.pth")
             torch.save(self.model.state_dict(), model_path)
 
+
+            # This code is outdated, as the data is only saved once after running, however it should also work for saving during more runs
             IoU_info_path = os.path.join(save_folder, f"IoU_info_test_set.csv")
             mean_average_precision_box, mean_average_recall_box, mean_average_precision_segm, mean_average_recall_segm = [], [], [], []
             for i, info in enumerate(self.IoU_info):
@@ -186,7 +188,9 @@ class ModelTrainer:
                 mean_average_precision_segm.append(round(np.mean(segm_IoU_array[:6]), 6))
                 mean_average_recall_segm.append(round(np.mean(segm_IoU_array[6:]), 6))
 
-            data = {"epoch": range(self.num_epochs),
+
+            data = {
+                    # "epoch": range(self.num_epochs), # this can be used if you want to save the IoU for each epoch
                     "mean average precision (box)": mean_average_precision_box,
                     "mean average recall (box)": mean_average_recall_box,
                     "mean average precision (segm)": mean_average_precision_segm,
