@@ -30,13 +30,14 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from numpy import random
     
 
+
 #%%
 
 # image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
 # mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
 
-image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Images'
-mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
+image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
+mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
 
 # image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Images"
 # mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Masks"
@@ -160,6 +161,8 @@ if __name__ == '__main__':
             labels = labels.long()
             labels = labels
             masks = (mask_true == obj_ids[:, None, None]).to(dtype=torch.uint8).bool()
+            # remove potential alpha channel
+            # masks = masks[:3, ...]
 
             boxes = masks_to_boxes(masks)
             boxes[:, 2] += boxes[:, 0] == boxes[:, 2]

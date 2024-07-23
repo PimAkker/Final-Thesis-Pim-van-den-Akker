@@ -48,13 +48,13 @@ def convert_coco_to_mask(coco_json_path, output_path):
         print(f"unique values: {np.unique(output_mask)}")
         # Add a legend
         plt.legend()
-        plt.show()
-        np.save(os.path.join(output_path, image_name + '.npy'), output_mask)
+        # plt.show()
+        np.save(os.path.join(output_path, image_name.replace(".png", "")), output_mask)
 #%%        
 if __name__ == '__main__':
     
-    coco_json_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\labels_real_world_data.json'
-    output_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks'
+    coco_json_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\coco_format_no_walls_tables.json'
+    output_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
     convert_coco_to_mask(coco_json_path, output_path)
     print('Done')
 # %%

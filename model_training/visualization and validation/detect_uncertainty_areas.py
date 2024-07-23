@@ -245,7 +245,7 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
 
 if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    data_to_test_on = r'real_world_data\Real_world_data_V2'
+    data_to_test_on = r'real_world_data\Real_world_data_V3'
     # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
     num_classes = len(category_information)  
     
