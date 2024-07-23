@@ -43,8 +43,19 @@ def load_model(weights_load_path, num_classes, device):
     model.to(device)
     return model
 
-def run_model(model, data, image_number, device, mask_threshold, box_threshold):
-    """runs the model and returns number_of_images images"""
+def run_model(model, data, image_number, device, box_threshold):
+    """Runs the model and returns the prediction, boxes, labels, masks, image, and scores.
+
+    Args:
+        model (torch.nn.Module): The model to be run.
+        data (torch.utils.data.Dataset): The dataset containing the images.
+        image_number (int): The index of the image to be processed.
+        device (torch.device): The device to run the model on.
+        box_threshold (float): The threshold value for filtering bounding boxes(0-1).
+
+    Returns:
+        tuple: A tuple containing the prediction, boxes, labels, masks, image, and scores.
+    """
     boxes = []
     labels = []
     masks = []
@@ -68,14 +79,25 @@ def run_model(model, data, image_number, device, mask_threshold, box_threshold):
     return prediction, boxes, labels, masks, img, scores
 
 
-def show_bounding_boxes(img, boxes,scores,labels,show_confidence_values=True,show_labels=True):
+def show_bounding_boxes(img, boxes, scores, labels, show_confidence_values=True, show_labels=True):
+    """
+    Display the image with bounding boxes overlaid.
+
+    Args:
+        img (Tensor): The input image tensor.
+        boxes (Tensor): The bounding box coordinates.
+        scores (Tensor): The confidence scores for each bounding box.
+        labels (Tensor): The labels for each bounding box.
+        show_confidence_values (bool, optional): Whether to show the confidence values inside the boxes. Defaults to True.
+        show_labels (bool, optional): Whether to show the labels below the boxes. Defaults to True.
+    """
     fig, ax = plt.subplots(1, figsize=(12, 6))
     ax.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
     for i, box in enumerate(boxes[0]):
         if show_confidence_values:
             # show the confidence value inside the box
-            score = np.round(scores[0][i].cpu().numpy(),2)
-            score_txt = plt.text(box[0], box[1],score, color='red', fontsize=12, alpha=0.8)
+            score = np.round(scores[0][i].cpu().numpy(), 2)
+            score_txt = plt.text(box[0], box[1], score, color='red', fontsize=12, alpha=0.8)
             score_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()]) 
         if show_labels:
             label = labels[0][i].cpu().numpy()
@@ -89,6 +111,16 @@ def show_bounding_boxes(img, boxes,scores,labels,show_confidence_values=True,sho
     plt.show()
     
 def show_masks(img, masks):
+    """
+    Display the image with overlaid masks.
+
+    Args:
+        img (torch.Tensor): The input image tensor.
+        masks (torch.Tensor): The masks tensor.
+
+    Returns:
+        None
+    """
     fig, ax = plt.subplots(1)
     ax.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
     for mask in masks[0]:
@@ -98,15 +130,44 @@ def show_masks(img, masks):
         plt.title(f"mask shape: {mask.shape}")
     plt.show()
     
-def fill_bounding_boxes(boxes, masks):
+def fill_bounding_boxes(boxes, shape= (256,256)):
+    """
+    Fills the bounding boxes with ones in the given masks.
+
+    Args:
+        boxes (torch.Tensor): A tensor containing the bounding box coordinates in the format [x_min, y_min, x_max, y_max].
+        masks (torch.Tensor): A tensor containing the masks, only used to determine the size.
+
+    Returns:
+        numpy.ndarray: A numpy array with the filled bounding boxes. Consisting of ones inside the boxes and zeros outside.
+    """
     
-    filled_bb = np.zeros_like(masks[0].sum(1).cpu().numpy())
+    filled_bb = np.zeros(shape)
+    
+    
+    
     for i, box in enumerate(boxes[0]):
-        x_min, y_min, x_max, y_max = box.cpu().numpy()
+        if not isinstance(boxes, np.ndarray):
+            x_min, y_min, x_max, y_max = box.cpu().numpy()
+        else:
+            x_min, y_min, x_max, y_max = box
+            
         filled_bb[i][int(y_min):int(y_max), int(x_min):int(x_max)] = 1
     return filled_bb
     
 def plot_overlap(img, boxes, masks, threshold=0.0):
+    """
+    Plots the overlap between masks and bounding boxes to visualize uncertainty areas.
+
+    Args:
+        img (Tensor): The input image.
+        boxes (Tensor): The bounding boxes.
+        masks (Tensor): The masks.
+        threshold (float, optional): The threshold value for the masks. Default is 0.0.
+
+    Returns:
+        None
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
     masks_copy = masks[0].clone()
@@ -117,7 +178,8 @@ def plot_overlap(img, boxes, masks, threshold=0.0):
     ax1.set_title("mask uncertainty regions")
     ax1.imshow(mask.cpu().numpy(), alpha=0.5)
 
-    filled_bb = fill_bounding_boxes(boxes, masks)
+    shape = np.array(masks[0].sum(1).shape)
+    filled_bb = fill_bounding_boxes(boxes, shape)
     
     ax2.imshow(np.sum(filled_bb, axis=0), alpha=0.5)
 
@@ -129,14 +191,17 @@ def plot_overlap(img, boxes, masks, threshold=0.0):
 
     plt.show()
 
-def quantify_area_of_overlap(clustered_boxes,filled_bb, masks, threshold=0.0):
-    
-    """quantify the area of overlap between the boxes in the cluster, this is essentially 
-    the intersection over union metric but extended to multiple boxes in a cluster instead of 2.
-    NOTE: this is quite slow, maybe remove some loops and go for a more numpy approach.
-    
+def quantify_area_of_overlap(clustered_boxes, filled_bb):
     """
-
+    Quantify the area of overlap between the boxes in the cluster. This is done by calculating the intersection over union metric, modified to work with more than two boxes.
+    
+    Parameters:
+        clustered_boxes (numpy.ndarray): Array of clustered boxes. 
+        filled_bb (numpy.ndarray): Array of filled bounding boxes.
+        
+    Returns:
+        dict: A dictionary containing the overlap scores for each cluster.
+    """
     
     clusters = np.unique(clustered_boxes)[1:]
 
@@ -174,9 +239,27 @@ def quantify_area_of_overlap(clustered_boxes,filled_bb, masks, threshold=0.0):
     return boxes_overlap_scores
     
     
-def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=True):
+def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=True):
+    """
+    Finds the area of uncertainty based on the given bounding boxes, masks, labels, and threshold.
+
+    Parameters:
+    - boxes (numpy.ndarray): The bounding boxes of the objects.
+    - masks (numpy.ndarray): The masks of the objects.
+    - labels_list (list): The list of labels for the objects.
+    - threshold (float): The threshold value for determining the area of uncertainty.
+    - show_overlap (bool): Whether to show the overlap between the uncertain area masks and boxes. Default is True.
+
+    Returns:
+    - uncertain_area_boxes (numpy.ndarray): The binary image representing the uncertain area.
+    - labels_in_cluster (dict): A dictionary containing the labels in each cluster, that has uncertainty abovce the threshold. 
+    - filled_bb (numpy.ndarray): The filled bounding boxes, of shape (num_boxes, height, width). The num_boxes index is the same as the index in the labels_list.
+
+    """
     # prepare the data
-    filled_bb = fill_bounding_boxes(boxes, masks)
+    
+    shape = np.array(masks[0].sum(1).shape)
+    filled_bb = fill_bounding_boxes(boxes, shape)
     filled_bb_single_val = filled_bb.sum(0)
     filled_bb_single_val[filled_bb_single_val != 0] = 1 
     filled_bb_single_val= filled_bb_single_val.astype('uint8')
@@ -185,13 +268,15 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
     num_clusters_boxes, clustered_image_boxes = cv2.connectedComponents(filled_bb_single_val)
     uncertain_area_boxes = np.zeros_like(filled_bb_single_val)
 
-    labels_list = labels_list[0].cpu().numpy()
-    boxes = boxes[0].cpu().numpy()
+    # check if labels_list and boxes are numpy arrays
+    if not isinstance(labels_list, np.ndarray):
+        labels_list = labels_list[0].cpu().numpy()
+        boxes = boxes[0].cpu().numpy()
     
     labels_in_cluster = {}      
     labels_in_cluster_pos = {}
     
-    boxes_overlap_score = quantify_area_of_overlap(clustered_image_boxes,filled_bb, masks)
+    boxes_overlap_score = quantify_area_of_overlap(clustered_image_boxes,filled_bb)
     
     for i in range(1,num_clusters_boxes):
         cluster_mask = clustered_image_boxes == i
@@ -238,7 +323,7 @@ def find_area_of_uncertainty(boxes,masks,labels_list,threshold, show_overlap=Tru
             
         plt.show()
         
-    return uncertain_area_boxes
+    return uncertain_area_boxes, labels_in_cluster, filled_bb
         
 
  #%%
