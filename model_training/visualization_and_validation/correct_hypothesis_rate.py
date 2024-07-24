@@ -42,10 +42,10 @@ def get_ground_truth(data, i):
 def calculate_correct_hypothesis_rate(overlap_indexes_dict,ground_truth_labels, predict_labels):
     correct_hypothesis = 0
     for ground_truth_cluster, predict_cluster in overlap_indexes_dict.items():
+        
         # check if the array is empty if so continue
         if len(predict_cluster) == 0:
             continue
-            
         
         if ground_truth_labels[ground_truth_cluster] in predict_labels[predict_cluster]:
             correct_hypothesis += 1

@@ -130,7 +130,7 @@ def show_masks(img, masks):
         plt.title(f"mask shape: {mask.shape}")
     plt.show()
     
-def fill_bounding_boxes(boxes, shape= (256,256)):
+def fill_bounding_boxes(boxes, shape= (1,256,256)):
     """
     Fills the bounding boxes with ones in the given masks.
 
@@ -144,11 +144,18 @@ def fill_bounding_boxes(boxes, shape= (256,256)):
     
     filled_bb = np.zeros(shape)
     
+    # make sure the boxes are numpy arrays
+    if shape[0] == 0: 
+        return np.zeros((1, shape[1], shape[2]))
     
+    if type(boxes) == list and not isinstance(boxes[0], np.ndarray):
+        boxes = boxes[0].cpu().numpy()
     
-    for i, box in enumerate(boxes[0]):
+        
+
+    for i, box in enumerate(boxes):
         if not isinstance(boxes, np.ndarray):
-            x_min, y_min, x_max, y_max = box.cpu().numpy()
+            x_min, y_min, x_max, y_max = box
         else:
             x_min, y_min, x_max, y_max = box
             
@@ -295,10 +302,10 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
                 x_min, y_min, _, _ = boxes[j]
                 if np.any(box.astype(bool) & cluster_mask):
                     temp_labels_in_cluster_pos.append((int(x_min), int(y_min)) )
-                    temp_labels_in_cluster.append((category_information_flipped[int(labels_list[j])]))    
+                    temp_labels_in_cluster.append(labels_list[j])    
                 
-            labels_in_cluster_pos[str(i)]  = temp_labels_in_cluster_pos
-            labels_in_cluster[str(i)] = temp_labels_in_cluster
+            labels_in_cluster_pos[i]  = temp_labels_in_cluster_pos
+            labels_in_cluster[i] = temp_labels_in_cluster
                     
     uncertain_area_indexes =  np.array(list(labels_in_cluster.keys())).astype(int)
     masks_merged = masks[0].cpu().numpy()[uncertain_area_indexes-1].squeeze(1).sum(0) 
@@ -307,6 +314,8 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
     
             
     if show_overlap:
+        labels_in_cluster_names = {k: [category_information_flipped[int(label)] for label in v] for k,v in labels_in_cluster.items()}
+        
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
         ax1.set_title("Uncertain area masks")
         ax1.imshow(masks_merged, alpha=0.5)
@@ -314,8 +323,8 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
         ax2.imshow(uncertain_area_boxes, alpha=0.5)
         # plot the labels in the cluster
         
-        for i, (cluster, cluster_name) in enumerate(labels_in_cluster.items()):
-            labels_list = f"Score:{round(boxes_overlap_score[int(cluster)],2)}"
+        for i, (cluster, cluster_name) in enumerate(labels_in_cluster_names.items()):
+            labels_list = f"Score:{round(boxes_overlap_score[cluster],2)}"
             for label in cluster_name:
                     labels_list = f"{labels_list} \n {label}"  
                
@@ -337,8 +346,8 @@ if __name__ == "__main__":
     
     box_threshold = 0.5
     mask_threshold = 0.5
-    image_start_number = 3
-    nr_images_to_show =7
+    image_start_number = 5
+    nr_images_to_show =1
     overlap_bb_threshold = .1
     
     
@@ -350,7 +359,7 @@ if __name__ == "__main__":
         model = load_model(weights_load_path, num_classes, device)
         data = load_data(data_to_test_on)
         
-        prediction_dict, boxes,labels,masks,img, scores  = run_model(model, data, image_nr, device, mask_threshold, box_threshold)
+        prediction_dict, boxes,labels,masks,img, scores  = run_model(model, data, image_nr, device,  box_threshold)
         # print(f"number of boxes: {len(boxes)}")
         # print(f"number of labels: {len(labels)}")
         # print(f"number of masks: {len(masks)}")

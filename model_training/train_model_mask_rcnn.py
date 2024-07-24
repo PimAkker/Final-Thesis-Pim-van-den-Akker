@@ -25,7 +25,7 @@ from model_training.utilities.utils import *
 from model_training.utilities.transforms import *
 from model_training.utilities.dataloader import *
 from category_information import category_information
-
+from re import search as regexsearch
 import matplotlib.pyplot as plt
 
 class ModelTrainer:
@@ -39,14 +39,16 @@ class ModelTrainer:
                  percentage_of_data_to_use=1, 
                  batch_size=4, 
                  learning_rate=0.0005, 
-                 momentum=0.9, 
+                 betas=(0.9, 0.999),
+                 eps=1e-8,
                  weight_decay=0.0005, 
                  weights_save_path="", 
                  weights_load_path="",
                  device=torch.device('cpu'),
-                 outputs_folder=None,
+                 output_folder=None,
                  plot_metrics_bool=True,
-                 seed = None
+                 seed = None,
+                 
                  ):
 
         self.data_root = data_root
@@ -59,13 +61,16 @@ class ModelTrainer:
         self.percentage_of_data_to_use = percentage_of_data_to_use
         self.batch_size = batch_size
         self.learning_rate = learning_rate
-        self.momentum = momentum
+        self.betas = betas
+        self.eps = eps
+        # self.momentum = momentum
         self.weight_decay = weight_decay
         self.weights_save_path = weights_save_path
         self.weights_load_path = weights_load_path
         self.device = device
-        self.outputs_folder = outputs_folder
+        self.output_folder = output_folder
         self.plot_metrics_bool = plot_metrics_bool
+        
         
         self.model = None
         self.optimizer = None
@@ -106,7 +111,7 @@ class ModelTrainer:
         # self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1)
         
         params = [p for p in self.model.parameters() if p.requires_grad]
-        self.optimizer = torch.optim.Adam(params, lr=self.learning_rate, weight_decay=self.weight_decay)
+        self.optimizer = torch.optim.Adam(params, lr=self.learning_rate, weight_decay=self.weight_decay, eps=self.eps, betas=self.betas)
         self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1)
         
 
@@ -135,7 +140,7 @@ class ModelTrainer:
         
         datetime_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                
-        save_folder = self.outputs_folder
+        save_folder = self.output_folder
         os.makedirs(save_folder, exist_ok=True)
         
         print(f'saving model info to {save_folder}...')
@@ -247,7 +252,11 @@ class ModelTrainer:
             self.plot_metrics()
         self.save_model_info()
         print("That's it!")
-
+        
+        train_loss =float(regexsearch( r'loss: ([0-9.]+) \([0-9.]+\)',str(self.train_loss_metric[-1])).group(1))
+        val_loss = float(regexsearch( r'loss: ([0-9.]+) \([0-9.]+\)',str(self.val_loss_metric[-1])).group(1))
+        
+        return train_loss, val_loss
 
 if __name__ == '__main__':
     
@@ -266,7 +275,7 @@ if __name__ == '__main__':
                             weights_save_path="",
                             weights_load_path="",
                             device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
-                            outputs_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v4_adam",
+                            output_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v4_adam",
                             plot_metrics_bool=True,
                             seed = 42	
                             
