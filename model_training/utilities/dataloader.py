@@ -13,7 +13,7 @@ from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from category_information import class_factor
 
 class LoadDataset(torch.utils.data.Dataset):
-    def __init__(self, root, transforms, ignore_indexes =2):
+    def __init__(self, root, transforms, ignore_classes =np.array([0,1])):
         self.root = root
         self.transforms = transforms
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -21,7 +21,7 @@ class LoadDataset(torch.utils.data.Dataset):
         # ensure that they are aligned
         self.imgs = list(sorted(os.listdir(os.path.join(root, "Images"))))
         self.masks = list(sorted(os.listdir(os.path.join(root, "Masks"))))
-        self.ignore_indexes = ignore_indexes # number of the first indexes to ignore, first index is background second is usually walls
+        self.ignore_classes = ignore_classes
         
 
     def __getitem__(self, idx):
@@ -33,8 +33,10 @@ class LoadDataset(torch.utils.data.Dataset):
         
         # instances are encoded as different colors
         obj_ids = torch.unique(mask)
-        # first id is the background second is walls so remove , so remove it
-        obj_ids = obj_ids[self.ignore_indexes:]
+        
+        # delete the ignore classes, so any object that start their id with self.ignore_classes will be removed
+        obj_ids = obj_ids[~np.isin(obj_ids//class_factor,self.ignore_classes)]        
+
         num_objs = len(obj_ids)
     
         img = read_image(img_path)

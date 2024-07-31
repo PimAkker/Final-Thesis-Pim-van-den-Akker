@@ -169,7 +169,9 @@ class ModelTrainer:
                     f.write(f"Path to loaded checkpoint: {self.weights_load_path}\n")
                 f.write(f"Total training time: {int(total_time)} seconds ({round(total_time/(60*60), 2)} hours) with time per epoch of {round(total_time / self.num_epochs)} seconds\n")
                 f.write(f"Learning rate: {self.learning_rate}\n")
-                f.write(f"Momentum: {self.momentum}\n")
+                # f.write(f"Momentum: {self.momentum}\n")
+                f.write("betas: " + str(self.betas) + "\n")
+                f.write(f"eps: {self.eps}\n")
                 f.write(f"Weight decay: {self.weight_decay}\n")
                 f.write(f"Batch size: {self.batch_size}\n")
                 f.write(f"Percentage of data used: {self.percentage_of_data_to_use*100}%\n")
@@ -264,13 +266,14 @@ if __name__ == '__main__':
                             num_classes=len(category_information),
                             continue_from_checkpoint=False,
                             save_model=True,
-                            num_epochs=2,
+                            num_epochs=7,
                             train_percentage=0.8,
                             test_percentage=0.2,
                             percentage_of_data_to_use=.01,
                             batch_size=3,
                             learning_rate=0.0001,
-                            momentum=0.9,
+                            betas=(0.9, 0.999),
+                            eps=1e-8,
                             weight_decay=0.0005,
                             weights_save_path="",
                             weights_load_path="",

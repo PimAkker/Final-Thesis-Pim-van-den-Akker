@@ -32,9 +32,9 @@ category_information_flipped = {v: k for k, v in category_information.items()}
 
 def load_data(data_path, percentage=1):
     
-    dataset = LoadDataset(data_path, get_transform(train=False), ignore_indexes=2)    
-    percentage_of_dataset_to_use = 1
-    dataset = torch.utils.data.Subset(dataset, range(int(len(dataset) * percentage_of_dataset_to_use)))
+    dataset = LoadDataset(data_path, get_transform(train=False), ignore_classes=np.array([0,1]))    
+
+    dataset = torch.utils.data.Subset(dataset, range(int(len(dataset) * percentage)))
     return dataset
 
 def load_model(weights_load_path, num_classes, device):
@@ -285,11 +285,13 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
     
     boxes_overlap_score = quantify_area_of_overlap(clustered_image_boxes,filled_bb)
     
+    
+    # TODO: this is very slow, implement in a numpy way
     for i in range(1,num_clusters_boxes):
         cluster_mask = clustered_image_boxes == i
         
                 
-        # cluster_max = 
+        
         if boxes_overlap_score[i] >= threshold:
             uncertain_area_boxes[cluster_mask] = 1
             
@@ -333,7 +335,7 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
         plt.show()
         
     return uncertain_area_boxes, labels_in_cluster, filled_bb
-        
+
 
  #%%
 
@@ -347,7 +349,7 @@ if __name__ == "__main__":
     box_threshold = 0.5
     mask_threshold = 0.5
     image_start_number = 5
-    nr_images_to_show =1
+    nr_images_to_show = 5
     overlap_bb_threshold = .1
     
     
@@ -355,20 +357,20 @@ if __name__ == "__main__":
         
         image_nr = i + image_start_number
         
-        weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_v3\weights.pth"
+        weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_tables_no_object_shift_model\weights.pth"
         model = load_model(weights_load_path, num_classes, device)
         data = load_data(data_to_test_on)
         
-        prediction_dict, boxes,labels,masks,img, scores  = run_model(model, data, image_nr, device,  box_threshold)
+        prediction_dict, boxes,labels,pred_masks,img, scores  = run_model(model, data, image_nr, device,  box_threshold)
         # print(f"number of boxes: {len(boxes)}")
         # print(f"number of labels: {len(labels)}")
         # print(f"number of masks: {len(masks)}")
         
         
         show_bounding_boxes(img, boxes, scores,labels)
-        show_masks(img, masks)
-        plot_overlap(img, boxes, masks,0.2)
+        show_masks(img, pred_masks)
+        plot_overlap(img, boxes, pred_masks,0.2)
     
-        find_area_of_uncertainty(boxes,masks,labels, overlap_bb_threshold, show_overlap=True)
+        find_area_of_uncertainty(boxes,pred_masks,labels, overlap_bb_threshold, show_overlap=True)
     
 # %%

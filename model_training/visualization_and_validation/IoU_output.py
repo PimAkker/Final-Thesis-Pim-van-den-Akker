@@ -46,16 +46,16 @@ if __name__ == '__main__':
     
 
 
+
         num_classes = len(category_information)
         # train on the GPU or on the CPU, if a GPU is not available
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # device = torch.device('cpu')
-        dataset_test = LoadDataset(data_to_test_on, get_transform(train=False), ignore_indexes=2)
+        dataset_test = LoadDataset(data_to_test_on, get_transform(train=False))
 
         dataset_test = torch.utils.data.Subset(dataset_test, range(int(len(dataset_test) * percentage_of_dataset_to_use)))
         
         precision_recall_dict = {}
-        
         
         # num_samples = int(len(dataset_test) * percentage_of_dataset_to_use)
         # indices = torch.randperm(len(dataset_test))[:num_samples]
@@ -174,7 +174,7 @@ if __name__ == '__main__':
             
 
                     
-    def plot_precision_recall(precision_recall_dict, result_folder=None, weights_load_path):           
+    def plot_precision_recall(precision_recall_dict, weights_load_path, result_folder=None ):           
 
 
 
@@ -218,6 +218,8 @@ if __name__ == '__main__':
             plt.tight_layout()
             
             if result_folder is not None:
+                if not os.path.exists(result_folder):
+                    os.makedirs(result_folder)
                 plt.savefig(os.path.join(result_folder, f"{os.path.basename(os.path.dirname(weights_load_path))}.png"))
             plt.show()
     def save_results(precision_recall_list, result_folder):
@@ -240,7 +242,7 @@ if __name__ == '__main__':
     
     """NOTE strangely,sometimes, this function doesn't work for some reason until you run it in the debugger one time  ¯\_(ツ)_/¯"""
     
-    cat_Ids = [1, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    cat_Ids = [4, 7, 8, 9, 13, 14, 15]
     # main_directory = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2"
     # weight_parent_folders = [f for f in os.listdir(main_directory) if os.path.isdir(os.path.join(main_directory, f))]
     # weights_paths_list = []
@@ -257,11 +259,13 @@ if __name__ == '__main__':
     # save_results(precision_recall_list, r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2\results")
     
     data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3"
-    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\no_tables_model\weights.pth"
-    results_folder = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\no_tables_model\results"
+    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_tables_no_object_shift_model2\weights.pth"
+    results_folder = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_no_tables_no_object_shift_model/IoU_info"
     results_dict = get_category_ids(data_to_test_on, weights_path,cat_Ids, percentage_of_dataset_to_use=1)
-    plot_precision_recall(results_dict, results_folder, weights_path)
+    plot_precision_recall(results_dict,  weights_path, result_folder = results_folder)
     
     
+
+# %%
 
 # %%

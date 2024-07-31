@@ -68,7 +68,7 @@ if __name__ == "__main__":
         'weight_decay': [0.0001, 0.0005, 0.001],
     }
 
-    num_trials = 5  # Number of random trials to run
+    num_trials = 5  # Number of random trials to run set to -1 to run all possible combinations
 
     for i in range(len(percentage_of_data_to_use_list)):
         fixed_params = {
