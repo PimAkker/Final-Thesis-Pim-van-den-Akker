@@ -72,7 +72,7 @@ def keys_to_names(instance_counts):
     return instance_counts
 
 #%%
-dataset_path = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V2\Masks"
+dataset_path = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks"
 masks = import_dataset(dataset_path)
 instance_counts = count_instances(masks)
 instance_counts = keys_to_names(instance_counts)

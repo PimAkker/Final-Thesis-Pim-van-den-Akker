@@ -54,6 +54,7 @@ def generate_dataset(nr_of_images=1,
                      walls_modifiers={}, 
                      chairs_modifiers={}, 
                      round_table_modifiers={},
+                     pillars_modifiers={},
                      raytrace_modifiers={}, 
                      minimum_overlap_percentage_for_visible=0.1,
                      ablation_parameter={},
@@ -107,8 +108,11 @@ def generate_dataset(nr_of_images=1,
             pc.set_modifier("walls", modifier, walls_modifiers[modifier])
         for modifier in list(chairs_modifiers.keys()):
             pc.set_modifier("chair", modifier, chairs_modifiers[modifier])
+        for modifier in list(pillars_modifiers.keys()):
+            pc.set_modifier("pillar", modifier, pillars_modifiers[modifier])
         for modifier in list(round_table_modifiers.keys()):
             pc.set_modifier("round table", modifier, round_table_modifiers[modifier])
+        
  
         for modifier in list(raytrace_modifiers.keys()):   
             pc.set_modifier("raytrace", modifier, raytrace_modifiers[modifier])        
@@ -209,5 +213,9 @@ def generate_dataset(nr_of_images=1,
     print(f"Finished dataset, Created {nr_of_images} images in {time.time() - total_start_time} seconds.")
 
     instance_nr_df.to_csv(os.path.join(metadata_folder, "object_count_metadata.csv"), index=False)
-    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, ablation_parameter=ablation_parameter, map_resolution=map_resolution, LiDAR_height=LiDAR_height)
+    data_gen_utils.save_metadata(metadata_path=metadata_folder,nr_of_images=i+1, modifiers_list= [walls_modifiers, chairs_modifiers, pillars_modifiers, round_table_modifiers,  raytrace_modifiers, set_colors],time_taken= time.time() - total_start_time, 
+                                 ablation_parameter=ablation_parameter, map_resolution=map_resolution, LiDAR_height=LiDAR_height,
+                                 minimum_overlap_percentage_for_visible=minimum_overlap_percentage_for_visible, objects_to_add_percentage=objects_to_add_percentage, objects_to_remove_percentage=objects_to_remove_percentage, object_to_move_percentage=object_to_move_percentage, 
+                                 force_object_visibility=force_object_visibility, max_shift_distance=max_shift_distance)
+                                 
     print("Done!")

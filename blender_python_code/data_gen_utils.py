@@ -131,12 +131,10 @@ class blender_object_placement:
             _, modifier_identifier_object = self.get_modifier_identifier(modifier_name_list, modifier_identifier_list, value)
             value = bpy.context.object.modifiers["GeometryNodes"][modifier_identifier_object]
         
-        modifier_index, modifier_identifier = self.get_modifier_identifier(modifier_name_list, modifier_identifier_list, modifier_name)
-        
         assert modifier_name in modifier_name_list, f"modifier_name: {modifier_name} is not in the list of supported modifiers \
         choose from {modifier_name_list}"
         
-        
+        modifier_index, modifier_identifier = self.get_modifier_identifier(modifier_name_list, modifier_identifier_list, modifier_name)       
         
         if isinstance(value, tuple):
             assert not any(isinstance(v, bool) for v in value), f"Boolean value is not supported for random choice for {object_name}:{modifier_name}, select either True or False"
@@ -658,7 +656,7 @@ def delete_folder_contents(folders, empty_folders=False):
     if empty_folders:
         total_files = sum(len(os.listdir(folder)) for folder in folders)
         if total_files > 500:
-            user_input = input(f"Are you sure you want to delete all {total_files} files in the folders? (y/n): ")
+            user_input = input(f"Are you sure you want to delete all {total_files} files in the folders: {folders}? (y/n): ")
             if user_input.lower() != "y":
                 raise ValueError("User did not confirm deletion of files")
         for folder in folders:
@@ -704,7 +702,12 @@ def create_folders(paths):
     for path in paths:
         if not os.path.exists(path):
             os.makedirs(path)
-def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0, ablation_parameter = [], map_resolution=[], LiDAR_height=()):
+def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_taken = 0, ablation_parameter = [], map_resolution=[], LiDAR_height=(),
+                                minimum_overlap_percentage_for_visible=0, objects_to_add_percentage=0, objects_to_remove_percentage=0, object_to_move_percentage=0, 
+                                force_object_visibility=0, max_shift_distance=0
+                  
+                  
+                  ):
     import pandas as pd
     """
     Save the metadata to a csv file. Consisting of the ranges of data generation parameters, 
@@ -726,10 +729,17 @@ def save_metadata(metadata_path= "",nr_of_images = 0, modifiers_list = [],time_t
         if len(ablation_parameter) > 0:
             f.write(f'This dataset was created for the ablation study with the following parameter(s): {ablation_parameter}\n\n')
         f.write(f"This file contains the metadata for the generated dataset\n\n")
-        f.write(f"This dataset was created on {time.ctime()}\n\n and took {time_taken} seconds to generate\n\n")
+        f.write(f"This dataset was created on {time.ctime()} and took {time_taken/3600} hours to generate\n\n")
         f.write(f"Total number of images: {nr_of_images}\n\n")
         f.write(f"Map resolution: {map_resolution}\n\n")
         f.write(f"LiDAR height range: {LiDAR_height}\n\n")
+        f.write(f"Minimum overlap percentage for visible objects: {minimum_overlap_percentage_for_visible}\n\n")
+        f.write(f"Percentage of objects to add: {objects_to_add_percentage}\n\n")
+        f.write(f"Percentage of objects to remove: {objects_to_remove_percentage}\n\n")
+        f.write(f"Percentage of objects to move: {object_to_move_percentage}\n\n")
+        f.write(f"Force object visibility: {force_object_visibility}\n\n")
+        f.write(f"Max shift distance: {max_shift_distance}\n\n")
+        
         
         f.write("Ranges of data generation parameters:\n")
         for i,modifier in enumerate(modifiers_list):

@@ -3,7 +3,7 @@ import os
 import sys
 
 path = os.path.dirname(os.path.abspath(__file__))
-path = "\\".join(path.split(os.sep)[:-1])
+path = os.path.dirname(path)
 os.chdir(path)
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
@@ -92,20 +92,32 @@ def show_bounding_boxes(img, boxes, scores, labels, show_confidence_values=True,
         show_labels (bool, optional): Whether to show the labels below the boxes. Defaults to True.
     """
     fig, ax = plt.subplots(1, figsize=(12, 6))
-    ax.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
+    image = img.mul(255).permute(1, 2, 0).byte().numpy()
+    
+    # colorswap black and white
+    maskwhite = cv2.inRange(image, (180, 180, 180), (255, 255, 255))
+    maskblack = cv2.inRange(image, (0, 0, 0), (180, 180, 180))
+    image[maskwhite > 0] = [0, 0, 0]
+    image[maskblack > 0] = [255, 255, 255]
+    
+    ax.imshow(image)
+    ax.axis('off')
     for i, box in enumerate(boxes[0]):
         if show_confidence_values:
             # show the confidence value inside the box
-            score = np.round(scores[0][i].cpu().numpy(), 2)
-            score_txt = plt.text(box[0], box[1], score, color='red', fontsize=12, alpha=0.8)
+            score = scores[0][i].cpu().numpy()
+            score_txt = plt.text(box[0], box[1], f"Confidence: {score:.2f}", color='black', fontsize=13, alpha=1, fontname='Computer Modern', fontfamily='serif')
             score_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()]) 
         if show_labels:
             label = labels[0][i].cpu().numpy()
-            label_txt = plt.text(box[0], box[3], category_information_flipped[int(label)], color='red', fontsize=12, alpha=0.8, ha='left', va='bottom')
+            label = category_information_flipped[int(label)].capitalize()
+            # set the first letter to uppercase
+            
+            label_txt = plt.text(box[0], box[3],label , color='black', fontsize=13, alpha=1, ha='left', va='bottom', fontname='Computer Modern', fontfamily='serif')
             label_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()])
 
         box = box.cpu().numpy()
-        rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r', facecolor='none')
+        rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=3, edgecolor='None', facecolor='b', alpha=0.5)
         ax.add_patch(rect)
 
     plt.show()
@@ -341,15 +353,17 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
 
 if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    data_to_test_on = r'real_world_data\Real_world_data_V3'
+    # data_to_test_on = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_no_tables_no_object_shift_big'
+    data_to_test_on = r"real_world_data\Real_world_data_V3"
     # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_heights\[]"
     num_classes = len(category_information)  
     
     
     box_threshold = 0.5
-    mask_threshold = 0.5
-    image_start_number = 5
-    nr_images_to_show = 5
+    mask_threshold = 0.2
+    image_start_number = 7
+    nr_images_to_show = 1
+    
     overlap_bb_threshold = .1
     
     
@@ -357,7 +371,7 @@ if __name__ == "__main__":
         
         image_nr = i + image_start_number
         
-        weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_tables_no_object_shift_model\weights.pth"
+        weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_object_shift_big_v3_model\weights.pth"
         model = load_model(weights_load_path, num_classes, device)
         data = load_data(data_to_test_on)
         

@@ -4,6 +4,8 @@ import os
 import sys
 
 
+
+
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
 root_dir_path = os.path.abspath(__file__).split(root_dir_name)[0] + root_dir_name
@@ -36,18 +38,19 @@ from numpy import random
 # image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
 # mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
 
-image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
-mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
+# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
 
-# image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Images"
-# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\memoryleaksetc\[]\Masks"
+image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Images"
+mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Masks"
 
 show_input_image = False
 show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 5
+render_num_images = 10
+
 randomize_images = False
  
 model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_tables_no_object_shift_model\weights.pth'

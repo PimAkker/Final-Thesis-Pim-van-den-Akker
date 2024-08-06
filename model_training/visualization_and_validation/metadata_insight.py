@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 # ensure we are in the correct directory
 root_dir_name = 'Blender'
 current_directory = os.getcwd().split("\\")
+
 assert root_dir_name in current_directory, f"Current directory is {current_directory} and does not contain root dir name:  {root_dir_name}"
 if current_directory[-1] != root_dir_name:
     # go down in the directory tree until the root directory is found
@@ -17,7 +18,7 @@ if current_directory[-1] != root_dir_name:
 
 #%%
 
-metadata_df = pd.read_csv(r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_v2\[]\Metadata\object_count_metadata.csv")
+metadata_df = pd.read_csv(r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_no_object_shift_big_v4\[]\Metadata\object_count_metadata.csv")
 
 metadata_sum = metadata_df.sum()
 
