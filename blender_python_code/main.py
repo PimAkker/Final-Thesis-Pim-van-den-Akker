@@ -91,7 +91,7 @@ chairs_modifiers = {
     "back rest offset": (0.3,0.8),
     "back rest height": (0.3,0.8),
     "leg width": (0.05, 0.1),
-    "circular legs": np.random.choice([True, False]),
+    "circular legs": (True, False),
     "leg type": (0,1),
     "leg center offset percentage":(0.5,1)
 }
@@ -108,7 +108,7 @@ round_table_modifiers = {
 
 pillar_modifiers = {
     "width": (1, 2),
-    "round/square": np.random.choice([True, False]),
+    "round/square": (True,False),
 }
 LiDAR_height = (0.2, 0.21) # height from the bottom of the walls
 # LiDAR_height = (0.2)

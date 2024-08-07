@@ -32,7 +32,10 @@ def convert_coco_to_mask(coco_json_path, output_path):
                 type_name= int(list(categories[type_id].values())[1])
                 
                 print(f'type_id: {type_name}')
-                # create a list of instance id's 
+                
+                # if the class is 999 then we ignore it by setting it to background
+                if type_name == 999: 
+                    type_name = 0
                 class_list_occurance_nr[type_name] += 1
                 instance_id = type_name*1000 + class_list_occurance_nr[type_name]
                 
@@ -40,12 +43,17 @@ def convert_coco_to_mask(coco_json_path, output_path):
                     vertices = np.array(polygon).reshape((-1, 2)).astype(np.int32)
                     cv2.fillPoly(mask, [vertices], 1) # fill in the polygon with the instance id)
 
-                mask = mask.astype(bool)
+                mask = mask.astype(bool)                                   
                 instance_id_single = mask * instance_id
                     
                 output_mask = np.where(mask, instance_id_single, output_mask)
+                
+        
         plt.imshow(output_mask)
         print(f"unique values: {np.unique(output_mask)}")
+        if len(np.unique(output_mask)) == 0:
+            print(f"Empty mask for image {image_name}")
+            
         # Add a legend
         plt.legend()
         # plt.show()

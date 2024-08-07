@@ -12,6 +12,8 @@ if __name__=="__main__":
         
         percentage_of_data_to_use_list = [0.01,0.02]
         
+        
+        
 
         for i in range(len(percentage_of_data_to_use_list)):
                 

@@ -33,6 +33,6 @@ if __name__=="__main__":
                                 weights_save_path="",
                                 weights_load_path="",
                                 device= device ,
-                                outputs_folder=os.path.join(output_parent_folder,f"{dataset_root_dirs[i]}"),
+                                output_folder=os.path.join(output_parent_folder,f"{dataset_root_dirs[i]}"),
                                 plot_metrics_bool=False)
                 trainer.run()

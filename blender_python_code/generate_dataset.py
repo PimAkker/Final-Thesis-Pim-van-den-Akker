@@ -17,7 +17,8 @@ import pandas as pd
 
 def modify_values_for_ablation(modifier_list, fix_values_dicts):
     """
-    change a value for during ablation studies, this will change the value to the mean of the range of the value
+    change a value for during ablation studies, this will change the value to the mean of the range of the value or a a
+    specified value
     
     
     args: 
@@ -36,10 +37,7 @@ def modify_values_for_ablation(modifier_list, fix_values_dicts):
                 else:
                     modifier_dict[fix_value_name] = fix_values_dicts[fix_value_name]
     
-
     return modifier_list
-
-
 
 def generate_dataset(nr_of_images=1,
                      folder_name="",  
@@ -64,8 +62,6 @@ def generate_dataset(nr_of_images=1,
     """
     Function to generate a dataset of images with corresponding masks and metadata
     """
-    
-  
 
     total_start_time = time.time()
     
@@ -74,7 +70,7 @@ def generate_dataset(nr_of_images=1,
     metadata_folder = os.path.join(folder_name, r"Metadata")
 
     # for ablation studies we can fix the values of the modifiers
-    modify_values_for_ablation([walls_modifiers, chairs_modifiers, round_table_modifiers, raytrace_modifiers], ablation_parameter)
+    modify_values_for_ablation([walls_modifiers, chairs_modifiers, round_table_modifiers,pillars_modifiers, raytrace_modifiers], ablation_parameter)
 
     data_gen_utils.create_folders([masks_folder,images_folder, metadata_folder])
     data_gen_utils.delete_folder_contents([masks_folder,images_folder, metadata_folder],empty_folders=empty_folders)

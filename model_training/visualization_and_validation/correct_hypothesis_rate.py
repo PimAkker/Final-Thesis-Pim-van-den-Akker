@@ -55,7 +55,7 @@ def calculate_correct_hypothesis_rate(overlap_indexes_dict,ground_truth_labels, 
             correct_label += 1
             
     if len(ground_truth_labels) == 0:
-        return 1, 0, 1, 1        
+        return 1, 0, 1, 1, 1        
         
     num_predictions = len(predict_labels)
     true_positives = correct_hypothesis
@@ -64,15 +64,15 @@ def calculate_correct_hypothesis_rate(overlap_indexes_dict,ground_truth_labels, 
     false_negatives = len(ground_truth_labels) - true_positives
 
     hyp_f1 = true_positives / (true_positives + 0.5 * (false_positives + false_negatives))
-    hyp_true_positive_rate = true_positives / (true_positives + false_negatives)
+    hyp_accuracy = true_positives / (true_positives + false_negatives)
     hyp_false_positive_rate = 0 if false_positives == 0 else false_positives / (false_positives + true_positives)
-    hyp_accuracy = true_positives / len(ground_truth_labels)
+    miss_rate = false_negatives / (true_positives + false_negatives)
     
     true_positive_rate = correct_label / len(predict_labels) if len(predict_labels) > 0 else 0
     
     
     
-    return  hyp_true_positive_rate, hyp_false_positive_rate ,hyp_f1, hyp_accuracy, true_positive_rate
+    return  hyp_accuracy, hyp_false_positive_rate ,hyp_f1,  true_positive_rate, miss_rate 
 
 def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_threshold, mask_threshold = 0.1):
     """
@@ -111,10 +111,10 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
 
     if nr_of_images is None:
         nr_of_images = len(data)
-    hyp_true_positive_rate_array = np.zeros(nr_of_images)
+    hyp_accuracy_array = np.zeros(nr_of_images)
     hyp_false_positive_rate_array = np.zeros(nr_of_images)
     hyp_f1_array = np.zeros(nr_of_images)
-    hyp_accuracy_array = np.zeros(nr_of_images)
+    hyp_miss_rate = np.zeros(nr_of_images)
     mask_IoU = np.zeros(nr_of_images)
     true_positive_rate_array = np.zeros(nr_of_images)
     
@@ -130,7 +130,7 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
         ground_truth_boxes,ground_truth_masks, ground_truth_labels = get_ground_truth(data, i)
         overlap_indexes = find_overlap_indexes(filled_bb, ground_truth_boxes)
         
-        hyp_true_positive_rate_array[i],hyp_false_positive_rate_array[i], hyp_f1_array[i], hyp_accuracy_array[i], true_positive_rate_array[i]  = calculate_correct_hypothesis_rate(overlap_indexes,
+        hyp_accuracy_array[i],hyp_false_positive_rate_array[i], hyp_f1_array[i], true_positive_rate_array[i],hyp_miss_rate[i]  = calculate_correct_hypothesis_rate(overlap_indexes,
             ground_truth_labels,pred_labels[0].cpu().numpy())
 
         mask_IoU[i], scored_pred_mask = calculate_mask_only_IoU(pred_masks[0].cpu().numpy(), ground_truth_masks, 
@@ -153,22 +153,25 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
             plt.show()
 
     model_name = os.path.split(model_path)[-2]
-    hyp_true_positive_rate = np.sum(hyp_true_positive_rate_array) / nr_of_images
-    hyp_false_positive_rate = np.sum(hyp_false_positive_rate_array) / nr_of_images
-    hyp_f1 = np.sum(hyp_f1_array) / nr_of_images
+    hyp_miscro_avg_true_positive_rate = np.sum(hyp_accuracy_array) / nr_of_images
+    hyp_miscro_avg_false_positive_rate = np.sum(hyp_false_positive_rate_array) / nr_of_images
+    hyp_miscro_avg_f1 = np.sum(hyp_f1_array) / nr_of_images
     mask_IoU = np.nansum(mask_IoU)/nr_of_images
     accuracy = np.nansum(hyp_accuracy_array) / nr_of_images
     True_positive_rate = np.nansum(true_positive_rate_array) / nr_of_images
+    micro_average_miss_rate = np.nansum(hyp_miss_rate) / nr_of_images
     
     print(f"for model {model_name}")
-    print(f"Hyp True positive rate: {hyp_true_positive_rate}")
-    print(f"Hyp False positive rate: {hyp_false_positive_rate}")
-    print(f"F1 score: {hyp_f1}")
-    print(f"Hyp accuracy: {accuracy}")
-    print(f"Hyp Mask IoU: {mask_IoU}")
+    print(f"for data {data_path.split(os.sep)[-1]}")
+    print(f"Hyp accuracy: {hyp_miscro_avg_true_positive_rate}")
+    print(f"Hyp False positive rate: {hyp_miscro_avg_false_positive_rate}")
+    print(f"F1 score: {hyp_miscro_avg_f1}")
+    print(f"Average hyp Mask IoU: {mask_IoU}")
     print(f"True positive rate: {True_positive_rate}")
+    print(f"Miss rate: {micro_average_miss_rate}")
+    
 
-    return hyp_true_positive_rate, hyp_false_positive_rate, hyp_f1, mask_IoU, accuracy
+    return hyp_miscro_avg_true_positive_rate, hyp_miscro_avg_false_positive_rate, hyp_miscro_avg_f1, mask_IoU, accuracy
 
 def randomized_paramater_search(data_path, model_path, device, uncertainty_thresholds, mask_thresholds, box_thresholds, visualize_images=False, nr_of_iterations=10, optimize_for='f1',nr_of_images_to_evaluate_on = None):
     # best_f1 = -1
@@ -225,8 +228,12 @@ if __name__ == "__main__":
     visualize_images = True
     nr_of_images = None
     # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_no_tables_no_object_shift_big\[]'
-    data_path = r'real_world_data\Real_world_data_V3'
-    model_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_object_shift_big_v4_model\weights.pth'
+    # data_path = r'real_world_data\Real_world_data_V3'
+    data_path = r'data\test\same_height_no_walls_no_object_shift_big_v4_testset\[]'
+    # model_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_object_shift_big_varying_model_v3\weights.pth'
+    model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_object_shift_big_v4_model\weights.pth"
+    # model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\ablation_v3_models\[low freq noise variance]\weights.pth"
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #%%
 if __name__ == "__main__":

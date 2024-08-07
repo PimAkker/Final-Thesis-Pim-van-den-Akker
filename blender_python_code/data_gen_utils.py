@@ -136,9 +136,7 @@ class blender_object_placement:
         
         modifier_index, modifier_identifier = self.get_modifier_identifier(modifier_name_list, modifier_identifier_list, modifier_name)       
         
-        if isinstance(value, tuple):
-            assert not any(isinstance(v, bool) for v in value), f"Boolean value is not supported for random choice for {object_name}:{modifier_name}, select either True or False"
-        
+
         if self.modifier_data_type_dict.get(object_name) is None:
             self.modifier_data_type_dict[object_name] = [input.type for input in geometry_nodes.node_group.inputs][1:]
            
@@ -149,14 +147,15 @@ class blender_object_placement:
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "walls" should have the "walls" geometry node modifier
 
-        if self.is_numeric(value) or type(value) == tuple:
+        if self.is_numeric(value) or (type(value) == tuple and not (True in value and False in value)):
             min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
             max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
 
-        # if the modifier is a tuple then set the value as a random value bouded by the tuple
-
-        if type(value) == tuple:
+        # if the modifier is a tuple then set the value as a random value bounded by the tuple
+        if type(value) == tuple and (True in value and False in value):
+            value = bool(np.random.choice(value))
+        elif type(value) == tuple:
             assert value[0] >= min_val, f"Value: {value[0]} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert value[1] <= max_val, f"Value: {value[1]} is too large for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"
             assert max_val != 0, f"{modifier_name} modifier has a max value of 0, this is not allowed"
