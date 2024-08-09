@@ -34,18 +34,9 @@ import importlib
 importlib.reload(model_training.utilities.utils)
 import pandas as pd
 #%%
-if __name__ == '__main__':
-    
-
-    
-    
+if __name__ == '__main__':    
         
     def get_category_ids(data_to_test_on, weights_load_path, cat_Ids, percentage_of_dataset_to_use=1):
-
-        
-    
-
-
 
         num_classes = len(category_information)
         # train on the GPU or on the CPU, if a GPU is not available
@@ -69,7 +60,6 @@ if __name__ == '__main__':
             collate_fn=utils.collate_fn
         )
 
-
         model = get_model_instance_segmentation(num_classes)
         model.load_state_dict(torch.load(weights_load_path))
 
@@ -77,7 +67,7 @@ if __name__ == '__main__':
         model.to(device)
             
         eval_output = evaluate(model, data_loader_test, device=device)
-        
+
         eval_output.eval_imgs
         bbox_IoU_array = eval_output.coco_eval['bbox'].stats 
         segm_IoU_array = eval_output.coco_eval['segm'].stats
@@ -105,7 +95,6 @@ if __name__ == '__main__':
         
         segm_IoU_array = eval_output.coco_eval['segm'].stats
 
-
     #NOTE is very slow, has to run entire thing for each mode
 
         if __name__ == '__main__': 
@@ -114,8 +103,6 @@ if __name__ == '__main__':
             for iou_type in eval_output.coco_eval.keys():
                 print(f"\n iou type: {iou_type}\n" )
                 
-
-
                 for id in cat_Ids:
                     # flip value and key
                     
@@ -154,8 +141,7 @@ if __name__ == '__main__':
                         'mean_avg_precision_segm': mean_avg_precision_segm,
                         'mean_avg_recall_segm': mean_avg_recall_segm
                     }
-                    
-                        
+                                            
             # set missing to Nan
             # print(f"Saved results to {os.path.join(result_folder, f'precision_recall_{name}.csv')}")
                 
@@ -166,17 +152,8 @@ if __name__ == '__main__':
             print(f"mean average recall    (segm)  {mean_avg_recall_segm}")
             
             return precision_recall_dict
-
-
-            
-            
-           
-            
-
-                    
+                          
     def plot_precision_recall(precision_recall_dict, weights_load_path, result_folder=None ):           
-
-
 
         if __name__ == '__main__': 
             plt.figure(figsize=(10, 10))
@@ -222,14 +199,18 @@ if __name__ == '__main__':
                     os.makedirs(result_folder)
                 plt.savefig(os.path.join(result_folder, f"{os.path.basename(os.path.dirname(weights_load_path))}.png"))
             plt.show()
+            
+
+            
     def save_results(precision_recall_list, result_folder):
         # if result_folder does not exist, create it
         if not os.path.exists(result_folder):
             os.makedirs(result_folder)
             
-        dataframe = pd.DataFrame()
-        for item in precision_recall_list:
-            dataframe = pd.concat([dataframe, pd.DataFrame(item)])
+        dataframe = pd.DataFrame(precision_recall_list)
+        # for item in precision_recall_list:
+            # dataframe = pd.concat([dataframe, pd.DataFrame(item)])
+
             
         dataframe.to_csv(os.path.join(result_folder, "IoU_results.csv"))
         print(f"Saved results to {os.path.join(result_folder, 'IoU_results.csv')}")
@@ -258,14 +239,46 @@ if __name__ == '__main__':
     # plot_precision_recall(precision_recall_list, r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2\results", weights_path)
     # save_results(precision_recall_list, r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2\results")
     
-    data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3"
-    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_tables_no_object_shift_model2\weights.pth"
-    results_folder = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_no_tables_no_object_shift_model/IoU_info"
+    # data_to_test_on = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_no_object_shift_big_v5_testset/[]"
+    data_to_test_on = r"/home/student/Pim/code/Blender/real_world_data/Real_world_data_V3"
+    weights_path = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_WITH_shift_big_v2_model/weights.pth"
+    results_folder = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_WITH_shift_big_v2_model"
+#%%
+if __name__ == '__main__':
     results_dict = get_category_ids(data_to_test_on, weights_path,cat_Ids, percentage_of_dataset_to_use=1)
-    plot_precision_recall(results_dict,  weights_path, result_folder = results_folder)
     
+    plot_precision_recall(results_dict,  weights_path, result_folder = results_folder)
+#%%
+if __name__ == "__main__":
+    # save results to csv
+    save_results(results_dict,results_folder)
     
 
 # %%
+# save_results(results_dict,results_folder)
+
+if __name__ == "__main__":
+    plt.figure(figsize=(10, 10))
+    plt.rcParams["font.family"] = "cmr10"  # Set font family to Computer Modern Roman
+    fontsize = 35
+    plt.bar(range(len(results_dict)), [v['mean_avg_precision_box'] for v in results_dict.values()])
+    plt.xticks(range(len(results_dict)), results_dict.keys(), rotation=45, ha='right', fontsize=fontsize)
+    plt.yticks(np.arange(0, 1.1, 0.1), fontsize=fontsize)  # Set y-axis labels from 0 to 1 with a step of 0.1
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
+    plt.ylabel('mean Average Precision (mAP)', fontsize=fontsize)
+    plt.xlabel('Classes', fontsize=fontsize)
+    plt.tight_layout()  # Adjust layout to prevent overlap
+    plt.savefig(os.path.join(results_folder, f'mAP_box_{data_to_test_on.split(os.sep)[-2:]}.pdf'))
+
+    plt.figure(figsize=(10, 10))
+    plt.rcParams["font.family"] = "cmr10"  # Set font family to Computer Modern Roman
+    plt.bar(range(len(results_dict)), [v['mean_avg_precision_segm'] for v in results_dict.values()])
+    plt.xticks(range(len(results_dict)), results_dict.keys(), rotation=45, ha='right', fontsize=fontsize)
+    plt.yticks(np.arange(0, 1.1, 0.1), fontsize=fontsize)  # Set y-axis labels from 0 to 1 with a step of 0.1
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
+    plt.ylabel('mean Average Precision (mAP)', fontsize=fontsize)
+    plt.xlabel('Classes', fontsize=fontsize)
+    plt.tight_layout()  # Adjust layout to prevent overlap
+    plt.savefig(os.path.join(results_folder,f'mAP_segm{data_to_test_on.split(os.sep)[-2:]}.pdf'))
 
 # %%

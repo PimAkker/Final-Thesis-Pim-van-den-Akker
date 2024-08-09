@@ -85,7 +85,9 @@ class blender_object_placement:
             object_name (str): Name of the object to set the modifier.
             modifier_name (str): Name of the modifier to set.
             value (int, float, bool, tuple): Value to set the modifier to.
-                - If the modifier is of type int or float, the value can be a single value or a tuple representing a range.
+                - If the modifier is of type int or float, the value can be a single value or a tuple representing a range or any number
+                of True, False booleans, it will pick a random value from the tuple, so for (True,True,False), there is a 1/3 probability of 
+                picking False. 
                 - If the modifier is of type bool, the value should be a boolean.
                 - If the modifier is a string with the name of another modifier. This will set the value of the 
                     modifier to the value of the other modifier. This is useful when you want to modifiers to have the same value.
@@ -100,7 +102,6 @@ class blender_object_placement:
             AssertionError: If the value is out of range for the modifier.
 
         Note:
-            - Random choice is not supported for boolean values. So this should be done manually.
             - If the value is a tuple, the modifier value will be set to a random value within the tuple range if the modifier is of type int or float.
             - The object_name should be the same as the geometry node name. For example, if the object is named "walls", it should have the "walls" geometry node modifier.
         """
@@ -147,13 +148,13 @@ class blender_object_placement:
         # NOTE: for this to work the object_name should be the same as the geometry node name. So object 
         # "walls" should have the "walls" geometry node modifier
 
-        if self.is_numeric(value) or (type(value) == tuple and not (True in value and False in value)):
+        if self.is_numeric(value) or (type(value) == tuple and not  all(isinstance(v, bool) for v in value)):
             min_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].min_value
             max_val = bpy.data.node_groups[object_name].inputs[modifier_index+1].max_value
 
 
         # if the modifier is a tuple then set the value as a random value bounded by the tuple
-        if type(value) == tuple and (True in value and False in value):
+        if type(value) == tuple and all(isinstance(v, bool) for v in value):
             value = bool(np.random.choice(value))
         elif type(value) == tuple:
             assert value[0] >= min_val, f"Value: {value[0]} is too small for {modifier_name} modifier ensure that: {min_val} <= value <= {max_val}"

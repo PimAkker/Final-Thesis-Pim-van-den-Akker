@@ -38,24 +38,24 @@ from numpy import random
 # image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
 # mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
 
-# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
-# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
+image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
+mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
 
-image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Images"
-mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Masks"
+# image_path = r"data/test/same_height_no_walls_no_object_shift_big_v5"
+# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Masks"
 
 show_input_image = False
 show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 10
+render_num_images = 120
 
 randomize_images = False
  
-model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_tables_no_object_shift_model\weights.pth'
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v2_model\weights.pth'
 
-mask_confidence_threshold = 0.5
+mask_confidence_threshold = 0.2
 
 number_of_pred_mask_to_show = 20
 label_confidence_threshold = 0.5
@@ -133,7 +133,8 @@ if __name__ == '__main__':
         pred_labels = replace_label_name(pred_labels, "walls tables new", "NEWTAB")
         
         pred_boxes = pred["boxes"].long()
-        pred_boxes = pred_boxes[pred["scores"] > label_confidence_threshold]
+        pred_box_indexes = pred["scores"] > label_confidence_threshold
+        pred_boxes = pred_boxes[pred_box_indexes]
 
 
         if draw_bounding:
@@ -148,7 +149,7 @@ if __name__ == '__main__':
         obj_ids = obj_ids[2:]
         num_objs = len(obj_ids)
 
-        masks = (pred["masks"] > mask_confidence_threshold).squeeze(1)
+        masks = (pred["masks"][pred_box_indexes] > mask_confidence_threshold).squeeze(1)
         mask_confidence_scores = torch.sum(masks, dim=(1, 2)) # this is the confidence score for each mask between 0 and masks.size(1) * masks.size(2)
         
         _, indices = torch.topk(mask_confidence_scores, k=min(number_of_pred_mask_to_show, len(mask_confidence_scores)))

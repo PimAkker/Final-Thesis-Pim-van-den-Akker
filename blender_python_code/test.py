@@ -5,11 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL
 
-
+import os 
 
 input_image = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Images\input-0-.png"
 image = PIL.Image.open(input_image)
 output = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Masks\inst-mask-0-.npy"
+# get the path of the output folder
+rootoutput = os.path.dirname(output)
 output = np.load(output)
 fig, axes = plt.subplots(1, 2)
 
