@@ -11,7 +11,7 @@ sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.curdir, r"model_training\\utilities"))
 from category_information import category_information
 
-import detect_uncertainty_areas
+import visualization_and_validation.detect_uncertainty_areas as detect_uncertainty_areas
 import matplotlib.pyplot as plt
 from importlib import reload
 reload(detect_uncertainty_areas)
@@ -42,7 +42,7 @@ def get_ground_truth(data, i):
 
 def calculate_correct_hypothesis_rate(overlap_indexes_dict,ground_truth_labels, predict_labels):
     correct_hypothesis = 0
-    correct_label = 0
+    correct_labels = 0
     for ground_truth_cluster, predict_cluster in overlap_indexes_dict.items():
         
         # check if the array is empty if so continue
@@ -52,27 +52,28 @@ def calculate_correct_hypothesis_rate(overlap_indexes_dict,ground_truth_labels, 
         if ground_truth_labels[ground_truth_cluster] in predict_labels[predict_cluster]:
             correct_hypothesis += 1
         if ground_truth_labels[ground_truth_cluster] == predict_labels[predict_cluster][0]:
-            correct_label += 1
+            correct_labels += 1
             
     if len(ground_truth_labels) == 0:
-        return 1, 0, 1, 1, 1        
+        return 1, 0, 1, 1
         
     num_predictions = len(predict_labels)
-    true_positives = correct_hypothesis
+    hyp_true_positives = correct_hypothesis
     
-    false_positives = num_predictions - true_positives
-    false_negatives = len(ground_truth_labels) - true_positives
+    hyp_false_positives = num_predictions - hyp_true_positives
+    hyp_false_negatives = len(ground_truth_labels) - hyp_true_positives
 
-    hyp_f1 = true_positives / (true_positives + 0.5 * (false_positives + false_negatives))
-    hyp_accuracy = true_positives / (true_positives + false_negatives)
-    hyp_false_positive_rate = 0 if false_positives == 0 else false_positives / (false_positives + true_positives)
-    miss_rate = false_negatives / (true_positives + false_negatives)
+    hyp_f1 = hyp_true_positives / (hyp_true_positives + 0.5 * (hyp_false_positives + hyp_false_negatives))
+    hyp_accuracy = hyp_true_positives / (hyp_true_positives + hyp_false_negatives)
+    hyp_false_positive_rate = 0 if hyp_false_positives == 0 else hyp_false_positives / (hyp_false_positives + hyp_true_positives)
+ 
     
-    true_positive_rate = correct_label / len(predict_labels) if len(predict_labels) > 0 else 0
+    true_positive_rate = correct_labels / len(predict_labels) if len(predict_labels) > 0 else np.nan
     
     
     
-    return  hyp_accuracy, hyp_false_positive_rate ,hyp_f1,  true_positive_rate, miss_rate 
+    
+    return  hyp_accuracy, hyp_false_positive_rate ,hyp_f1,  true_positive_rate
 
 def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_threshold, mask_threshold = 0.1):
     """
@@ -99,6 +100,8 @@ def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_thre
     
     intersection = np.sum(pred_masks & ground_truth_mask)
     union = np.sum(pred_masks | ground_truth_mask)
+    if intersection == 0 and union == 0:
+        return 1, pred_masks
     return intersection / union, pred_masks
         
 
@@ -114,7 +117,6 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
     hyp_accuracy_array = np.zeros(nr_of_images)
     hyp_false_positive_rate_array = np.zeros(nr_of_images)
     hyp_f1_array = np.zeros(nr_of_images)
-    hyp_miss_rate = np.zeros(nr_of_images)
     mask_IoU = np.zeros(nr_of_images)
     true_positive_rate_array = np.zeros(nr_of_images)
     
@@ -130,13 +132,38 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
         ground_truth_boxes,ground_truth_masks, ground_truth_labels = get_ground_truth(data, i)
         overlap_indexes = find_overlap_indexes(filled_bb, ground_truth_boxes)
         
-        hyp_accuracy_array[i],hyp_false_positive_rate_array[i], hyp_f1_array[i], true_positive_rate_array[i],hyp_miss_rate[i]  = calculate_correct_hypothesis_rate(overlap_indexes,
+        hyp_accuracy_array[i],hyp_false_positive_rate_array[i], hyp_f1_array[i], true_positive_rate_array[i]  = calculate_correct_hypothesis_rate(overlap_indexes,
             ground_truth_labels,pred_labels[0].cpu().numpy())
 
         mask_IoU[i], scored_pred_mask = calculate_mask_only_IoU(pred_masks[0].cpu().numpy(), ground_truth_masks, 
             pred_scores, box_threshold,mask_threshold=mask_threshold)
         
-        if visualize_images:            
+        if visualize_images:           
+            # import cv2 
+            # plt.figure(figsize=(15, 5))
+            # #  swap black and white to make the image more visible
+            # pred_img = (255.0 * (pred_img - pred_img.min()) / (pred_img.max() - pred_img.min())).to(torch.uint8)
+            # pred_img = pred_img.cpu().numpy()
+            # pred_img = np.transpose(pred_img, (1, 2, 0))
+            # maskwhite = cv2.inRange(pred_img, (180, 180, 180), (255, 255, 255))
+            # maskblack = cv2.inRange(pred_img, (0, 0, 0), (180, 180, 180))
+            # pred_img[maskwhite > 0] = [0, 0, 0]
+            # pred_img[maskblack > 0] = [255, 255, 255]
+
+            
+            # plt.figure(figsize=(15, 5))
+            # plt.imshow(pred_img)
+            # plt.axis('off')
+
+            # plt.figure(figsize=(15, 5))
+            # plt.imshow(np.sum(ground_truth_masks,axis=0))
+            # plt.axis('off')
+
+            # plt.figure(figsize=(15, 5))
+            # plt.imshow(scored_pred_mask)
+            # plt.axis('off')
+
+            # plt.show()
             plt.figure(figsize=(15, 5))
             
             plt.subplot(1, 3, 1)
@@ -159,7 +186,7 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
     mask_IoU = np.nansum(mask_IoU)/nr_of_images
     accuracy = np.nansum(hyp_accuracy_array) / nr_of_images
     True_positive_rate = np.nansum(true_positive_rate_array) / nr_of_images
-    micro_average_miss_rate = np.nansum(hyp_miss_rate) / nr_of_images
+
     
     print(f"for model {model_name}")
     print(f"for data {data_path.split(os.sep)[-1]}")
@@ -168,8 +195,6 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
     print(f"F1 score: {hyp_miscro_avg_f1}")
     print(f"Average hyp Mask IoU: {mask_IoU}")
     print(f"True positive rate: {True_positive_rate}")
-    print(f"Miss rate: {micro_average_miss_rate}")
-    
 
     return hyp_miscro_avg_true_positive_rate, hyp_miscro_avg_false_positive_rate, hyp_miscro_avg_f1, mask_IoU, accuracy
 
@@ -221,24 +246,26 @@ def randomized_paramater_search(data_path, model_path, device, uncertainty_thres
     
 # %%
 if __name__ == "__main__":
-    uncertainty_threshold = 0.2
+    uncertainty_threshold = 0.5
     mask_threshold = 0.3
     box_threshold = 0.5
     
-    visualize_images = True
+    visualize_images = False
     nr_of_images = None
     # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_no_tables_no_object_shift_big\[]'
-    # data_path = r'real_world_data\Real_world_data_V3'
-    data_path = r'data\test\same_height_no_walls_no_object_shift_big_v4_testset\[]'
+    data_path = r'real_world_data\Real_world_data_V3'
+    # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_WITH_shift_big_v4_testset\[]'
+    # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]'
     # model_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_object_shift_big_varying_model_v3\weights.pth'
-    model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_object_shift_big_v4_model\weights.pth"
+    model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\weights.pth"
     # model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\ablation_v3_models\[low freq noise variance]\weights.pth"
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 #%%
 if __name__ == "__main__":
     # run once:
-    _,_,f1, _,_ = run_correct_hypothesis_rate(data_path=data_path, model_path=model_path, device=device, uncertainty_threshold=uncertainty_threshold, mask_threshold=mask_threshold, box_threshold=box_threshold, visualize_images=visualize_images, nr_of_images= nr_of_images)
+    _,_,f1, _ = run_correct_hypothesis_rate(data_path=data_path, model_path=model_path, device=device, uncertainty_threshold=uncertainty_threshold, mask_threshold=mask_threshold, box_threshold=box_threshold, visualize_images=visualize_images, nr_of_images= nr_of_images)
 #%%
     
 if __name__ == "__main__":

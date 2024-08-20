@@ -5,13 +5,18 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+# csv_paths = {
+#     "Reference": r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v2_model\IoU_results_real_world_with_shift_v2.csv',
+#     "LiDAR High Freq.": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_lidar_high.csv',
+#     "LiDAR Block Size": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_real_world_v3_lidar_block_small.csv',
+#     "LiDAR Low Freq": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_lidar_low.csv',
+#     "Pillar Width": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_pillar_width.csv',
+#     "Chair Size": r"C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_chair size.csv",
+#     'Pillar Chair Block Size':r"C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_real_world_v3_pillar_chair_lidar.csv"
+# }
 csv_paths = {
-    "Reference": r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v2_model\IoU_results_real_world_with_shift_v2.csv',
-    "LiDAR High Freq.": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_lidar_high.csv',
-    "LiDAR Block Size": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_block_size_model.csv',
-    "LiDAR Low Freq": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_lidar_low.csv',
-    "Pillar Width": r'C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_pillar_width.csv',
-    "Chair Size": r"C:\Users\pimde\OneDrive\thesis\Blender\data\ablation\csv_results\IoU_info_rwv3_chair size.csv"
+    "Customized": r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_object_shift_big_v5_model\IoU_info_rwv3_bigshiftv5.csv",
+    "General": r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3_model\IoU_results_with_object_shift_v3.csv"
 }
 
 # save_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v2_model'
@@ -45,8 +50,11 @@ plt.rcParams["font.family"] = "cmr10"  # Set font to Computer Modern Roman
 plt.rcParams["axes.grid"] = True  # Enable grid
 plt.rcParams["font.size"] = 20  # Set default font size
 
-plt.figure(figsize=(25.1, 8.9))
+# plt.figure(figsize=(24, 10))
+plt.figure(figsize=(28.1, 10.5))
 
+# plt.figure()
+# 
 # Plot each dataframe
 for i, (label, df) in enumerate(dfs):
     plt.bar(indices + i * width, np.array(df.iloc[save_row+1]), label=label, width=width, align='edge')
@@ -57,7 +65,7 @@ plt.xticks(indices+0.5, dfs[0][1].columns)
 # Add labels, title, and legend
 plt.ylabel('mAP')
 plt.xlabel('Categories')
-plt.legend(loc='lower left', bbox_to_anchor=(.846, 0.55))
+plt.legend(loc='lower left', bbox_to_anchor=(.846, 0.55), title='Fixed Parameters:')
 # plt.legend()
 # Ensure y-axis numbers are displayed
 plt.yticks(np.arange(0.1, 1.1, step=0.1))

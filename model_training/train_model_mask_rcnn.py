@@ -262,23 +262,23 @@ class ModelTrainer:
 
 if __name__ == '__main__':
     
-    trainer = ModelTrainer(data_root= r"data/test/same_height_no_walls_v4/[]",
+    trainer = ModelTrainer(data_root= r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3\[]",
                             num_classes=len(category_information),
                             continue_from_checkpoint=False,
                             save_model=True,
                             num_epochs=7,
                             train_percentage=0.8,
                             test_percentage=0.2,
-                            percentage_of_data_to_use=.01,
-                            batch_size=3,
+                            percentage_of_data_to_use=1,
+                            batch_size=8,
                             learning_rate=1e-4,
                             betas=(0.9, 0.999),
-                            eps=1e-8,
+                            eps=1e-5,
                             weight_decay=5e-4,
-                            weights_save_path="",
+                            # weights_save_path="",
                             weights_load_path="",
                             device= torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'),
-                            output_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_v4_adam",
+                            output_folder=r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3_model",
                             plot_metrics_bool=True,
                             seed = 42	
                             

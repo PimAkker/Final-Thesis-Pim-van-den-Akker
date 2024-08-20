@@ -41,32 +41,46 @@ from numpy import random
 image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
 mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
 
-# image_path = r"data/test/same_height_no_walls_no_object_shift_big_v5"
-# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test1\wheredidthepillarsgo\[]\Masks"
+# image_path =  r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\Masks'
+import cv2
 
-show_input_image = False
+show_input_image = True
 show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 120
+render_num_images = 10
 
 randomize_images = False
  
-model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v2_model\weights.pth'
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\weights.pth'
 
 mask_confidence_threshold = 0.2
 
-number_of_pred_mask_to_show = 20
+number_of_pred_mask_to_show = 100
 label_confidence_threshold = 0.5
 
 
 image_path_list = [os.path.join(image_path, file) for file in os.listdir(image_path) if file.endswith(".png")]
 if show_ground_truth:
     mask_path_list = [os.path.join(mask_path, file) for file in os.listdir(mask_path) if file.endswith(".npy")]
+def switch_black_and_white(image): 
+    
+    
+    image = image[:3, :, :]
+    image = image.cpu().numpy() 
+    image = np.transpose(image, (1, 2, 0))
+    
+    maskwhite = cv2.inRange(image, (180, 180, 180), (255, 255, 255))
+    maskblack = cv2.inRange(image, (0, 0, 0), (180, 180, 180))
+    image[maskwhite > 0] = [0, 0, 0]
+    image[maskblack > 0] = [255, 255, 255]
+    return image
 
 def replace_label_name(list, from_name, to_name):
     [x.replace(from_name, to_name) for x in list]
+    
     return list
 
 
@@ -92,7 +106,8 @@ if __name__ == '__main__':
         image_orig = read_image(image_path_list[file_nr])
         
         if show_input_image:
-            plt.imshow(image_orig.permute(1, 2, 0))
+            image_orig_display = switch_black_and_white(image_orig)
+            plt.imshow(image_orig_display)
             plt.axis('off')
             plt.show()
         plt.figure(figsize=(10,10))
@@ -124,14 +139,7 @@ if __name__ == '__main__':
         pred_labels = pred_labels[pred["scores"] > label_confidence_threshold]
         pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in pred_labels]
         
-        # For easier reading change the label names
-        pred_labels = replace_label_name(pred_labels, "chairs removed", " REMCHAIR")
-        pred_labels = replace_label_name(pred_labels, "chairs new", " NEWCHAIR")
-        pred_labels = replace_label_name(pred_labels, "pillars new", "NEWPIL")
-        pred_labels = replace_label_name(pred_labels, "pillars removed", "REMPIL")
-        pred_labels = replace_label_name(pred_labels, "walls tables removed", "REMTAB")
-        pred_labels = replace_label_name(pred_labels, "walls tables new", "NEWTAB")
-        
+
         pred_boxes = pred["boxes"].long()
         pred_box_indexes = pred["scores"] > label_confidence_threshold
         pred_boxes = pred_boxes[pred_box_indexes]
@@ -148,6 +156,7 @@ if __name__ == '__main__':
 
         obj_ids = obj_ids[2:]
         num_objs = len(obj_ids)
+        
 
         masks = (pred["masks"][pred_box_indexes] > mask_confidence_threshold).squeeze(1)
         mask_confidence_scores = torch.sum(masks, dim=(1, 2)) # this is the confidence score for each mask between 0 and masks.size(1) * masks.size(2)

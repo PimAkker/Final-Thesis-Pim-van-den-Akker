@@ -240,9 +240,9 @@ if __name__ == '__main__':
     # save_results(precision_recall_list, r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2\results")
     
     # data_to_test_on = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_no_object_shift_big_v5_testset/[]"
-    data_to_test_on = r"/home/student/Pim/code/Blender/real_world_data/Real_world_data_V3"
-    weights_path = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_WITH_shift_big_v2_model/weights.pth"
-    results_folder = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_WITH_shift_big_v2_model"
+    data_to_test_on = r"real_world_data/Real_world_data_V3"
+    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3_model\weights.pth"
+    results_folder = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3_model"
 #%%
 if __name__ == '__main__':
     results_dict = get_category_ids(data_to_test_on, weights_path,cat_Ids, percentage_of_dataset_to_use=1)

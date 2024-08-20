@@ -77,9 +77,24 @@ def run_model(model, data, image_number, device, box_threshold):
         scores.append(prediction[0]['scores'])
         
     return prediction, boxes, labels, masks, img, scores
+def switch_black_and_white(image):
+    """
+    Switches the black and white colors in an image.
 
+    Parameters:
+    - image: numpy.ndarray
+        The input image.
 
-def show_bounding_boxes(img, boxes, scores, labels, show_confidence_values=True, show_labels=True):
+    Returns:
+    - numpy.ndarray
+        The image with black and white colors switched.
+    """
+    maskwhite = cv2.inRange(image, (180, 180, 180), (255, 255, 255))
+    maskblack = cv2.inRange(image, (0, 0, 0), (180, 180, 180))
+    image[maskwhite > 0] = [0, 0, 0]
+    image[maskblack > 0] = [255, 255, 255]
+    return image 
+def show_pred_bounding_boxes(img, boxes, scores, labels, show_confidence_values=True, show_labels=True):
     """
     Display the image with bounding boxes overlaid.
 
@@ -94,11 +109,8 @@ def show_bounding_boxes(img, boxes, scores, labels, show_confidence_values=True,
     fig, ax = plt.subplots(1, figsize=(12, 6))
     image = img.mul(255).permute(1, 2, 0).byte().numpy()
     
-    # colorswap black and white
-    maskwhite = cv2.inRange(image, (180, 180, 180), (255, 255, 255))
-    maskblack = cv2.inRange(image, (0, 0, 0), (180, 180, 180))
-    image[maskwhite > 0] = [0, 0, 0]
-    image[maskblack > 0] = [255, 255, 255]
+    image = switch_black_and_white(image)
+
     
     ax.imshow(image)
     ax.axis('off')
@@ -117,12 +129,13 @@ def show_bounding_boxes(img, boxes, scores, labels, show_confidence_values=True,
             label_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()])
 
         box = box.cpu().numpy()
-        rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=3, edgecolor='None', facecolor='b', alpha=0.5)
+        rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=3, edgecolor='Blue', facecolor='None', alpha=0.5)
         ax.add_patch(rect)
 
     plt.show()
+
     
-def show_masks(img, masks):
+def show_masks(img, masks,mask_threshold=0.2):
     """
     Display the image with overlaid masks.
 
@@ -133,14 +146,19 @@ def show_masks(img, masks):
     Returns:
         None
     """
-    fig, ax = plt.subplots(1)
-    ax.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
-    for mask in masks[0]:
-        mask = mask[0].cpu().numpy()
-        ax.imshow(mask, alpha=0.5)
-        # show some info 
-        plt.title(f"mask shape: {mask.shape}")
+    plt.figure(figsize=(10, 10))
+    plt.imshow(img.mul(255).permute(1, 2, 0).byte().numpy())
+    # show all the masks as different colors
+    
+    masks = masks[0].cpu().numpy()
+    masks = masks > mask_threshold
+    masks = np.sum(masks, axis=(0,1))
+    plt.imshow(masks)
+    plt.axis('off')
     plt.show()
+        # show some info 
+    # plt.title(f"mask shape: {mask.shape}")
+
     
 def fill_bounding_boxes(boxes, shape= (1,256,256)):
     """
@@ -347,6 +365,55 @@ def find_area_of_uncertainty(boxes, masks, labels_list, threshold, show_overlap=
         plt.show()
         
     return uncertain_area_boxes, labels_in_cluster, filled_bb
+def draw_ground_truth_bounding_boxes(img, boxes, labels):
+    """
+    Display the image with ground truth bounding boxes overlaid.
+
+    Args:
+        img (Tensor): The input image tensor.
+        boxes (Tensor): The bounding box coordinates.
+        labels (Tensor): The labels for each bounding box.
+
+    Returns:
+        None
+    """
+    fig, ax = plt.subplots(1, figsize=(12, 6))
+    image = img.mul(255).permute(1, 2, 0).byte().numpy()
+    image = switch_black_and_white(image)
+    ax.imshow(image)
+    ax.axis('off')
+    for i, box in enumerate(boxes):
+        label = labels[i]
+        label = category_information_flipped[int(label)].capitalize()
+        # set the first letter to uppercase
+        label_txt = plt.text(box[0], box[3], label, color='black', fontsize=13, alpha=1, ha='left', va='bottom', fontname='Computer Modern', fontfamily='serif')
+        label_txt.set_path_effects([path_effects.Stroke(linewidth=2, foreground='white'), path_effects.Normal()])
+        box = box.cpu().numpy()
+        rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=3, edgecolor='Blue', facecolor='None', alpha=0.5)
+        ax.add_patch(rect)
+    plt.show()
+
+def show_ground_truth_masks(img, masks, labels):
+    """
+    Display the image with ground truth masks overlaid.
+
+    Args:
+        img (Tensor): The input image tensor.
+        masks (Tensor): The masks tensor.
+        labels (Tensor): The labels for each mask.
+
+    Returns:
+        None
+    """
+    fig, ax = plt.subplots(1, figsize=(10, 10))
+    image = img.mul(255).permute(1, 2, 0).byte().numpy()
+    ax.imshow(image)
+    ax.axis('off')
+    masks= torch.sum(masks, dim=0)
+    masks = masks.cpu().numpy()
+
+    plt.imshow(masks)
+    plt.show()
 
 
  #%%
@@ -360,9 +427,9 @@ if __name__ == "__main__":
     
     
     box_threshold = 0.5
-    mask_threshold = 0.2
+    mask_threshold = 0.5
     image_start_number = 7
-    nr_images_to_show = 1
+    nr_images_to_show = 120
     
     overlap_bb_threshold = .1
     
@@ -371,20 +438,30 @@ if __name__ == "__main__":
         
         image_nr = i + image_start_number
         
-        weights_load_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_no_object_shift_big_v3_model\weights.pth"
+        weights_load_path =r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\weights.pth'
         model = load_model(weights_load_path, num_classes, device)
         data = load_data(data_to_test_on)
+        
+        ground_truth_boxes = data[image_nr][1]['boxes']
+        ground_truth_labels = data[image_nr][1]['labels']
         
         prediction_dict, boxes,labels,pred_masks,img, scores  = run_model(model, data, image_nr, device,  box_threshold)
         # print(f"number of boxes: {len(boxes)}")
         # print(f"number of labels: {len(labels)}")
         # print(f"number of masks: {len(masks)}")
+        plt.figure(figsize=(10,10)) 
+        plt.axis('off')
+        img_swapped = switch_black_and_white(img.mul(255).cpu().numpy().transpose(1,2,0).copy())
+        plt.imshow(img_swapped)
+        plt.show()
         
-        
-        show_bounding_boxes(img, boxes, scores,labels)
-        show_masks(img, pred_masks)
-        plot_overlap(img, boxes, pred_masks,0.2)
-    
-        find_area_of_uncertainty(boxes,pred_masks,labels, overlap_bb_threshold, show_overlap=True)
+        show_pred_bounding_boxes(img, boxes, scores,labels)
+        draw_ground_truth_bounding_boxes(img, ground_truth_boxes, ground_truth_labels)
+
+        show_masks(img, pred_masks,mask_threshold=mask_threshold)
+        show_ground_truth_masks(img, data[image_nr][1]['masks'], ground_truth_labels)
+        # plot_overlap(img, boxes, pred_masks,0.2)
+    # 
+        # find_area_of_uncertainty(boxes,pred_masks,labels, overlap_bb_threshold, show_overlap=True)
     
 # %%

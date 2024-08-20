@@ -17,6 +17,7 @@ root = os.getcwd()
 for dir in dirs:
     sys.path.append(os.path.join(root, dir))
 sys.path.append(os.getcwd())
+
 import generate_dataset
 from category_information import category_information
 import numpy as np
