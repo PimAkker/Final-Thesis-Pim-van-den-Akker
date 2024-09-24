@@ -20,7 +20,9 @@ install packages in blender through [this](https://stackoverflow.com/questions/1
 ## Usage	
 To use the dataset generator, open the room_generation_v4.blend file in blender. Then run the script in the text editor (top tab). The script will generate a dataset with the parameters set in the script.
 
+The data 
 
 
-Some examples of what the variation can do:
+
+Some examples of what the dataset generation can can do:
 ![gif](room_variation.gif)
