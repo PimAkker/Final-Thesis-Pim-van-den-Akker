@@ -39,8 +39,8 @@ if __name__ == '__main__':
     def get_category_ids(data_to_test_on, weights_load_path, cat_Ids, percentage_of_dataset_to_use=1):
 
         num_classes = len(category_information)
-        # train on the GPU or on the CPU, if a GPU is not available
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        
         # device = torch.device('cpu')
         dataset_test = LoadDataset(data_to_test_on, get_transform(train=False))
 
@@ -239,10 +239,12 @@ if __name__ == '__main__':
     # plot_precision_recall(precision_recall_list, r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2\results", weights_path)
     # save_results(precision_recall_list, r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info2\results")
     
-    # data_to_test_on = r"/home/student/Pim/code/Blender/data/test/same_height_no_walls_no_object_shift_big_v5_testset/[]"
-    data_to_test_on = r"real_world_data/Real_world_data_V3"
-    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3_model\weights.pth"
-    results_folder = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_big_varying_model_WITH_object_shift_v3_model"
+    data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_WITH_shift_big_v4_testset\[]"
+    # data_to_test_on = r"C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3"
+    weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\ablation_v3_models\[high freq noise variance]\weights.pth"
+    # weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\ablation_v3_models\[low freq noise variance]\weights.pth"
+    # weights_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\ablation_v3_models\[wall nr x, wall nr y]\weights.pth"
+    results_folder = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Results\Ablation_IoU_synthetic"
 #%%
 if __name__ == '__main__':
     results_dict = get_category_ids(data_to_test_on, weights_path,cat_Ids, percentage_of_dataset_to_use=1)
@@ -257,28 +259,28 @@ if __name__ == "__main__":
 # %%
 # save_results(results_dict,results_folder)
 
-if __name__ == "__main__":
-    plt.figure(figsize=(10, 10))
-    plt.rcParams["font.family"] = "cmr10"  # Set font family to Computer Modern Roman
-    fontsize = 35
-    plt.bar(range(len(results_dict)), [v['mean_avg_precision_box'] for v in results_dict.values()])
-    plt.xticks(range(len(results_dict)), results_dict.keys(), rotation=45, ha='right', fontsize=fontsize)
-    plt.yticks(np.arange(0, 1.1, 0.1), fontsize=fontsize)  # Set y-axis labels from 0 to 1 with a step of 0.1
-    plt.grid(color='gray', linestyle='--', linewidth=0.5)
-    plt.ylabel('mean Average Precision (mAP)', fontsize=fontsize)
-    plt.xlabel('Classes', fontsize=fontsize)
-    plt.tight_layout()  # Adjust layout to prevent overlap
-    plt.savefig(os.path.join(results_folder, f'mAP_box_{data_to_test_on.split(os.sep)[-2:]}.pdf'))
+# if __name__ == "__main__":
+#     plt.figure(figsize=(10, 10))
+#     plt.rcParams["font.family"] = "cmr10"  # Set font family to Computer Modern Roman
+#     fontsize = 35
+#     plt.bar(range(len(results_dict)), [v['mean_avg_precision_box'] for v in results_dict.values()])
+#     plt.xticks(range(len(results_dict)), results_dict.keys(), rotation=45, ha='right', fontsize=fontsize)
+#     plt.yticks(np.arange(0, 1.1, 0.1), fontsize=fontsize)  # Set y-axis labels from 0 to 1 with a step of 0.1
+#     plt.grid(color='gray', linestyle='--', linewidth=0.5)
+#     plt.ylabel('mean Average Precision (mAP)', fontsize=fontsize)
+#     plt.xlabel('Classes', fontsize=fontsize)
+#     plt.tight_layout()  # Adjust layout to prevent overlap
+#     plt.savefig(os.path.join(results_folder, f'mAP_box_{data_to_test_on.split(os.sep)[-2:]}.pdf'))
 
-    plt.figure(figsize=(10, 10))
-    plt.rcParams["font.family"] = "cmr10"  # Set font family to Computer Modern Roman
-    plt.bar(range(len(results_dict)), [v['mean_avg_precision_segm'] for v in results_dict.values()])
-    plt.xticks(range(len(results_dict)), results_dict.keys(), rotation=45, ha='right', fontsize=fontsize)
-    plt.yticks(np.arange(0, 1.1, 0.1), fontsize=fontsize)  # Set y-axis labels from 0 to 1 with a step of 0.1
-    plt.grid(color='gray', linestyle='--', linewidth=0.5)
-    plt.ylabel('mean Average Precision (mAP)', fontsize=fontsize)
-    plt.xlabel('Classes', fontsize=fontsize)
-    plt.tight_layout()  # Adjust layout to prevent overlap
-    plt.savefig(os.path.join(results_folder,f'mAP_segm{data_to_test_on.split(os.sep)[-2:]}.pdf'))
+#     plt.figure(figsize=(10, 10))
+#     plt.rcParams["font.family"] = "cmr10"  # Set font family to Computer Modern Roman
+#     plt.bar(range(len(results_dict)), [v['mean_avg_precision_segm'] for v in results_dict.values()])
+#     plt.xticks(range(len(results_dict)), results_dict.keys(), rotation=45, ha='right', fontsize=fontsize)
+#     plt.yticks(np.arange(0, 1.1, 0.1), fontsize=fontsize)  # Set y-axis labels from 0 to 1 with a step of 0.1
+#     plt.grid(color='gray', linestyle='--', linewidth=0.5)
+#     plt.ylabel('mean Average Precision (mAP)', fontsize=fontsize)
+#     plt.xlabel('Classes', fontsize=fontsize)
+#     plt.tight_layout()  # Adjust layout to prevent overlap
+#     plt.savefig(os.path.join(results_folder,f'mAP_segm{data_to_test_on.split(os.sep)[-2:]}.pdf'))
 
 # %%

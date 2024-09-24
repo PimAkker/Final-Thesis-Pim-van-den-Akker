@@ -8,13 +8,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-csv_real_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\IoU_info_real_world_v3.csv' 
-csv_synthetic_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\IoU_info__syn_shWsv4.csv"
+csv_real_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\!Customized_model\IoU_info_real_world_v3.csv' 
+csv_synthetic_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\!Customized_model\IoU_info__syn_shWsv4.csv"
 
 save_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v2_model'
 name = 'IoU_results_mAP_segm_syn_vs_real_with_shift_v2.pdf'
 
-save_row = 2
+save_row = 0
 
 save_path = os.path.join(save_path, name)
 
@@ -59,7 +59,7 @@ plt.rcParams["font.size"] = 18  # Set default font size
 
 plt.figure(figsize=(12, 8))
 plt.bar(real_df.columns, np.array(real_df.iloc[save_row+1]), label='Real world data', width=-width, align='edge')
-plt.bar(synthetic_df.columns, np.array(sy   nthetic_df.iloc[save_row+1]), label='Synthetic data', width=width, align='edge')
+plt.bar(synthetic_df.columns, np.array(synthetic_df.iloc[save_row+1]), label='Synthetic data', width=width, align='edge')
 
 # Add labels, title, and legend
 plt.ylabel('mAP')
@@ -84,4 +84,12 @@ plt.show()
 
 
 
+# %%
+
+# make a new panda df with real_df columns as index and real_df.iloc[save_row+1] and synthetic_df as values
+df = pd.DataFrame(data={'Real world data': real_df.iloc[save_row+1], 'Synthetic data': synthetic_df.iloc[save_row+1]}, index=real_df.columns)
+
+# %%
+# save to csv
+df.to_csv(r'C:\Users\pimde\OneDrive\thesis\final presentation\Graphs\IoU_results_mAP_segm_syn_vs_real_with_shift.csv')
 # %%

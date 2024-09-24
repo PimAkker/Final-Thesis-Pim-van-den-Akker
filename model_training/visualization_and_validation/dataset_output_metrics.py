@@ -90,6 +90,9 @@ matplotlib.rcParams['font.family'] = 'serif'
 
 sorted_instance_counts = dict(sorted(instance_counts.items(), key=lambda x: x[1], reverse=True))
 
+# remove the Background class
+del sorted_instance_counts['Background']
+
 plt.bar(sorted_instance_counts.keys(), sorted_instance_counts.values())
 plt.xlabel("Class")
 plt.ylabel("Number of items")
@@ -98,8 +101,10 @@ plt.xticks(rotation=45, ha='right')
 plt.grid(axis='y', linestyle=':', alpha=0.5)  # Add subtle gridlines
 
 plt.tight_layout()
-plt.savefig('real_world_dataset_values.eps')
+plt.rcParams['font.family'] = 'serif'  # Set font to computer modern
+plt.savefig('real_world_dataset_values.pdf')
 plt.show()
+
 
 
 

@@ -64,18 +64,18 @@ def calculate_correct_hypothesis_rate(overlap_indexes_dict,ground_truth_labels, 
     hyp_false_negatives = len(ground_truth_labels) - hyp_true_positives
 
     hyp_f1 = hyp_true_positives / (hyp_true_positives + 0.5 * (hyp_false_positives + hyp_false_negatives))
-    hyp_accuracy = hyp_true_positives / (hyp_true_positives + hyp_false_negatives)
+    hyp_TPR = hyp_true_positives / (hyp_true_positives + hyp_false_negatives)
     hyp_false_positive_rate = 0 if hyp_false_positives == 0 else hyp_false_positives / (hyp_false_positives + hyp_true_positives)
  
     
-    true_positive_rate = correct_labels / len(predict_labels) if len(predict_labels) > 0 else np.nan
+    true_positive_rate = correct_labels / len(predict_labels) if len(predict_labels) > 0 else 0
     
     
     
     
-    return  hyp_accuracy, hyp_false_positive_rate ,hyp_f1,  true_positive_rate
+    return  hyp_TPR, hyp_false_positive_rate ,hyp_f1,  true_positive_rate
 
-def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_threshold, mask_threshold = 0.1):
+def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_threshold, mask_threshold = 0.1, ground_truth_labels=None, pred_labels=None, ignore_classes = None):
     """
     Calculate the intersection over union metric for two masks.
 
@@ -87,8 +87,15 @@ def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_thre
     Returns:
         float: The intersection over union metric.
 """
+    if ignore_classes is not None:
+        remove_indexes_pred = np.where(np.isin(pred_labels, ignore_classes))
+        remove_indexes_ground_truth = np.where(np.isin(ground_truth_labels, ignore_classes))
+        pred_masks = np.delete(pred_masks, remove_indexes_pred, axis=0)
+        pred_scores = np.delete(pred_scores, remove_indexes_pred, axis=0)
+        ground_truth_mask = np.delete(ground_truth_mask, remove_indexes_ground_truth, axis=0)
+        
 
-    pass_threshold_indices_labels = np.where(pred_scores[0].cpu().numpy() > box_threshold)
+    pass_threshold_indices_labels = np.where(pred_scores > box_threshold)
 
     pred_masks = pred_masks[pass_threshold_indices_labels]
     
@@ -102,19 +109,23 @@ def calculate_mask_only_IoU(pred_masks, ground_truth_mask, pred_scores, box_thre
     union = np.sum(pred_masks | ground_truth_mask)
     if intersection == 0 and union == 0:
         return 1, pred_masks
+    # plt.imshow(pred_masks)
+    # plt.show()
+    # plt.imshow(ground_truth_mask)
+    # plt.show()
     return intersection / union, pred_masks
         
 
 
 
 # if __name__ == "__main__":
-def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, uncertainty_threshold=0.2, mask_threshold=0.5, nr_of_images=None, box_threshold=0.5, visualize_images=False):
+def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, uncertainty_threshold=0.2, mask_threshold=0.5, nr_of_images=None, box_threshold=0.5, visualize_images=False, ignore_classes_in_mask = None):
     data = detect_uncertainty_areas.load_data(data_path)
     model = detect_uncertainty_areas.load_model(model_path, num_classes= len(category_information), device=device)
 
     if nr_of_images is None:
         nr_of_images = len(data)
-    hyp_accuracy_array = np.zeros(nr_of_images)
+    hyp_TPR_array = np.zeros(nr_of_images)
     hyp_false_positive_rate_array = np.zeros(nr_of_images)
     hyp_f1_array = np.zeros(nr_of_images)
     mask_IoU = np.zeros(nr_of_images)
@@ -132,71 +143,72 @@ def run_correct_hypothesis_rate(data_path=None, model_path=None, device=None, un
         ground_truth_boxes,ground_truth_masks, ground_truth_labels = get_ground_truth(data, i)
         overlap_indexes = find_overlap_indexes(filled_bb, ground_truth_boxes)
         
-        hyp_accuracy_array[i],hyp_false_positive_rate_array[i], hyp_f1_array[i], true_positive_rate_array[i]  = calculate_correct_hypothesis_rate(overlap_indexes,
+        hyp_TPR_array[i],hyp_false_positive_rate_array[i], hyp_f1_array[i], true_positive_rate_array[i]  = calculate_correct_hypothesis_rate(overlap_indexes,
             ground_truth_labels,pred_labels[0].cpu().numpy())
 
         mask_IoU[i], scored_pred_mask = calculate_mask_only_IoU(pred_masks[0].cpu().numpy(), ground_truth_masks, 
-            pred_scores, box_threshold,mask_threshold=mask_threshold)
+            pred_scores[0].cpu().numpy(), box_threshold,mask_threshold=mask_threshold, ground_truth_labels=ground_truth_labels, pred_labels=pred_labels[0].cpu().numpy(),
+            ignore_classes = ignore_classes_in_mask)
         
         if visualize_images:           
-            # import cv2 
-            # plt.figure(figsize=(15, 5))
-            # #  swap black and white to make the image more visible
-            # pred_img = (255.0 * (pred_img - pred_img.min()) / (pred_img.max() - pred_img.min())).to(torch.uint8)
-            # pred_img = pred_img.cpu().numpy()
-            # pred_img = np.transpose(pred_img, (1, 2, 0))
-            # maskwhite = cv2.inRange(pred_img, (180, 180, 180), (255, 255, 255))
-            # maskblack = cv2.inRange(pred_img, (0, 0, 0), (180, 180, 180))
-            # pred_img[maskwhite > 0] = [0, 0, 0]
-            # pred_img[maskblack > 0] = [255, 255, 255]
-
-            
-            # plt.figure(figsize=(15, 5))
-            # plt.imshow(pred_img)
-            # plt.axis('off')
-
-            # plt.figure(figsize=(15, 5))
-            # plt.imshow(np.sum(ground_truth_masks,axis=0))
-            # plt.axis('off')
-
-            # plt.figure(figsize=(15, 5))
-            # plt.imshow(scored_pred_mask)
-            # plt.axis('off')
-
-            # plt.show()
+            import cv2 
             plt.figure(figsize=(15, 5))
-            
-            plt.subplot(1, 3, 1)
-            plt.title("Input")
-            plt.imshow(pred_img.permute(1, 2, 0))
+            #  swap black and white to make the image more visible
+            pred_img = (255.0 * (pred_img - pred_img.min()) / (pred_img.max() - pred_img.min())).to(torch.uint8)
+            pred_img = pred_img.cpu().numpy()
+            pred_img = np.transpose(pred_img, (1, 2, 0))
+            maskwhite = cv2.inRange(pred_img, (180, 180, 180), (255, 255, 255))
+            maskblack = cv2.inRange(pred_img, (0, 0, 0), (180, 180, 180))
+            pred_img[maskwhite > 0] = [0, 0, 0]
+            pred_img[maskblack > 0] = [255, 255, 255]
 
-            plt.subplot(1, 3, 2)
-            plt.title("Ground truth")
-            plt.imshow(np.sum(ground_truth_masks,axis=0))
             
-            plt.subplot(1, 3, 3)
-            plt.title(f"Prediction")
+            plt.figure(figsize=(15, 5))
+            plt.imshow(pred_img)
+            plt.axis('off')
+
+            plt.figure(figsize=(15, 5))
+            plt.imshow(np.sum(ground_truth_masks,axis=0))
+            plt.axis('off')
+
+            plt.figure(figsize=(15, 5))
             plt.imshow(scored_pred_mask)
+            plt.axis('off')
+
             plt.show()
+            # plt.figure(figsize=(15, 5))
+            
+            # plt.subplot(1, 3, 1)
+            # plt.title("Input")
+            # plt.imshow(pred_img.permute(1, 2, 0))
+
+            # plt.subplot(1, 3, 2)
+            # plt.title("Ground truth")
+            # plt.imshow(np.sum(ground_truth_masks,axis=0))
+            
+            # plt.subplot(1, 3, 3)
+            # plt.title(f"Prediction")
+            # plt.imshow(scored_pred_mask)
+            # plt.show()
 
     model_name = os.path.split(model_path)[-2]
-    hyp_miscro_avg_true_positive_rate = np.sum(hyp_accuracy_array) / nr_of_images
+    hyp_miscro_avg_true_positive_rate = np.sum(hyp_TPR_array) / nr_of_images
     hyp_miscro_avg_false_positive_rate = np.sum(hyp_false_positive_rate_array) / nr_of_images
     hyp_miscro_avg_f1 = np.sum(hyp_f1_array) / nr_of_images
     mask_IoU = np.nansum(mask_IoU)/nr_of_images
-    accuracy = np.nansum(hyp_accuracy_array) / nr_of_images
+    accuracy = np.nansum(hyp_TPR_array) / nr_of_images
     True_positive_rate = np.nansum(true_positive_rate_array) / nr_of_images
 
     
     print(f"for model {model_name}")
     print(f"for data {data_path.split(os.sep)[-1]}")
-    print(f"Hyp accuracy: {hyp_miscro_avg_true_positive_rate}")
+    print(f"Hyp True Positive Rate: {hyp_miscro_avg_true_positive_rate}")
     print(f"Hyp False positive rate: {hyp_miscro_avg_false_positive_rate}")
     print(f"F1 score: {hyp_miscro_avg_f1}")
     print(f"Average hyp Mask IoU: {mask_IoU}")
     print(f"True positive rate: {True_positive_rate}")
 
-    return hyp_miscro_avg_true_positive_rate, hyp_miscro_avg_false_positive_rate, hyp_miscro_avg_f1, mask_IoU, accuracy
+    return hyp_miscro_avg_true_positive_rate, hyp_miscro_avg_false_positive_rate, hyp_miscro_avg_f1, mask_IoU
 
 def randomized_paramater_search(data_path, model_path, device, uncertainty_thresholds, mask_thresholds, box_thresholds, visualize_images=False, nr_of_iterations=10, optimize_for='f1',nr_of_images_to_evaluate_on = None):
     # best_f1 = -1
@@ -247,25 +259,27 @@ def randomized_paramater_search(data_path, model_path, device, uncertainty_thres
 # %%
 if __name__ == "__main__":
     uncertainty_threshold = 0.5
-    mask_threshold = 0.3
+    mask_threshold = 0.5
     box_threshold = 0.5
     
-    visualize_images = False
+    visualize_images = True
     nr_of_images = None
     # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_no_tables_no_object_shift_big\[]'
-    data_path = r'real_world_data\Real_world_data_V3'
-    # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height_no_walls_WITH_shift_big_v4_testset\[]'
-    # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]'
+    # data_path = r'real_world_data\Real_world_data_V3'
+    # data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\Customized_dataset\[]'
+    data_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]'
     # model_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\varying_height_no_walls_no_object_shift_big_varying_model_v3\weights.pth'
-    model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\weights.pth"
+    model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\!Customized_model\weights.pth"
     # model_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\ablation_v3_models\[low freq noise variance]\weights.pth"
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # ignore_classes_in_mask = [9]
+    ignore_classes_in_mask = None
 
 #%%
 if __name__ == "__main__":
     # run once:
-    _,_,f1, _ = run_correct_hypothesis_rate(data_path=data_path, model_path=model_path, device=device, uncertainty_threshold=uncertainty_threshold, mask_threshold=mask_threshold, box_threshold=box_threshold, visualize_images=visualize_images, nr_of_images= nr_of_images)
+    _,_,f1, _ = run_correct_hypothesis_rate(data_path=data_path, model_path=model_path, device=device, uncertainty_threshold=uncertainty_threshold, mask_threshold=mask_threshold, box_threshold=box_threshold, visualize_images=visualize_images, nr_of_images= nr_of_images, ignore_classes_in_mask=ignore_classes_in_mask)
 #%%
     
 if __name__ == "__main__":

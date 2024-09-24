@@ -35,11 +35,11 @@ from numpy import random
 
 #%%
 
-# image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\images"
-# mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\same_height\masks"
+image_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\Images"
+mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\Masks"
 
-image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
-mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
+# image_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Images'
+# mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\real_world_data\Real_world_data_V3\Masks'
 
 # image_path =  r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\Images'
 # mask_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\Masks'
@@ -50,11 +50,11 @@ show_image = True
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
-render_num_images = 10
+render_num_images = 100
 
-randomize_images = False
+randomize_images = True
  
-model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\same_height_no_walls_WITH_shift_big_v4_model\weights.pth'
+model_weights_path = r'C:\Users\pimde\OneDrive\thesis\Blender\data\Models\info\!Customized_model\weights.pth'
 
 mask_confidence_threshold = 0.2
 
