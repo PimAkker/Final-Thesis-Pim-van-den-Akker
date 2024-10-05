@@ -46,7 +46,7 @@ mask_path = r"C:\Users\pimde\OneDrive\thesis\Blender\data\test\finaltestset\[]\M
 import cv2
 
 show_input_image = True
-show_image = True
+show_image = False
 show_mask = True
 show_ground_truth = True
 draw_bounding = True
@@ -78,10 +78,9 @@ def switch_black_and_white(image):
     image[maskblack > 0] = [255, 255, 255]
     return image
 
-def replace_label_name(list, from_name, to_name):
-    [x.replace(from_name, to_name) for x in list]
-    
-    return list
+def replace_label_name(label_list, from_name, to_name):
+    label_list = [to_name if x == from_name else x for x in label_list]
+    return label_list
 
 
 
@@ -186,8 +185,8 @@ if __name__ == '__main__':
             else:
                 image_orig = torch.zeros_like(image_orig)
             pred_labels = [list(category_information.keys())[list(category_information.values()).index(x)] for x in labels]
-            pred_labels = replace_label_name(pred_labels, "chairs removed", " REMCHAIR")
-            pred_labels = replace_label_name(pred_labels, "chairs new", " NEWCHAIR")
+            pred_labels = replace_label_name(pred_labels, "pillars", " pillars correct")
+            pred_labels = replace_label_name(pred_labels, "chairs", " chairs correct")
 
             if draw_bounding:
                 output_image = draw_bounding_boxes(image_orig, boxes, pred_labels, colors="red")
