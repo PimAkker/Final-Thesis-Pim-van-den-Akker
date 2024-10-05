@@ -1,3 +1,6 @@
+# this file is used to train the model on multiple percentages of the dataset
+
+
 import train_model_mask_rcnn
 import os 
 from category_information import category_information
